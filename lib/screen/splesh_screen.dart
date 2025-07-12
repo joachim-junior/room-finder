@@ -58,8 +58,6 @@ class _SpleshScreenState extends State<SpleshScreen> {
     setScreen();
   }
 
-
-
   setScreen() async {
     final prefs = await SharedPreferences.getInstance();
     Timer(
@@ -70,8 +68,15 @@ class _SpleshScreenState extends State<SpleshScreen> {
             : prefs.getBool('Remember') != true
                 ? Navigator.pushReplacement(context,
                     MaterialPageRoute(builder: (context) => LoginScreen()))
-                : getData.read("userType") == "admin" ? Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MembershipScreen()))
-            : Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => BottoBarScreen())));
+                : getData.read("userType") == "admin"
+                    ? Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => MembershipScreen()))
+                    : Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => BottoBarScreen())));
   }
 
   @override
@@ -85,12 +90,9 @@ class _SpleshScreenState extends State<SpleshScreen> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               SizedBox(height: Get.height * 0.1),
-
               Center(
                   child: Image.asset("assets/images/applogo.png", height: 50)),
-
               SizedBox(height: Get.height * 0.03),
-
               Text(
                 "GoProperty".tr,
                 style: TextStyle(
@@ -98,9 +100,7 @@ class _SpleshScreenState extends State<SpleshScreen> {
                     color: Colors.blue,
                     fontFamily: FontFamily.gilroyBold),
               ),
-
               SizedBox(height: Get.height * 0.03),
-
               Text(
                 "Manage your properties with ease and \nget instant alert about responses"
                     .tr,
@@ -137,13 +137,11 @@ class _SpleshScreenState extends State<SpleshScreen> {
 // }
 
 Future getLocation() async {
-
   LocationPermission permission;
   permission = await Geolocator.checkPermission();
   permission = await Geolocator.requestPermission();
   if (permission == LocationPermission.denied) {
     lat = 0.0;
     long = 0.0;
-  } else {
-  }
+  } else {}
 }

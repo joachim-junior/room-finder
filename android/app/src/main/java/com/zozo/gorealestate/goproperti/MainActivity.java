@@ -1,4 +1,4 @@
-package com.zozo.gorealestate;
+package com.zozo.roomfinder;
 
 import io.flutter.embedding.android.FlutterActivity;
 

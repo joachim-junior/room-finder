@@ -52,7 +52,7 @@ class HomePageController extends GetxController implements GetxService {
   PageController pageController = PageController();
 
   CameraPosition kGoogle = CameraPosition(
-    target: LatLng(21.2381962, 72.8879607),
+    target: LatLng(4.1666641, 6.7943573),
     zoom: 5,
   );
 
@@ -70,7 +70,7 @@ class HomePageController extends GetxController implements GetxService {
 
   HomePageController() {
     getHomeDataApi();
-    getCatWiseData(cId: "0",countryId: getData.read("countryId"));
+    getCatWiseData(cId: "0", countryId: getData.read("countryId"));
   }
 
   chnageObjectIndex(int index) {
@@ -103,14 +103,14 @@ class HomePageController extends GetxController implements GetxService {
     update();
   }
 
-
   String addProp = "";
   Future getHomeDataApi({String? countryId}) async {
     print(">>>>>>>>>>>>>>>>>>>>>>>>>>COUNTRy CODE ${countryId}");
     try {
       isLoading = false;
       Map map = {
-        "uid": getData.read("UserLogin") == null ? "0"
+        "uid": getData.read("UserLogin") == null
+            ? "0"
             : "${getData.read("UserLogin")["id"]}",
         "country_id": countryId,
       };
@@ -128,7 +128,6 @@ class HomePageController extends GetxController implements GetxService {
         print("ADDDPORP >>>>>>>>>>>>>>>>>> ${addProp}");
         var maplist = mapInfo.reversed.toList();
         currency = homeDatatInfo?.homeData!.currency ?? "";
-
 
         update();
       }
@@ -154,7 +153,9 @@ class HomePageController extends GetxController implements GetxService {
 
       Uri uri = Uri.parse(Config.path + Config.propertyDetails);
 
-      var response = await http.post(uri, body: jsonEncode(map),
+      var response = await http.post(
+        uri,
+        body: jsonEncode(map),
       );
 
       print("DDDDDDDDDDDDDDDD ${response.statusCode}");
@@ -226,34 +227,33 @@ class HomePageController extends GetxController implements GetxService {
     }
   }
 
-  Future getCatWiseData({required String? cId, required String? countryId}) async {
-
+  Future getCatWiseData(
+      {required String? cId, required String? countryId}) async {
     print("++++++ -------- %##%#%#%#%# ${countryId}");
-      Map map = {
-        "cid": cId ?? "0",
-        "uid": getData.read("UserLogin") == null
-            ? "0"
-            : getData.read("UserLogin")["id"].toString(),
-        "country_id": countryId,
-      };
+    Map map = {
+      "cid": cId ?? "0",
+      "uid": getData.read("UserLogin") == null
+          ? "0"
+          : getData.read("UserLogin")["id"].toString(),
+      "country_id": countryId,
+    };
 
-      Uri uri = Uri.parse(Config.path + Config.catWiseData);
+    Uri uri = Uri.parse(Config.path + Config.catWiseData);
 
-      print("++++++ -------- +++++++ ------- ++++++${map}");
-      print("++++++ -------- +++++++ ------- ++++++${uri}");
+    print("++++++ -------- +++++++ ------- ++++++${map}");
+    print("++++++ -------- +++++++ ------- ++++++${uri}");
 
-      var response = await http.post(
-        uri,
-        body: jsonEncode(map),
-      );
-      if (response.statusCode == 200) {
-        var result = jsonDecode(response.body);
-        catWiseInfo = CatWiseInfo.fromJson(result);
-        isCatWise = true;
-        update();
-        print("< >? < > < > < > < > < > < > < > <>?${catWiseInfo!.responseMsg}>");
-      }
-
+    var response = await http.post(
+      uri,
+      body: jsonEncode(map),
+    );
+    if (response.statusCode == 200) {
+      var result = jsonDecode(response.body);
+      catWiseInfo = CatWiseInfo.fromJson(result);
+      isCatWise = true;
+      update();
+      print("< >? < > < > < > < > < > < > < > <>?${catWiseInfo!.responseMsg}>");
+    }
   }
 
   enquirySetApi({String? pId}) async {

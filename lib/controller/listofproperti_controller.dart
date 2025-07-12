@@ -27,7 +27,7 @@ class ListOfPropertiController extends GetxController implements GetxService {
       Uri uri = Uri.parse(Config.path + Config.propertyList);
       var response = await http.post(
         uri,
-        body: jsonEncode(map),
+        body: jsonEncode(map), 
       );
       if (response.statusCode == 200) {
         var result = jsonDecode(response.body);

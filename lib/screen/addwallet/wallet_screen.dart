@@ -100,7 +100,7 @@ class _WalletScreenState extends State<WalletScreen> {
                       Padding(
                         padding: const EdgeInsets.only(top: 10, left: 15),
                         child: Text(
-                          "${currency}${walletController.walletInfo?.wallet}",
+                          "${currency}${walletController.walletInfo?.wallet ?? 0}",
                           textAlign: TextAlign.start,
                           style: TextStyle(
                             fontSize: 45,
@@ -208,8 +208,9 @@ class _WalletScreenState extends State<WalletScreen> {
                                         ),
                                 ),
                                 decoration: BoxDecoration(
-                                  border:
-                                      Border.all(color: notifire.getborderColor,),
+                                  border: Border.all(
+                                    color: notifire.getborderColor,
+                                  ),
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                               );

@@ -3,7 +3,7 @@ description: A new Flutter project.
 
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+publish_to: "none" # Remove this line if you wish to publish to pub.dev
 
 # The following defines the version and build number for your application.
 # A version number is three numbers separated by dots, like 1.2.43
@@ -20,7 +20,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: '>=2.18.4 <4.0.0'
+  sdk: ">=2.18.4 <4.0.0"
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -32,77 +32,82 @@ dependencies:
   flutter:
     sdk: flutter
 
-
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.2
   get: ^4.6.5
   http: ^0.13.5
   intl_phone_field: ^3.1.0
-  pinput: ^3.0.1
-  firebase_core: ^2.4.1
-  firebase_auth: ^4.2.5
-  firebase_analytics: ^10.1.0
-  geolocator: ^10.1.0
-  geocoding: ^2.0.5
-  google_api_headers: 
+  pinput: ^5.0.0
+  firebase_core: ^3.8.0
+  firebase_auth: ^5.3.3
+  firebase_analytics: ^11.3.5
+  geolocator: ^13.0.2
+  geocoding: ^3.0.0
   google_maps_webservice: ^0.0.20-nullsafety.5
   flutter_google_places_hoc081098: ^1.2.0
-  badges: 
+  badges:
   fluttertoast: ^8.1.2
   shared_preferences: ^2.0.17
-  provider: 
+  provider:
   intl: any
-  readmore: ^2.2.0
+  readmore: ^3.0.0
   flutter_rating_bar: ^4.0.1
   image_picker: ^1.0.4
   flutter_widget_from_html_core: any
   get_storage: ^2.0.3
-  accordion: ^2.5.1 
+  accordion: ^2.5.1
   google_maps_flutter:
   permission_handler: ^11.0.1
   razorpay_flutter: ^1.3.0
-  webview_flutter: ^3.0.4
-  flutter_share: ^2.0.0
+  webview_flutter: ^3.0.0
   package_info_plus:
   english_words: ^4.0.0
   url_launcher: ^6.1.9
-  onesignal_flutter: ^3.5.0
+  onesignal_flutter: ^5.2.7
   cached_network_image: ^3.3.0
   dotted_border: ^2.0.0+3
   panorama: ^0.4.1
   http_auth: ^1.0.1
-  flutter_spinkit: 
-  syncfusion_flutter_datepicker: ^24.1.47
-  flutter_local_notifications: ^9.7.0
-  firebase_messaging: ^14.7.7
-  cloud_firestore: ^4.13.4
+  flutter_share: ^2.0.0
+  flutter_spinkit:
+  syncfusion_flutter_datepicker: ^27.1.58
+  flutter_local_notifications: ^18.0.1
+  firebase_messaging: ^15.1.5
+  cloud_firestore: ^5.5.0
   photo_view: ^0.15.0
   flutter_svg: ^2.0.9
   flutter_switch: ^0.3.2
   googleapis_auth: ^1.4.1
   dio: ^5.4.0
 
-
-
-
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  mockito: ^5.4.2
+  build_runner: ^2.4.6
+  pigeon: ^11.0.0
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^3.0.1
+  flutter_lints: ^5.0.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
 # The following section is specific to Flutter packages.
-flutter:
+dependency_overrides:
+  google_api_headers:
+    path: local_plugins/google_api_headers
+  motion_sensors:
+    path: local_plugins/motion_sensors
+  webview_flutter_android:
+    path: local_plugins/webview_flutter_android
 
+flutter:
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
@@ -162,4 +167,3 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages
- 

@@ -1,23 +1,23 @@
 // ignore_for_file: prefer_interpolation_to_compose_strings
 
 class Config {
+  static const String baseurl = 'https://cpanel.roomfinder237.com/';
 
+  static String? firebaseKey;
 
-  static const String baseurl = 'https://property.cscodetech.cloud/';
-
-  static  String? firebaseKey ;
-
-  static String? projectID = "studio-67236";
+  static String? projectID = "roomfinder-237";
 
   static const String path = baseurl + 'user_api/';
 
-  static const String oneSignel = "****";
+  static const String oneSignel = "d6d95946-496a-48fa-8fd9-bbb1493e3801";
 
-  static const googleKey = "**************";
+  static const googleKey = "AIzaSyCgnZ9JGLTmqBsfJks2ega4j899yn0s_-Y";
 
   static const String imageUrl = baseurl;
 
   static const paymentBaseUrl = baseurl;
+
+  static const String currency = "FCFA";
 
   static const String smstype = 'sms_type.php';
   static const String paystackpayment = 'paystack/index.php';

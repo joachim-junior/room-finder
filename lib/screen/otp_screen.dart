@@ -3,7 +3,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:goproperti/Api/config.dart';
 import 'package:goproperti/controller/login_controller.dart';
 import 'package:goproperti/controller/selectcountry_controller.dart';
 import 'package:goproperti/controller/signup_controller.dart';
@@ -12,7 +11,6 @@ import 'package:goproperti/model/routes_helper.dart';
 import 'package:goproperti/utils/Colors.dart';
 import 'package:goproperti/utils/Custom_widget.dart';
 import 'package:goproperti/utils/Dark_lightmode.dart';
-import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:pinput/pinput.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -27,7 +25,6 @@ class OtpScreen extends StatefulWidget {
 }
 
 class _OtpScreenState extends State<OtpScreen> {
-
   @override
   void initState() {
     // TODO: implement initState
@@ -65,10 +62,12 @@ class _OtpScreenState extends State<OtpScreen> {
     }
   }
 
-  Future getCountryData() async{
-    selectCountryController.getCountryApi().then((value){
-      for(int a = 0; a < selectCountryController.countryInfo!.countryData!.length; a++){
-        if(selectCountryController.countryInfo?.countryData![a].dCon == "1"){
+  Future getCountryData() async {
+    selectCountryController.getCountryApi().then((value) {
+      for (int a = 0;
+          a < selectCountryController.countryInfo!.countryData!.length;
+          a++) {
+        if (selectCountryController.countryInfo?.countryData![a].dCon == "1") {
           setState(() {
             countrySelected = a;
           });
@@ -194,20 +193,27 @@ class _OtpScreenState extends State<OtpScreen> {
                     ),
                     InkWell(
                       onTap: () {
-
                         signUpController.smstype().then((value) {
-                          if(value["SMS_TYPE"] == "Msg91"){
-                            signUpController.sendOtp(countryCode, phoneNumber).then((value) {
-                              setState(() {
-                                otpCode = value["otp"].toString();
-                              });
-                            },);
-                          } else if(value["SMS_TYPE"] == "Twilio") {
-                            signUpController.twilloOtp(countryCode, phoneNumber).then((value) {
-                              setState(() {
-                                otpCode = value["otp"].toString();
-                              });
-                            },);
+                          if (value["SMS_TYPE"] == "Msg91") {
+                            signUpController
+                                .sendOtp(countryCode, phoneNumber)
+                                .then(
+                              (value) {
+                                setState(() {
+                                  otpCode = value["otp"].toString();
+                                });
+                              },
+                            );
+                          } else if (value["SMS_TYPE"] == "Twilio") {
+                            signUpController
+                                .twilloOtp(countryCode, phoneNumber)
+                                .then(
+                              (value) {
+                                setState(() {
+                                  otpCode = value["otp"].toString();
+                                });
+                              },
+                            );
                           }
                         });
 
@@ -245,41 +251,58 @@ class _OtpScreenState extends State<OtpScreen> {
                 ),
                 onclick: () {
                   print("OTP CODE :   $otpCode");
-                    if (otpCode == code) {
-                      if (rout == "signUpScreen") {
-                          try {
-                            signUpController.setUserApiData(countryCode).then((value) {
-                              print(">>>>>>>>>>>>>>>>> >>>>>>>>>>>> >>>>>>>>>> >>>> ${value}");
-                                if (value["Result"] == "true") {
+                  if (otpCode == code) {
+                    if (rout == "signUpScreen") {
+                      try {
+                        signUpController.setUserApiData(countryCode).then(
+                          (value) {
+                            print(
+                                ">>>>>>>>>>>>>>>>> >>>>>>>>>>>> >>>>>>>>>> >>>> ${value}");
+                            if (value["Result"] == "true") {
+                              setState(() {
+                                save(
+                                    "countryId",
+                                    selectCountryController
+                                            .countryInfo
+                                            ?.countryData![countrySelected]
+                                            .id ??
+                                        "");
+                                save(
+                                    "countryName",
+                                    selectCountryController
+                                            .countryInfo
+                                            ?.countryData![countrySelected]
+                                            .title ??
+                                        "");
+                              });
 
-                                  setState(() {
-                                    save("countryId", selectCountryController.countryInfo?.countryData![countrySelected].id ?? "");
-                                    save("countryName", selectCountryController.countryInfo?.countryData![countrySelected].title ?? "");
-                                  });
-                                  
-                                  selectCountryController.changeCountryIndex(countrySelected);
-                                  homePageController.getHomeDataApi(countryId: getData.read("countryId"));
-                                  homePageController.getCatWiseData(countryId: getData.read("countryId"), cId: "0");
-                                  searchController.getSearchData(
-                                      countryId: getData.read("countryId"));
-                                  Get.offAndToNamed(Routes.bottoBarScreen);
-                                } else {
-                                  showToastMessage(value["ResponseMsg"]);
-                                }
-
-                            },);
-                            initPlatformState();
-                            showToastMessage(signUpController.signUpMsg);
-                          } catch (e) {
-                            print("525 --- 525  --- 525 ${e}");
-                          }
+                              selectCountryController
+                                  .changeCountryIndex(countrySelected);
+                              homePageController.getHomeDataApi(
+                                  countryId: getData.read("countryId"));
+                              homePageController.getCatWiseData(
+                                  countryId: getData.read("countryId"),
+                                  cId: "0");
+                              searchController.getSearchData(
+                                  countryId: getData.read("countryId"));
+                              Get.offAndToNamed(Routes.bottoBarScreen);
+                            } else {
+                              showToastMessage(value["ResponseMsg"]);
+                            }
+                          },
+                        );
+                        // initPlatformState();
+                        showToastMessage(signUpController.signUpMsg);
+                      } catch (e) {
+                        print("525 --- 525  --- 525 ${e}");
                       }
-                      if (rout == "resetScreen") {
-                        forgetPasswordBottomSheet();
-                      }
-                    } else {
-                      showToastMessage("Please enter your valid OTP".tr);
                     }
+                    if (rout == "resetScreen") {
+                      forgetPasswordBottomSheet();
+                    }
+                  } else {
+                    showToastMessage("Please enter your valid OTP".tr);
+                  }
                 },
               ),
             ],
@@ -289,15 +312,15 @@ class _OtpScreenState extends State<OtpScreen> {
     );
   }
 
-  Future<void> initPlatformState() async {
-    OneSignal.shared.setAppId(Config.oneSignel);
-    OneSignal.shared
-        .promptUserForPushNotificationPermission()
-        .then((accepted) {});
-    OneSignal.shared.setPermissionObserver((OSPermissionStateChanges changes) {
-      print("Accepted OSPermissionStateChanges : $changes");
-    });
-  }
+  // Future<void> initPlatformState() async {
+  //   OneSignal.shared.setAppId(Config.oneSignel);
+  //   OneSignal.shared
+  //       .promptUserForPushNotificationPermission()
+  //       .then((accepted) {});
+  //   OneSignal.shared.setPermissionObserver((OSPermissionStateChanges changes) {
+  //     print("Accepted OSPermissionStateChanges : $changes");
+  //   });
+  // }
 
   Future forgetPasswordBottomSheet() {
     return Get.bottomSheet(

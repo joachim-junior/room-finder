@@ -1,7 +1,7 @@
 // ignore_for_file: avoid_print, prefer_interpolation_to_compose_strings, prefer_typing_uninitialized_variables
 
 import 'dart:convert';
-
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:goproperti/Api/config.dart';
@@ -26,6 +26,81 @@ class WalletController extends GetxController implements GetxService {
   String signupcredit = "";
   String refercredit = "";
   int tex = 0;
+
+  String? get userPhone => getData.read("UserLogin")["mobile"]?.toString();
+  String? get userCountryCode => getData.read("UserLogin")["ccode"]?.toString();
+
+  Future<Map<String, dynamic>> initiateMobileMoneyPayment({
+    required String amount,
+    required String phone,
+    required String countryCode,
+  }) async {
+    try {
+      final userId = getData.read("UserLogin")["id"]?.toString();
+      if (userId == null) throw Exception("User not logged in");
+
+      final response = await http
+          .post(
+            Uri.parse('${Config.path}fapshi_initiate.php'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'uid': userId,
+              'amount': amount,
+              'phone': phone,
+              'country_code': countryCode,
+              'purpose': 'wallet_topup',
+            }),
+          )
+          .timeout(const Duration(seconds: 30));
+
+      if (response.statusCode == 200) {
+        final result = jsonDecode(response.body);
+
+        if (result['status'] == 'success') {
+          return {
+            'status': 'success',
+            'transaction_id': result['transaction_id'],
+            'message': result['message'] ?? 'Payment initiated successfully'
+          };
+        } else {
+          throw Exception(result['message'] ?? 'Payment initiation failed');
+        }
+      } else {
+        throw Exception('HTTP Error ${response.statusCode}');
+      }
+    } on TimeoutException {
+      throw Exception('Request timed out. Please check your connection');
+    } on http.ClientException {
+      throw Exception('Network error. Please check your internet connection');
+    } catch (e) {
+      throw Exception('Payment error: ${e.toString()}');
+    }
+  }
+
+  Future<String> checkPaymentStatus(String transactionId) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse('${Config.path}fapshi_verify.php'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'transaction_id': transactionId,
+            }),
+          )
+          .timeout(const Duration(seconds: 30));
+
+      if (response.statusCode == 200) {
+        final result = jsonDecode(response.body);
+        return result['status'] ??
+            'pending'; // 'completed', 'failed', 'pending'
+      } else {
+        throw Exception('Verification failed: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Status check error: ${e.toString()}');
+    }
+  }
+
   getWalletReportData() async {
     try {
       isLoading = false;

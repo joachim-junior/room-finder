@@ -55,19 +55,19 @@ class SignUpController extends GetxController implements GetxService {
   }
 
   Future smstype() async {
+    var response =
+        await http.get(Uri.parse(Config.path + Config.smstype), headers: {
+      'Content-Type': 'application/json',
+    });
 
-    var response = await http.get(Uri.parse(Config.path + Config.smstype),
-        headers: {'Content-Type': 'application/json',}
-    );
-
-    if(response.statusCode == 200){
+    if (response.statusCode == 200) {
       var smsdecode = jsonDecode(response.body);
       update();
-      print(" SMS CODE TYPE >>>>>>>>>>>>>> : : : : : :${smsdecode["SMS_TYPE"]}");
+      print(
+          " SMS CODE TYPE >>>>>>>>>>>>>> : : : : : :${smsdecode["SMS_TYPE"]}");
       return smsdecode;
     }
   }
-
 
   Future checkMobileNumber(String cuntryCode) async {
     print("${cuntryCode}");
@@ -97,7 +97,8 @@ class SignUpController extends GetxController implements GetxService {
     }
   }
 
-  Future checkMobileInResetPassword({String? number, String? cuntryCode}) async {
+  Future checkMobileInResetPassword(
+      {String? number, String? cuntryCode}) async {
     try {
       Map map = {
         "mobile": number,
@@ -125,22 +126,19 @@ class SignUpController extends GetxController implements GetxService {
   MsgotpModel? msgotpData;
   String otpCode = "";
   Future sendOtp(cuntryCode, number) async {
-
-    Map body = {
-      "mobile" : cuntryCode + number
-    };
+    Map body = {"mobile": cuntryCode + number};
 
     var response = await http.post(Uri.parse(Config.path + Config.msgotp),
-      body: jsonEncode(body),
-        headers: {'Content-Type': 'application/json',}
-    );
+        body: jsonEncode(body),
+        headers: {
+          'Content-Type': 'application/json',
+        });
     print("><<<<<<<<<<<<<<<<<<$body");
 
-    if(response.statusCode == 200){
+    if (response.statusCode == 200) {
       var msgdecode = jsonDecode(response.body);
 
-      if(msgdecode["Result"] == "true"){
-
+      if (msgdecode["Result"] == "true") {
         msgotpData = msgotpModelFromJson(response.body);
         otpCode = msgotpData!.otp.toString();
         print("><<<<<<<<<<<<<<<<<<$otpCode");
@@ -156,21 +154,19 @@ class SignUpController extends GetxController implements GetxService {
 
   String twilloCode = "";
   Future twilloOtp(cuntryCode, number) async {
-
-    Map body = {
-      "mobile" : cuntryCode + number
-    };
+    Map body = {"mobile": cuntryCode + number};
 
     var response = await http.post(Uri.parse(Config.path + Config.twillotp),
-      body: jsonEncode(body),
-        headers: {'Content-Type': 'application/json',}
-    );
+        body: jsonEncode(body),
+        headers: {
+          'Content-Type': 'application/json',
+        });
     print("><<<<<<<<<<<<<<<<<<$body");
 
-    if(response.statusCode == 200){
+    if (response.statusCode == 200) {
       var msgdecode = jsonDecode(response.body);
 
-      if(msgdecode["Result"] == "true"){
+      if (msgdecode["Result"] == "true") {
         print(" OTP CODE : >>> ${msgdecode["otp"]}");
         update();
         return msgdecode;
@@ -183,35 +179,34 @@ class SignUpController extends GetxController implements GetxService {
   }
 
   Future setUserApiData(String cuntryCode) async {
+    final prefs = await SharedPreferences.getInstance();
 
-      final prefs = await SharedPreferences.getInstance();
+    Map map = {
+      "name": name.text,
+      "email": email.text,
+      "mobile": number.text,
+      "ccode": cuntryCode,
+      "password": password.text
+    };
+    Uri uri = Uri.parse(Config.path + Config.registerUser);
+    var response = await http.post(
+      uri,
+      body: jsonEncode(map),
+    );
 
-      Map map = {
-        "name": name.text,
-        "email": email.text,
-        "mobile": number.text,
-        "ccode": cuntryCode,
-        "password": password.text
-      };
-      Uri uri = Uri.parse(Config.path + Config.registerUser);
-      var response = await http.post(
-        uri,
-        body: jsonEncode(map),
-      );
+    if (response.statusCode == 200) {
+      var result = jsonDecode(response.body);
+      await prefs.setBool('Firstuser', true);
+      signUpMsg = result["ResponseMsg"];
+      showToastMessage(signUpMsg);
+      save("UserLogin", result["UserLogin"]);
 
-      if (response.statusCode == 200) {
-        var result = jsonDecode(response.body);
-        await prefs.setBool('Firstuser', true);
-        signUpMsg = result["ResponseMsg"];
-        showToastMessage(signUpMsg);
-        save("UserLogin", result["UserLogin"]);
-
-        firebaseNewuser();
-        OneSignal.shared.sendTag("user_id", getData.read("UserLogin")["id"]);
-        update();
-      }
-      print("${jsonDecode(response.body)}");
-      return jsonDecode(response.body);
+      firebaseNewuser();
+      // OneSignal.shared.sendTag("user_id", getData.read("UserLogin")["id"]);
+      update();
+    }
+    print("${jsonDecode(response.body)}");
+    return jsonDecode(response.body);
   }
 
   firebaseNewuser() async {

@@ -31,7 +31,6 @@ class _FlutterWaveState extends State<FlutterWave> {
           child: Stack(
             children: [
               WebView(
-
                 initialUrl:
                     "${Config.paymentBaseUrl + "flutterwave/index.php?amt=${widget.totalAmount}&email=${widget.email}"}",
                 javascriptMode: JavascriptMode.unrestricted,

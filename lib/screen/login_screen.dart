@@ -3,7 +3,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:goproperti/Api/config.dart';
 import 'package:goproperti/Api/data_store.dart';
 import 'package:goproperti/controller/homepage_controller.dart';
 import 'package:goproperti/controller/login_controller.dart';
@@ -14,7 +13,6 @@ import 'package:goproperti/utils/Colors.dart';
 import 'package:goproperti/utils/Custom_widget.dart';
 import 'package:goproperti/utils/Dark_lightmode.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
-import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -27,7 +25,6 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-
   LoginController loginController = Get.find();
   DashBoardController dashBoardController = Get.find();
   HomePageController homePageController = Get.find();
@@ -45,10 +42,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
   int countrySelected = 0;
 
-  Future getCountryData() async{
-    selectCountryController.getCountryApi().then((value){
-      for(int a = 0; a < selectCountryController.countryInfo!.countryData!.length; a++){
-        if(selectCountryController.countryInfo?.countryData![a].dCon == "1"){
+  Future getCountryData() async {
+    selectCountryController.getCountryApi().then((value) {
+      for (int a = 0;
+          a < selectCountryController.countryInfo!.countryData!.length;
+          a++) {
+        if (selectCountryController.countryInfo?.countryData![a].dCon == "1") {
           setState(() {
             countrySelected = a;
           });
@@ -73,9 +72,11 @@ class _LoginScreenState extends State<LoginScreen> {
     loginController.number.text = "";
     loginController.password.text = "";
     getCountryData();
-    selectCountryController.getCountryApi().then((value){
-      for(int a = 0; a < selectCountryController.countryInfo!.countryData!.length; a++){
-        if(selectCountryController.countryInfo?.countryData![a].dCon == "1"){
+    selectCountryController.getCountryApi().then((value) {
+      for (int a = 0;
+          a < selectCountryController.countryInfo!.countryData!.length;
+          a++) {
+        if (selectCountryController.countryInfo?.countryData![a].dCon == "1") {
           setState(() {
             countrySelected = a;
           });
@@ -156,7 +157,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 15),
                   child: IntlPhoneField(
                     disableLengthCheck: true,
-                    initialCountryCode: "IN",
+                    initialCountryCode: "CM",
                     keyboardType: TextInputType.number,
                     cursorColor: notifire.getwhiteblackcolor,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -387,26 +388,32 @@ class _LoginScreenState extends State<LoginScreen> {
                     _formKey.currentState?.validate();
 
                     if (_formKey.currentState?.validate() ?? false) {
-                      initPlatformState();
-                      loginController.getLoginApiData(cuntryCode, context).then((value) {
-
-                              if (value["Result"] == "true") {
-                                if(getData.read("userType") == "admin") {
-                                  dashBoardController.getDashBoardData().then((value) {
-                                    Get.offAndToNamed(Routes.membershipScreen);
-                                  },);
-                                }  else {
+                      // initPlatformState();
+                      loginController.getLoginApiData(cuntryCode, context).then(
+                        (value) {
+                          if (value["Result"] == "true") {
+                            if (getData.read("userType") == "admin") {
+                              dashBoardController.getDashBoardData().then(
+                                (value) {
+                                  Get.offAndToNamed(Routes.membershipScreen);
+                                },
+                              );
+                            } else {
                               setState(() {
                                 save(
                                     "countryId",
                                     selectCountryController
                                             .countryInfo
-                                            ?.countryData![countrySelected].id ?? "");
+                                            ?.countryData![countrySelected]
+                                            .id ??
+                                        "");
                                 save(
-                                    "countryName", selectCountryController
+                                    "countryName",
+                                    selectCountryController
                                             .countryInfo
                                             ?.countryData![countrySelected]
-                                            .title ?? "");
+                                            .title ??
+                                        "");
                               });
 
                               selectCountryController
@@ -417,15 +424,20 @@ class _LoginScreenState extends State<LoginScreen> {
                                   cId: "0");
                               searchController.getSearchData(
                                   countryId: getData.read("countryId"));
-                              homePageController.getHomeDataApi(
-                                  countryId: getData.read("countryId")).then((value) {
-                                Get.offAndToNamed(Routes.bottoBarScreen);
-                                  },);
+                              homePageController
+                                  .getHomeDataApi(
+                                      countryId: getData.read("countryId"))
+                                  .then(
+                                (value) {
+                                  Get.offAndToNamed(Routes.bottoBarScreen);
+                                },
+                              );
                             }
                           } else {
-                                showToastMessage(value["ResponseMsg"]);
-                              }
-                      },);
+                            showToastMessage(value["ResponseMsg"]);
+                          }
+                        },
+                      );
                     } else {}
                   },
                 ),
@@ -452,21 +464,28 @@ class _LoginScreenState extends State<LoginScreen> {
                   buttoncolor: notifire.getboxcolor,
                   buttontext: "Continue as a Guest".tr,
                   onclick: () {
-
                     setState(() {
-                      save("countryId", selectCountryController.countryInfo?.countryData![countrySelected].id ?? "");
-                      save("countryName", selectCountryController.countryInfo?.countryData![countrySelected].title ?? "");
+                      save(
+                          "countryId",
+                          selectCountryController.countryInfo
+                                  ?.countryData![countrySelected].id ??
+                              "");
+                      save(
+                          "countryName",
+                          selectCountryController.countryInfo
+                                  ?.countryData![countrySelected].title ??
+                              "");
                     });
 
                     selectCountryController.changeCountryIndex(countrySelected);
                     homePageController.getHomeDataApi(
                         countryId: getData.read("countryId"));
-                    homePageController.getCatWiseData(countryId: getData.read("countryId"), cId: "0");
+                    homePageController.getCatWiseData(
+                        countryId: getData.read("countryId"), cId: "0");
                     searchController.getSearchData(
                         countryId: getData.read("countryId"));
                     Get.offAndToNamed(Routes.bottoBarScreen);
                     save('isLoginBack', true);
-
                   },
                   style: TextStyle(
                     fontFamily: FontFamily.gilroyBold,
@@ -517,13 +536,13 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Future<void> initPlatformState() async {
-    OneSignal.shared.setAppId(Config.oneSignel);
-    OneSignal.shared
-        .promptUserForPushNotificationPermission()
-        .then((accepted) {});
-    OneSignal.shared.setPermissionObserver((OSPermissionStateChanges changes) {
-      print("Accepted OSPermissionStateChanges : $changes");
-    });
-  }
+  // Future<void> initPlatformState() async {
+  //   OneSignal.shared.setAppId(Config.oneSignel);
+  //   OneSignal.shared
+  //       .promptUserForPushNotificationPermission()
+  //       .then((accepted) {});
+  //   OneSignal.shared.setPermissionObserver((OSPermissionStateChanges changes) {
+  //     print("Accepted OSPermissionStateChanges : $changes");
+  //   });
+  // }
 }

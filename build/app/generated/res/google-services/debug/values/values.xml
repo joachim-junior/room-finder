@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="default_web_client_id" translatable="false">324152946798-ld353q39f3sblu050orlhiskivjihb3h.apps.googleusercontent.com</string>
-    <string name="gcm_defaultSenderId" translatable="false">324152946798</string>
-    <string name="google_api_key" translatable="false">AIzaSyC_DvOqnmIm5EnA8JCL65FaQTJBftFaU7g</string>
-    <string name="google_app_id" translatable="false">1:324152946798:android:e258957f5cb3fd3715f67f</string>
-    <string name="google_crash_reporting_api_key" translatable="false">AIzaSyC_DvOqnmIm5EnA8JCL65FaQTJBftFaU7g</string>
-    <string name="google_storage_bucket" translatable="false">studio-67236.appspot.com</string>
-    <string name="project_id" translatable="false">studio-67236</string>
+    <string name="gcm_defaultSenderId" translatable="false">205842635100</string>
+    <string name="google_api_key" translatable="false">AIzaSyAidn2bpyaTNYMABC63BaCMdB8P8K0DFts</string>
+    <string name="google_app_id" translatable="false">1:205842635100:android:211a98ee768af3ebc6c999</string>
+    <string name="google_crash_reporting_api_key" translatable="false">AIzaSyAidn2bpyaTNYMABC63BaCMdB8P8K0DFts</string>
+    <string name="google_storage_bucket" translatable="false">roomfinder-237.firebasestorage.app</string>
+    <string name="project_id" translatable="false">roomfinder-237</string>
 </resources>

@@ -59,6 +59,7 @@ class _BookRealEstateState extends State<BookRealEstate> {
     super.dispose();
     bookrealEstateController.cleanDate();
   }
+
   List<PickerDateRange> _generatePickerDateRanges(List<String> dates) {
     return dates.map((date) {
       DateTime parsedDate = DateTime.parse(date);
@@ -84,7 +85,8 @@ class _BookRealEstateState extends State<BookRealEstate> {
           ),
         ),
         title: Text(
-          "Book Now ${homePageController.propetydetailsInfo?.propetydetails!.title}".tr,
+          "Book Now ${homePageController.propetydetailsInfo?.propetydetails!.title}"
+              .tr,
           style: TextStyle(
             fontSize: 17,
             fontFamily: FontFamily.gilroyBold,
@@ -120,28 +122,59 @@ class _BookRealEstateState extends State<BookRealEstate> {
                       bookrealEstateController.onSelectionChanged,
                   selectionMode: DateRangePickerSelectionMode.range,
                   enablePastDates: false,
-                  startRangeSelectionColor: bookrealEstateController.checkDateResult == "true" ? blueColor : RedColor,
-                  endRangeSelectionColor: bookrealEstateController.checkDateResult == "true" ? blueColor : RedColor,
+                  startRangeSelectionColor:
+                      bookrealEstateController.checkDateResult == "true"
+                          ? blueColor
+                          : RedColor,
+                  endRangeSelectionColor:
+                      bookrealEstateController.checkDateResult == "true"
+                          ? blueColor
+                          : RedColor,
                   headerStyle: DateRangePickerHeaderStyle(
                     textStyle: TextStyle(
                       fontFamily: FontFamily.gilroyMedium,
                       color: notifire.getwhiteblackcolor,
                     ),
                   ),
-                  selectionTextStyle: TextStyle(fontFamily: FontFamily.gilroyMedium),
-                  rangeTextStyle: TextStyle(color: notifire.getwhiteblackcolor, fontFamily: FontFamily.gilroyMedium),
+                  selectionTextStyle:
+                      TextStyle(fontFamily: FontFamily.gilroyMedium),
+                  rangeTextStyle: TextStyle(
+                      color: notifire.getwhiteblackcolor,
+                      fontFamily: FontFamily.gilroyMedium),
                   monthCellStyle: DateRangePickerMonthCellStyle(
-                    disabledDatesTextStyle: TextStyle(color: notifire.getgreycolor, fontFamily: FontFamily.gilroyMedium),
-                    textStyle: TextStyle(color: notifire.getwhiteblackcolor, fontFamily: FontFamily.gilroyMedium),
-                    blackoutDateTextStyle: TextStyle(color: Colors.red, decoration: TextDecoration.lineThrough),
+                    disabledDatesTextStyle: TextStyle(
+                        color: notifire.getgreycolor,
+                        fontFamily: FontFamily.gilroyMedium),
+                    textStyle: TextStyle(
+                        color: notifire.getwhiteblackcolor,
+                        fontFamily: FontFamily.gilroyMedium),
+                    blackoutDateTextStyle: TextStyle(
+                        color: Colors.red,
+                        decoration: TextDecoration.lineThrough),
                   ),
-                  monthViewSettings:  DateRangePickerMonthViewSettings(
-                  viewHeaderStyle: DateRangePickerViewHeaderStyle(textStyle: TextStyle(color: notifire.getwhiteblackcolor, fontFamily: FontFamily.gilroyMedium)),
-                  blackoutDates: [
-                    for (int i = 0; i < calendarController.selectedDate.length; i++)
-                      for (int a = 0; a <= DateTime.parse(calendarController.selectedDate[i].toString()).difference(DateTime.parse(calendarController.selectedDate[i].toString())).inDays; a++)
-                        DateTime.parse(calendarController.selectedDate[i].toString()).add(Duration(days: a)),
-                  ]),
+                  monthViewSettings: DateRangePickerMonthViewSettings(
+                      viewHeaderStyle: DateRangePickerViewHeaderStyle(
+                          textStyle: TextStyle(
+                              color: notifire.getwhiteblackcolor,
+                              fontFamily: FontFamily.gilroyMedium)),
+                      blackoutDates: [
+                        for (int i = 0;
+                            i < calendarController.selectedDate.length;
+                            i++)
+                          for (int a = 0;
+                              a <=
+                                  DateTime.parse(calendarController
+                                          .selectedDate[i]
+                                          .toString())
+                                      .difference(DateTime.parse(
+                                          calendarController.selectedDate[i]
+                                              .toString()))
+                                      .inDays;
+                              a++)
+                            DateTime.parse(calendarController.selectedDate[i]
+                                    .toString())
+                                .add(Duration(days: a)),
+                      ]),
                   backgroundColor: notifire.getblackwhitecolor,
                   initialSelectedRange: PickerDateRange(
                     DateTime.now().subtract(

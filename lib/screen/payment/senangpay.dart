@@ -12,13 +12,17 @@ class Senangpay extends StatefulWidget {
   final String name;
   final String email;
   final String phone;
-  const Senangpay({super.key, required this.totalAmount, required this.name, required this.email, required this.phone});
+  const Senangpay(
+      {super.key,
+      required this.totalAmount,
+      required this.name,
+      required this.email,
+      required this.phone});
   @override
   State<Senangpay> createState() => _SenangpayState();
 }
 
 class _SenangpayState extends State<Senangpay> {
-
   late WebViewController _controller;
   var progress;
   String? accessToken;
@@ -30,45 +34,46 @@ class _SenangpayState extends State<Senangpay> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-          child: Stack(
-            children: [
-              WebView(
-                initialUrl: "${Config.paymentBaseUrl}result.php?detail=Movers&amount=${widget.totalAmount}&order_id=$notificationId&name=${widget.name}&email=${widget.email}&phone=${widget.phone}",
-                javascriptMode: JavascriptMode.unrestricted,
-                navigationDelegate: (NavigationRequest request) async {
-
-                  final uri = Uri.parse(request.url);
-                  if (uri.queryParameters["msg"] == null) {
-                    accessToken = uri.queryParameters["token"];
+        child: Stack(
+          children: [
+            WebView(
+              initialUrl:
+                  "${Config.paymentBaseUrl}result.php?detail=Movers&amount=${widget.totalAmount}&order_id=$notificationId&name=${widget.name}&email=${widget.email}&phone=${widget.phone}",
+              javascriptMode: JavascriptMode.unrestricted,
+              navigationDelegate: (NavigationRequest request) async {
+                final uri = Uri.parse(request.url);
+                if (uri.queryParameters["msg"] == null) {
+                  accessToken = uri.queryParameters["token"];
+                } else {
+                  if (uri.queryParameters["msg"] == "Payment_was_successful") {
+                    payerID = uri.queryParameters["transaction_id"];
+                    Get.back(result: payerID);
                   } else {
-                    if (uri.queryParameters["msg"] == "Payment_was_successful") {
-                      payerID = await uri.queryParameters["transaction_id"];
-                      Get.back(result: payerID);
-                    } else {
-                      Get.back();
-                      showToastMessage("${uri.queryParameters["msg"]}");
-                    }
+                    Get.back();
+                    showToastMessage("${uri.queryParameters["msg"]}");
                   }
+                }
 
-                  return NavigationDecision.navigate;
-                },
-                gestureNavigationEnabled: true,
-                onWebViewCreated: (controller) {
-                  _controller = controller;
-                },
-                onPageFinished: (finish) {
-                 readJS();
-                },
-                onProgress: (val) {
-                  progress = val;
-                  setState(() {});
-                },
-              ),
-            ],
-          ),
+                return NavigationDecision.navigate;
+              },
+              gestureNavigationEnabled: true,
+              onWebViewCreated: (controller) {
+                _controller = controller;
+              },
+              onPageFinished: (finish) {
+                readJS();
+              },
+              onProgress: (val) {
+                progress = val;
+                setState(() {});
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
+
   Future readJS() async {
     setState(() {
       _controller
@@ -101,6 +106,7 @@ class _SenangpayState extends State<Senangpay> {
       });
     });
   }
+
   jsonStringToMap(String data) {
     List<String> str = data
         .replaceAll("{", "")

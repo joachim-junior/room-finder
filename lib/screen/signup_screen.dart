@@ -10,11 +10,9 @@ import 'package:goproperti/utils/Colors.dart';
 import 'package:goproperti/utils/Custom_widget.dart';
 import 'package:goproperti/utils/Dark_lightmode.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
-import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../Api/config.dart';
 import '../Api/data_store.dart';
 import '../controller/homepage_controller.dart';
 import '../controller/search_controller.dart';
@@ -27,7 +25,6 @@ class SignUpScreen extends StatefulWidget {
 }
 
 class _SignUpScreenState extends State<SignUpScreen> {
-
   @override
   void initState() {
     // TODO: implement initState
@@ -56,10 +53,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
     }
   }
 
-  Future getCountryData() async{
-    selectCountryController.getCountryApi().then((value){
-      for(int a = 0; a < selectCountryController.countryInfo!.countryData!.length; a++){
-        if(selectCountryController.countryInfo?.countryData![a].dCon == "1"){
+  Future getCountryData() async {
+    selectCountryController.getCountryApi().then((value) {
+      for (int a = 0;
+          a < selectCountryController.countryInfo!.countryData!.length;
+          a++) {
+        if (selectCountryController.countryInfo?.countryData![a].dCon == "1") {
           setState(() {
             countrySelected = a;
           });
@@ -248,7 +247,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       controller: signUpController.number,
                       autovalidateMode: AutovalidateMode.onUserInteraction,
-                      initialCountryCode: "IN",
+                      initialCountryCode: "CM",
                       dropdownIcon: Icon(
                         Icons.arrow_drop_down,
                         color: notifire.getgreycolor,
@@ -511,63 +510,85 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       });
                       if ((_formKey.currentState?.validate() ?? false) &&
                           (signUpController.chack == true)) {
-
                         signUpController.smstype().then((msgtype) {
-
-                          signUpController.checkMobileNumber(cuntryCode).then((value) {
-
+                          signUpController
+                              .checkMobileNumber(cuntryCode)
+                              .then((value) {
                             if (value == "true") {
                               if (msgtype["otp_auth"] == "No") {
-                                signUpController.setUserApiData(cuntryCode).then((value) {
+                                signUpController
+                                    .setUserApiData(cuntryCode)
+                                    .then(
+                                  (value) {
                                     if (value["Result"] == "true") {
                                       setState(() {
-                                        save("countryId", selectCountryController.countryInfo?.countryData![countrySelected].id ?? "");
-                                        save("countryName", selectCountryController.countryInfo?.countryData![countrySelected].title ?? "");
+                                        save(
+                                            "countryId",
+                                            selectCountryController
+                                                    .countryInfo
+                                                    ?.countryData![
+                                                        countrySelected]
+                                                    .id ??
+                                                "");
+                                        save(
+                                            "countryName",
+                                            selectCountryController
+                                                    .countryInfo
+                                                    ?.countryData![
+                                                        countrySelected]
+                                                    .title ??
+                                                "");
                                       });
-                                      
-                                      selectCountryController.changeCountryIndex(countrySelected);
+
+                                      selectCountryController
+                                          .changeCountryIndex(countrySelected);
                                       homePageController.getHomeDataApi(
                                           countryId: getData.read("countryId"));
-                                      homePageController.getCatWiseData(countryId: getData.read("countryId"), cId: "0");
+                                      homePageController.getCatWiseData(
+                                          countryId: getData.read("countryId"),
+                                          cId: "0");
                                       searchController.getSearchData(
                                           countryId: getData.read("countryId"));
                                       Get.offAndToNamed(Routes.bottoBarScreen);
-                                      initPlatformState();
+                                      // initPlatformState();
                                     } else {
                                       showToastMessage(value["ResponseMsg"]);
                                     }
-                                },);
+                                  },
+                                );
                               } else {
-
                                 if (msgtype["SMS_TYPE"] == "Msg91") {
-
-                                  signUpController.sendOtp(cuntryCode, signUpController.number.text).then((value) {
+                                  signUpController
+                                      .sendOtp(cuntryCode,
+                                          signUpController.number.text)
+                                      .then((value) {
                                     if (value["Result"] == "true") {
-                                        Get.toNamed(Routes.otpScreen, arguments: {
-                                          "number": signUpController.number.text,
-                                          "cuntryCode": cuntryCode,
-                                          "route": "signUpScreen",
-                                          "otpCode": value["otp"].toString(),
-                                        });
-                                      } else {
-                                      showToastMessage('Invalid Mobile Number'.tr);
+                                      Get.toNamed(Routes.otpScreen, arguments: {
+                                        "number": signUpController.number.text,
+                                        "cuntryCode": cuntryCode,
+                                        "route": "signUpScreen",
+                                        "otpCode": value["otp"].toString(),
+                                      });
+                                    } else {
+                                      showToastMessage(
+                                          'Invalid Mobile Number'.tr);
                                     }
                                   });
-
-                                } else if(msgtype["SMS_TYPE"] == "Twilio"){
-
-                                  signUpController.twilloOtp(cuntryCode, signUpController.number.text).then((value) {
-
+                                } else if (msgtype["SMS_TYPE"] == "Twilio") {
+                                  signUpController
+                                      .twilloOtp(cuntryCode,
+                                          signUpController.number.text)
+                                      .then((value) {
                                     if (value["Result"] == "true") {
-                                        Get.toNamed(Routes.otpScreen, arguments: {
-                                          "number": signUpController.number.text,
-                                          "cuntryCode": cuntryCode,
-                                          "route": "signUpScreen",
-                                          "otpCode": value["otp"]
-                                        });
-
+                                      Get.toNamed(Routes.otpScreen, arguments: {
+                                        "number": signUpController.number.text,
+                                        "cuntryCode": cuntryCode,
+                                        "route": "signUpScreen",
+                                        "otpCode": value["otp"]
+                                      });
                                     } else {
-                                      showToastMessage('Invalid Mobile Number'.tr);
+                                      showToastMessage(
+                                          'Invalid Mobile Number'.tr);
                                     }
                                   });
                                 }
@@ -586,7 +607,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   SizedBox(
                     height: 15,
                   ),
-
                   Padding(
                     padding: const EdgeInsets.only(bottom: 45),
                     child: Row(
@@ -622,13 +642,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
       ),
     );
   }
-  Future<void> initPlatformState() async {
-    OneSignal.shared.setAppId(Config.oneSignel);
-    OneSignal.shared
-        .promptUserForPushNotificationPermission()
-        .then((accepted) {});
-    OneSignal.shared.setPermissionObserver((OSPermissionStateChanges changes) {
-      print("Accepted OSPermissionStateChanges : $changes");
-    });
-  }
+  // Future<void> initPlatformState() async {
+  //   OneSignal.shared.setAppId(Config.oneSignel);
+  //   OneSignal.shared
+  //       .promptUserForPushNotificationPermission()
+  //       .then((accepted) {});
+  //   OneSignal.shared.setPermissionObserver((OSPermissionStateChanges changes) {
+  //     print("Accepted OSPermissionStateChanges : $changes");
+  //   });
+  // }
 }

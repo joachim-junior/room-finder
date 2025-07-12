@@ -1,0 +1,14 @@
+-- Merging decision tree log ---
+manifest
+ADDED from /home/sureadsman/.pub-cache/hosted/pub.dev/webview_flutter_android-2.10.4/android/src/main/AndroidManifest.xml:1:1-2:12
+INJECTED from /home/sureadsman/.pub-cache/hosted/pub.dev/webview_flutter_android-2.10.4/android/src/main/AndroidManifest.xml:1:1-2:12
+	package
+		INJECTED from /home/sureadsman/.pub-cache/hosted/pub.dev/webview_flutter_android-2.10.4/android/src/main/AndroidManifest.xml
+uses-sdk
+INJECTED from /home/sureadsman/.pub-cache/hosted/pub.dev/webview_flutter_android-2.10.4/android/src/main/AndroidManifest.xml reason: use-sdk injection requested
+INJECTED from /home/sureadsman/.pub-cache/hosted/pub.dev/webview_flutter_android-2.10.4/android/src/main/AndroidManifest.xml
+INJECTED from /home/sureadsman/.pub-cache/hosted/pub.dev/webview_flutter_android-2.10.4/android/src/main/AndroidManifest.xml
+	android:targetSdkVersion
+		INJECTED from /home/sureadsman/.pub-cache/hosted/pub.dev/webview_flutter_android-2.10.4/android/src/main/AndroidManifest.xml
+	android:minSdkVersion
+		INJECTED from /home/sureadsman/.pub-cache/hosted/pub.dev/webview_flutter_android-2.10.4/android/src/main/AndroidManifest.xml

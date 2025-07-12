@@ -40,8 +40,8 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   CameraPosition kGoogle = CameraPosition(
-    target: LatLng(21.2381962, 72.8879607),
-    zoom: 5,
+    target: LatLng(4.1666641, 6.7943573),
+    zoom: 7,
   );
 
   final Set<Marker> markers = Set();
@@ -62,7 +62,6 @@ class _MapScreenState extends State<MapScreen> {
     super.initState();
     getmarkers();
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -166,14 +165,14 @@ class _MapScreenState extends State<MapScreen> {
                               target: LatLng(
                                 double.parse(homePageController
                                         .homeDatatInfo
-                                        ?.homeData
-                                        !.featuredProperty![index]
+                                        ?.homeData!
+                                        .featuredProperty![index]
                                         .latitude ??
                                     "0"),
                                 double.parse(homePageController
                                         .homeDatatInfo
-                                        ?.homeData
-                                        !.featuredProperty![index]
+                                        ?.homeData!
+                                        .featuredProperty![index]
                                         .longtitude ??
                                     ""),
                               ),
@@ -191,15 +190,15 @@ class _MapScreenState extends State<MapScreen> {
                             setState(() {
                               homePageController.rate = homePageController
                                       .homeDatatInfo
-                                      ?.homeData
-                                      !.featuredProperty![index]
+                                      ?.homeData!
+                                      .featuredProperty![index]
                                       .rate ??
                                   "";
                             });
                             homePageController.chnageObjectIndex(index);
                             await homePageController.getPropertyDetailsApi(
-                                id: homePageController.homeDatatInfo?.homeData
-                                    !.featuredProperty![index].id);
+                                id: homePageController.homeDatatInfo?.homeData!
+                                    .featuredProperty![index].id);
                             Get.toNamed(
                               Routes.viewDataScreen,
                             );
@@ -233,8 +232,8 @@ class _MapScreenState extends State<MapScreen> {
                                     ),
                                     homePageController
                                                 .homeDatatInfo
-                                                ?.homeData
-                                                !.featuredProperty![index]
+                                                ?.homeData!
+                                                .featuredProperty![index]
                                                 .buyorrent ==
                                             "1"
                                         ? Positioned(
@@ -259,8 +258,8 @@ class _MapScreenState extends State<MapScreen> {
                                                   Text(
                                                     homePageController
                                                             .homeDatatInfo
-                                                            ?.homeData
-                                                            !.featuredProperty![
+                                                            ?.homeData!
+                                                            .featuredProperty![
                                                                 index]
                                                             .rate
                                                             .toString() ??
@@ -317,8 +316,8 @@ class _MapScreenState extends State<MapScreen> {
                                             child: Text(
                                               homePageController
                                                       .homeDatatInfo
-                                                      ?.homeData
-                                                      !.featuredProperty![index]
+                                                      ?.homeData!
+                                                      .featuredProperty![index]
                                                       .title ??
                                                   "",
                                               maxLines: 2,
@@ -326,24 +325,25 @@ class _MapScreenState extends State<MapScreen> {
                                                 fontSize: 17,
                                                 fontFamily:
                                                     FontFamily.gilroyBold,
-                                                color: notifire
-                                                    .getwhiteblackcolor,
-                                                overflow:
-                                                    TextOverflow.ellipsis,
+                                                color:
+                                                    notifire.getwhiteblackcolor,
+                                                overflow: TextOverflow.ellipsis,
                                               ),
                                             ),
                                           ),
                                         ],
                                       ),
-                                      SizedBox(height: 5,),
+                                      SizedBox(
+                                        height: 5,
+                                      ),
                                       Row(
                                         children: [
                                           Expanded(
                                             child: Text(
                                               homePageController
                                                       .homeDatatInfo
-                                                      ?.homeData
-                                                      !.featuredProperty![index]
+                                                      ?.homeData!
+                                                      .featuredProperty![index]
                                                       .city ??
                                                   "",
                                               maxLines: 1,
@@ -361,34 +361,34 @@ class _MapScreenState extends State<MapScreen> {
                                           ),
                                         ],
                                       ),
-                                      SizedBox(height: 6,),
+                                      SizedBox(
+                                        height: 6,
+                                      ),
                                       Row(
                                         children: [
                                           Text(
                                             "${currency}${homePageController.homeDatatInfo?.homeData!.featuredProperty![index].price}",
                                             style: TextStyle(
                                               fontSize: 17,
-                                              fontFamily:
-                                              FontFamily.gilroyBold,
+                                              fontFamily: FontFamily.gilroyBold,
                                               color: blueColor,
                                             ),
                                           ),
                                           homePageController
-                                              .homeDatatInfo
-                                              ?.homeData
-                                          !.featuredProperty![
-                                          index]
-                                              .buyorrent ==
-                                              "1"
+                                                      .homeDatatInfo
+                                                      ?.homeData!
+                                                      .featuredProperty![index]
+                                                      .buyorrent ==
+                                                  "1"
                                               ? Text(
-                                            "/night".tr,
-                                            style: TextStyle(
-                                              color: notifire
-                                                  .getgreycolor,
-                                              fontFamily: FontFamily
-                                                  .gilroyMedium,
-                                            ),
-                                          )
+                                                  "/night".tr,
+                                                  style: TextStyle(
+                                                    color:
+                                                        notifire.getgreycolor,
+                                                    fontFamily:
+                                                        FontFamily.gilroyMedium,
+                                                  ),
+                                                )
                                               : SizedBox(),
                                         ],
                                       ),
@@ -418,7 +418,9 @@ class _MapScreenState extends State<MapScreen> {
   getmarkers() async {
     final Uint8List markIcon = await getImages("assets/images/MapPin.png", 100);
     for (var i = 0;
-        i < homePageController.homeDatatInfo!.homeData!.featuredProperty!.length;
+        i <
+            homePageController
+                .homeDatatInfo!.homeData!.featuredProperty!.length;
         i++) {
       markers.add(Marker(
         //add first marker

@@ -113,13 +113,13 @@ class UsePaypalState extends State<UsePaypal> {
     }
   }
 
-  JavascriptChannel _toasterJavascriptChannel(BuildContext context) {
-    return JavascriptChannel(
-        name: 'Toaster',
-        onMessageReceived: (JavascriptMessage message) {
-          widget.onError(message.message);
-        });
-  }
+  // JavascriptChannel _toasterJavascriptChannel(BuildContext context) {
+  //   return JavascriptChannel(
+  //       name: 'Toaster',
+  //       onMessageReceived: (JavascriptMessage message) {
+  //         widget.onError(message.message);
+  //       });
+  // }
 
   @override
   void initState() {
@@ -134,7 +134,7 @@ class UsePaypalState extends State<UsePaypal> {
           ? 'https://api.sandbox.paypal.com'
           : 'https://www.api.paypal.com';
     });
-    if (Platform.isAndroid) WebView.platform = SurfaceAndroidWebView();
+    // if (Platform.isAndroid) WebView.platform = SurfaceAndroidWebView();
     loadPayment();
   }
 
@@ -242,7 +242,7 @@ class UsePaypalState extends State<UsePaypal> {
                                 _controller.complete(webViewController);
                               },
                               javascriptChannels: <JavascriptChannel>[
-                                _toasterJavascriptChannel(context),
+                                // _toasterJavascriptChannel(context),
                               ].toSet(),
                               navigationDelegate:
                                   (NavigationRequest request) async {

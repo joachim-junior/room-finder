@@ -281,7 +281,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     width: Get.size.width,
                     child: InkWell(
                       onTap: () {
-                        selectCountryController.getCountryApi().then((value) =>  Get.toNamed(Routes.selectCountryScreen),);
+                        selectCountryController.getCountryApi().then(
+                              (value) =>
+                                  Get.toNamed(Routes.selectCountryScreen),
+                            );
                       },
                       child: Row(
                         children: [
