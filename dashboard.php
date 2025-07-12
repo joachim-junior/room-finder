@@ -372,6 +372,72 @@ require 'include/main_head.php';
                 </div>
               </div>
               
+              <div class="col-lg-3 col-md-6 col-sm-6">
+                <div class="card sale-chart">
+                  <div class="card-body">
+                    <div class="d-flex">    
+                      <div class="flex-shrink-0">                
+                        <div class="sale-detail">
+                          <div class="icon"><i data-feather="trending-up"></i></div>
+                          <div class="sale-content">
+                            <h3>Platform Commission</h3>
+                            <p><?php 
+                            $commission_result = $rstate->query("select sum(`commission_amount`) as total_commission from tbl_commission_tracking where status='paid'");
+                            $commission = $commission_result ? $commission_result->fetch_assoc() : ['total_commission' => 0];
+                            echo number_format((float)$commission['total_commission'], 2, '.', '').' '.$set['currency'];?></p>
+                          </div>
+                        </div>
+                      </div>
+                    
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="col-lg-3 col-md-6 col-sm-6">
+                <div class="card sale-chart">
+                  <div class="card-body">
+                    <div class="d-flex">    
+                      <div class="flex-shrink-0">                
+                        <div class="sale-detail">
+                          <div class="icon"><i data-feather="wallet"></i></div>
+                          <div class="sale-content">
+                            <h3>Total Wallet Deposits</h3>
+                            <p><?php 
+                            $wallet_result = $rstate->query("select sum(`amount`) as total_deposits from tbl_wallet_transactions where transaction_type='deposit' and status='completed'");
+                            $wallet_deposits = $wallet_result ? $wallet_result->fetch_assoc() : ['total_deposits' => 0];
+                            echo number_format((float)$wallet_deposits['total_deposits'], 2, '.', '').' '.$set['currency'];?></p>
+                          </div>
+                        </div>
+                      </div>
+                    
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="col-lg-3 col-md-6 col-sm-6">
+                <div class="card sale-chart">
+                  <div class="card-body">
+                    <div class="d-flex">    
+                      <div class="flex-shrink-0">                
+                        <div class="sale-detail">
+                          <div class="icon"><i data-feather="dollar-sign"></i></div>
+                          <div class="sale-content">
+                            <h3>Property Owner Payouts</h3>
+                            <p><?php 
+                            $payout_result = $rstate->query("select sum(`amount`) as total_payouts from tbl_property_owner_payouts where status='paid'");
+                            $payouts = $payout_result ? $payout_result->fetch_assoc() : ['total_payouts' => 0];
+                            echo number_format((float)$payouts['total_payouts'], 2, '.', '').' '.$set['currency'];?></p>
+                          </div>
+                        </div>
+                      </div>
+                    
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
              
              
           
