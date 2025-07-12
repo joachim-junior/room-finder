@@ -104,7 +104,7 @@ else
                         </g>
                       </svg><span>Enquiry List</span></a></li>
 					  
-					    <li class="sidebar-list">  <a class="sidebar-link sidebar-title link-nav" href="list_payout.php"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+					    					  <li class="sidebar-list">  <a class="sidebar-link sidebar-title link-nav" href="list_payout.php"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <g> 
                           <g> 
                             <path d="M6.91699 14.854L9.90999 10.965L13.324 13.645L16.253 9.86499" stroke="#130F26" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
@@ -113,6 +113,36 @@ else
                           </g>
                         </g>
                       </svg><span>Payout List</span></a></li>
+                  
+                  <li class="sidebar-list">           <a class="sidebar-link sidebar-title" href="javascript:void(0)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <g> 
+                          <g> 
+                            <path d="M17.7778 8.33333H9.11111C8.49746 8.33333 8 8.83079 8 9.44444V14.5556C8 15.1692 8.49746 15.6667 9.11111 15.6667H17.7778C18.3914 15.6667 18.8889 15.1692 18.8889 14.5556V9.44444C18.8889 8.83079 18.3914 8.33333 17.7778 8.33333Z" stroke="#130F26" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                            <path d="M17.7778 8.33333V6.11111C17.7778 5.49746 17.4603 4.909 16.9046 4.48223C16.3489 4.05547 15.6044 3.83333 14.8333 3.83333H12C11.229 3.83333 10.4844 4.05547 9.92874 4.48223C9.37302 4.909 9.05556 5.49746 9.05556 6.11111V8.33333" stroke="#130F26" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                          </g>
+                        </g>
+                      </svg><span>Wallet Management</span></a>
+                    <ul class="sidebar-submenu">
+                      <li><a href="admin_wallet_settings.php">Wallet Settings</a></li>
+                      <li><a href="admin_wallet_transactions.php">Transaction History</a></li>
+                      <li><a href="admin_fapshi_settings.php">Fapshi Configuration</a></li>
+                    </ul>
+                  </li>
+                  
+                  <li class="sidebar-list">           <a class="sidebar-link sidebar-title" href="javascript:void(0)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <g> 
+                          <g> 
+                            <path d="M16 7C16 9.20914 14.2091 11 12 11C9.79086 11 8 9.20914 8 7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7Z" stroke="#130F26" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                            <path d="M12 14L8.21922 19.2169C7.94496 19.6276 8.25574 20.2 8.75574 20.2H15.2443C15.7443 20.2 16.055 19.6276 15.7808 19.2169L12 14Z" stroke="#130F26" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                          </g>
+                        </g>
+                      </svg><span>Commission Management</span></a>
+                    <ul class="sidebar-submenu">
+                      <li><a href="admin_commission_settings.php">Commission Settings</a></li>
+                      <li><a href="admin_commission_reports.php">Commission Reports</a></li>
+                      <li><a href="admin_property_owner_payouts.php">Property Owner Payouts</a></li>
+                    </ul>
+                  </li>
                   
                   
                   <li class="sidebar-list">           <a class="sidebar-link sidebar-title" href="javascript:void(0)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
