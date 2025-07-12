@@ -77,7 +77,6 @@ if ($_SESSION['stype'] == 'Staff' && !in_array('Write', $property_per)) {
 					 $data = $rstate->query("select * from tbl_property where id=".$_GET['id']."")->fetch_assoc();
 					 ?>
 					 <form method="post" enctype="multipart/form-data">
-                                    
                                     <div class="card-body">
                                         
 										<div class="row">

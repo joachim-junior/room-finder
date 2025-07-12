@@ -21,26 +21,26 @@ if ($data['uid'] == '' or $data['country_id'] == '') {
 	{
 	$udata = $rstate->query("select * from tbl_user where id=".$uid."")->fetch_assoc();
 	$timestamp = date("Y-m-d");
-	if($udata['end_date'] < $timestamp)
-	{
-	$table = "tbl_user";
-                $field = ["start_date" => NULL, "end_date" => NULL,"pack_id"=>"0","is_subscribe"=>"0"];
-  $where = "where id=".$uid."";
-$h = new Estate();
-	 $check = $h->restateupdateDatanull_Api($field,$table,$where);
+// 	if($udata['end_date'] < $timestamp)
+// 	{
+// 	$table = "tbl_user";
+//                 $field = ["start_date" => NULL, "end_date" => NULL,"pack_id"=>"0","is_subscribe"=>"0"];
+//   $where = "where id=".$uid."";
+// $h = new Estate();
+// 	 $check = $h->restateupdateDatanull_Api($field,$table,$where);
 	 
-	 $table = "plan_purchase_history";
-        $where = "where uid=" . $uid . "";
-        $h = new Estate();
-        $check = $h->restateDeleteData_Api($where, $table);
+// 	 $table = "plan_purchase_history";
+//         $where = "where uid=" . $uid . "";
+//         $h = new Estate();
+//         $check = $h->restateDeleteData_Api($where, $table);
 		
-		$table="tbl_property";
-   $field = "status=0";
-  $where = "where add_user_id=".$uid."";
-$h = new Estate();
-	  $check = $h->restateupdateData_single($field,$table,$where);
-	}
-	}
+// 		$table="tbl_property";
+//    $field = "status=0";
+//   $where = "where add_user_id=".$uid."";
+// $h = new Estate();
+// 	  $check = $h->restateupdateData_single($field,$table,$where);
+// 	}
+// 	}
 	$country_id = $data['country_id'];
 	$f = array();
 	$fp = array();

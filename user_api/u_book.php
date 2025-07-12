@@ -10,7 +10,6 @@ if ($data['prop_id'] == '' or $data['uid'] == '' or $data['check_in'] == '' or $
         "ResponseMsg" => "Something Went Wrong!"
     );
 } else {
-    
     $prop_id     = strip_tags(mysqli_real_escape_string($rstate, $data['prop_id']));
     $uid     = strip_tags(mysqli_real_escape_string($rstate, $data['uid']));
 	$vp = $rstate->query("select * from tbl_user where id=".$uid."")->fetch_assoc();
@@ -283,7 +282,7 @@ $timestamp = date("Y-m-d H:i:s");
 $title_mains = "Booking Received!!";
 $descriptions = 'New Booking #'.$oid.' Has Been Received.';
 
-	   $table="tbl_notification";
+  $table="tbl_notification";
   $field_values=array("uid","datetime","title","description");
   $data_values=array("$uid","$timestamp","$title_mains","$descriptions");
   
