@@ -46,19 +46,19 @@ if (!isset($_SESSION['restatename'])) {
                                      FROM tbl_property_owner_payouts 
                                      WHERE property_owner_id = $user_id AND status = 'completed'";
                     $total_earnings_result = $rstate->query($earnings_query);
-                    $total_earnings = $total_earnings_result ? $total_earnings_result->fetch_assoc()['total_earnings'] : 0;
+                    $total_earnings = $total_earnings_result ? floatval($total_earnings_result->fetch_assoc()['total_earnings']) : 0;
                     
                     $pending_earnings_query = "SELECT SUM(amount) as pending_earnings 
                                              FROM tbl_property_owner_payouts 
                                              WHERE property_owner_id = $user_id AND status = 'pending'";
                     $pending_earnings_result = $rstate->query($pending_earnings_query);
-                    $pending_earnings = $pending_earnings_result ? $pending_earnings_result->fetch_assoc()['pending_earnings'] : 0;
+                    $pending_earnings = $pending_earnings_result ? floatval($pending_earnings_result->fetch_assoc()['pending_earnings']) : 0;
                     
                     $withdrawn_query = "SELECT SUM(payout_amount) as total_withdrawn 
                                       FROM tbl_fapshi_payouts 
                                       WHERE property_owner_id = $user_id AND status = 'completed'";
                     $withdrawn_result = $rstate->query($withdrawn_query);
-                    $total_withdrawn = $withdrawn_result ? $withdrawn_result->fetch_assoc()['total_withdrawn'] : 0;
+                    $total_withdrawn = $withdrawn_result ? floatval($withdrawn_result->fetch_assoc()['total_withdrawn']) : 0;
                     
                     $available_balance = ($total_earnings + $pending_earnings) - $total_withdrawn;
                     
@@ -138,7 +138,7 @@ if (!isset($_SESSION['restatename'])) {
 }
 
 /**
- * Initiate Fapshi transfer/payout
+ * Initiate Fapshi transfer/payout based on standard API patterns
  */
 function initiateFapshiTransfer($payout_id, $amount, $mobile_number, $payment_method, $description, $fapshi_settings) {
     
@@ -149,23 +149,25 @@ function initiateFapshiTransfer($payout_id, $amount, $mobile_number, $payment_me
     // Determine Fapshi API base URL
     $base_url = $environment === 'production' 
         ? 'https://api.fapshi.com' 
-        : 'https://sandbox-api.fapshi.com';
+        : 'https://sandbox.fapshi.com';
     
-    // Prepare transfer request data
+    // Prepare transfer request data based on common payout API patterns
     $transfer_data = array(
         'amount' => $amount,
-        'currency' => 'XAF', // Cameroon Franc
-        'mobile_number' => $mobile_number,
-        'payment_method' => $payment_method,
+        'currency' => 'XAF', // Central African Franc for Cameroon
+        'recipient' => array(
+            'phone' => $mobile_number,
+            'method' => $payment_method
+        ),
+        'external_reference' => $payout_id,
         'description' => $description,
-        'external_id' => $payout_id,
         'callback_url' => getCurrentDomain() . '/user_api/fapshi_payout_webhook.php'
     );
     
     // Set up cURL for API request
     $curl = curl_init();
     curl_setopt_array($curl, array(
-        CURLOPT_URL => $base_url . '/v1/transfers',
+        CURLOPT_URL => $base_url . '/v1/payouts', // Standard payout endpoint
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_ENCODING => '',
         CURLOPT_MAXREDIRS => 10,
@@ -177,7 +179,8 @@ function initiateFapshiTransfer($payout_id, $amount, $mobile_number, $payment_me
         CURLOPT_HTTPHEADER => array(
             'Content-Type: application/json',
             'Authorization: Bearer ' . $api_key,
-            'X-API-Secret: ' . $api_secret
+            'X-API-Secret: ' . $api_secret,
+            'Accept: application/json'
         ),
     ));
     
@@ -185,6 +188,10 @@ function initiateFapshiTransfer($payout_id, $amount, $mobile_number, $payment_me
     $http_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
     $curl_error = curl_error($curl);
     curl_close($curl);
+    
+    // Log the API request for debugging
+    error_log("Fapshi Payout API Request: " . json_encode($transfer_data));
+    error_log("Fapshi Payout API Response: " . $response);
     
     if ($curl_error) {
         return array(
@@ -195,21 +202,36 @@ function initiateFapshiTransfer($payout_id, $amount, $mobile_number, $payment_me
     
     $response_data = json_decode($response, true);
     
-    if ($http_code === 200 || $http_code === 201) {
-        if (isset($response_data['transaction_id']) || isset($response_data['id'])) {
+    if ($http_code >= 200 && $http_code < 300) {
+        // Successful response - adapt to actual Fapshi response structure
+        $transaction_id = null;
+        if (isset($response_data['transaction_id'])) {
+            $transaction_id = $response_data['transaction_id'];
+        } elseif (isset($response_data['id'])) {
+            $transaction_id = $response_data['id'];
+        } elseif (isset($response_data['reference'])) {
+            $transaction_id = $response_data['reference'];
+        } elseif (isset($response_data['payout_id'])) {
+            $transaction_id = $response_data['payout_id'];
+        }
+        
+        if ($transaction_id) {
             return array(
                 'success' => true,
-                'transaction_id' => $response_data['transaction_id'] ?? $response_data['id'],
+                'transaction_id' => $transaction_id,
                 'response' => $response_data
             );
         }
     }
     
+    // Handle error responses
     $error_message = 'Transfer failed';
     if (isset($response_data['message'])) {
         $error_message = $response_data['message'];
     } elseif (isset($response_data['error'])) {
         $error_message = $response_data['error'];
+    } elseif (isset($response_data['errors'])) {
+        $error_message = is_array($response_data['errors']) ? implode(', ', $response_data['errors']) : $response_data['errors'];
     }
     
     return array(
