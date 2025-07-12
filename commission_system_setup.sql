@@ -1,7 +1,7 @@
--- Commission System Setup
+-- Commission System Setup for Property Booking Platform
 -- Run this SQL to create commission-related tables and settings
 
--- Add commission settings to existing settings table or create new one
+-- Create commission settings table
 CREATE TABLE IF NOT EXISTS `tbl_commission_settings` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `commission_rate` decimal(5,2) NOT NULL DEFAULT 10.00,
@@ -15,9 +15,14 @@ CREATE TABLE IF NOT EXISTS `tbl_commission_settings` (
 
 -- Insert default commission settings
 INSERT INTO `tbl_commission_settings` (`commission_rate`, `payout_timing`, `minimum_payout`, `auto_payout`) 
-VALUES (10.00, 'immediate', 100.00, 1);
+VALUES (10.00, 'immediate', 100.00, 1)
+ON DUPLICATE KEY UPDATE 
+  `commission_rate` = VALUES(`commission_rate`),
+  `payout_timing` = VALUES(`payout_timing`),
+  `minimum_payout` = VALUES(`minimum_payout`),
+  `auto_payout` = VALUES(`auto_payout`);
 
--- Create commission tracking table
+-- Create commission tracking table compatible with existing tbl_book structure
 CREATE TABLE IF NOT EXISTS `tbl_commission_tracking` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `booking_id` int(11) NOT NULL,
@@ -36,33 +41,32 @@ CREATE TABLE IF NOT EXISTS `tbl_commission_tracking` (
   KEY `created_at` (`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Create property owner payouts table
-CREATE TABLE IF NOT EXISTS `tbl_property_owner_payouts` (
+-- Update existing payout_setting table to be compatible with commission system
+ALTER TABLE `payout_setting` 
+ADD COLUMN IF NOT EXISTS `commission_tracking_id` int(11) DEFAULT NULL AFTER `id`,
+ADD COLUMN IF NOT EXISTS `booking_id` int(11) DEFAULT NULL AFTER `commission_tracking_id`,
+ADD COLUMN IF NOT EXISTS `commission_amount` decimal(10,2) DEFAULT 0.00 AFTER `amt`,
+ADD COLUMN IF NOT EXISTS `net_payout` decimal(10,2) DEFAULT 0.00 AFTER `commission_amount`;
+
+-- Add indexes to existing payout_setting table
+ALTER TABLE `payout_setting` ADD INDEX IF NOT EXISTS `idx_commission_tracking` (`commission_tracking_id`);
+ALTER TABLE `payout_setting` ADD INDEX IF NOT EXISTS `idx_booking_id` (`booking_id`);
+ALTER TABLE `payout_setting` ADD INDEX IF NOT EXISTS `idx_owner_status` (`owner_id`, `status`);
+
+-- Create property owner earnings summary table
+CREATE TABLE IF NOT EXISTS `tbl_property_owner_earnings` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `owner_id` int(11) NOT NULL,
-  `booking_id` int(11) NOT NULL,
-  `commission_tracking_id` int(11) NOT NULL,
-  `amount` decimal(10,2) NOT NULL,
-  `payout_method` varchar(50) DEFAULT 'wallet',
-  `status` enum('pending','completed','failed') DEFAULT 'pending',
-  `transaction_reference` varchar(100) DEFAULT NULL,
-  `processed_at` timestamp NULL DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `total_bookings` int(11) DEFAULT 0,
+  `total_earnings` decimal(12,2) DEFAULT 0.00,
+  `total_commission` decimal(12,2) DEFAULT 0.00,
+  `total_payouts` decimal(12,2) DEFAULT 0.00,
+  `pending_amount` decimal(12,2) DEFAULT 0.00,
+  `last_booking_date` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  KEY `owner_id` (`owner_id`),
-  KEY `booking_id` (`booking_id`),
-  KEY `commission_tracking_id` (`commission_tracking_id`),
-  KEY `status` (`status`)
+  UNIQUE KEY `owner_id` (`owner_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
--- Add wallet field to property owners if not exists (tbl_user table)
--- This assumes property owners are also in tbl_user table with a role field
-ALTER TABLE `tbl_user` ADD COLUMN `wallet` decimal(10,2) DEFAULT 0.00 AFTER `email`;
-ALTER TABLE `tbl_user` ADD COLUMN `user_type` enum('customer','property_owner','admin') DEFAULT 'customer' AFTER `wallet`;
-
--- Update existing users to set property owners
--- You'll need to run this based on your existing data structure
--- UPDATE tbl_user SET user_type = 'property_owner' WHERE id IN (SELECT DISTINCT add_user_id FROM tbl_property);
 
 -- Create platform earnings summary table
 CREATE TABLE IF NOT EXISTS `tbl_platform_earnings` (
@@ -78,23 +82,22 @@ CREATE TABLE IF NOT EXISTS `tbl_platform_earnings` (
   UNIQUE KEY `date` (`date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Add foreign key constraints
-ALTER TABLE `tbl_commission_tracking` 
-  ADD CONSTRAINT `fk_commission_booking` FOREIGN KEY (`booking_id`) REFERENCES `tbl_book`(`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_commission_owner` FOREIGN KEY (`property_owner_id`) REFERENCES `tbl_user`(`id`) ON DELETE CASCADE;
+-- Update tbl_book table to include commission tracking
+ALTER TABLE `tbl_book` 
+ADD COLUMN IF NOT EXISTS `commission_calculated` tinyint(1) DEFAULT 0 AFTER `is_rate`,
+ADD COLUMN IF NOT EXISTS `commission_amount` decimal(10,2) DEFAULT 0.00 AFTER `commission_calculated`,
+ADD COLUMN IF NOT EXISTS `owner_payout` decimal(10,2) DEFAULT 0.00 AFTER `commission_amount`;
 
-ALTER TABLE `tbl_property_owner_payouts`
-  ADD CONSTRAINT `fk_payout_owner` FOREIGN KEY (`owner_id`) REFERENCES `tbl_user`(`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_payout_booking` FOREIGN KEY (`booking_id`) REFERENCES `tbl_book`(`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_payout_commission` FOREIGN KEY (`commission_tracking_id`) REFERENCES `tbl_commission_tracking`(`id`) ON DELETE CASCADE;
+-- Add indexes to tbl_book for commission tracking
+ALTER TABLE `tbl_book` ADD INDEX IF NOT EXISTS `idx_commission_calculated` (`commission_calculated`);
+ALTER TABLE `tbl_book` ADD INDEX IF NOT EXISTS `idx_book_status_commission` (`book_status`, `commission_calculated`);
 
 -- Create indexes for better performance
-CREATE INDEX `idx_commission_date` ON `tbl_commission_tracking` (`created_at`);
-CREATE INDEX `idx_payout_date` ON `tbl_property_owner_payouts` (`created_at`);
-CREATE INDEX `idx_owner_payouts` ON `tbl_property_owner_payouts` (`owner_id`, `status`);
+CREATE INDEX IF NOT EXISTS `idx_commission_date` ON `tbl_commission_tracking` (`created_at`);
+CREATE INDEX IF NOT EXISTS `idx_owner_earnings` ON `tbl_property_owner_earnings` (`owner_id`);
 
--- Create a view for commission analytics
-CREATE VIEW `v_commission_analytics` AS
+-- Create a view for commission analytics compatible with existing structure
+CREATE OR REPLACE VIEW `v_commission_analytics` AS
 SELECT 
     DATE(ct.created_at) as booking_date,
     COUNT(ct.id) as total_bookings,
@@ -105,3 +108,73 @@ SELECT
 FROM tbl_commission_tracking ct
 GROUP BY DATE(ct.created_at)
 ORDER BY booking_date DESC;
+
+-- Create a view for property owner earnings summary
+CREATE OR REPLACE VIEW `v_property_owner_earnings` AS
+SELECT 
+    ps.owner_id,
+    COUNT(DISTINCT ps.id) as total_payout_requests,
+    SUM(CASE WHEN ps.status = 'pending' THEN ps.amt ELSE 0 END) as pending_amount,
+    SUM(CASE WHEN ps.status = 'completed' THEN ps.amt ELSE 0 END) as completed_amount,
+    SUM(ps.amt) as total_requested,
+    MAX(ps.r_date) as last_request_date,
+    COALESCE(ct_summary.total_earnings, 0) as total_earnings,
+    COALESCE(ct_summary.total_commission, 0) as total_commission_deducted
+FROM payout_setting ps
+LEFT JOIN (
+    SELECT 
+        property_owner_id,
+        SUM(booking_amount) as total_earnings,
+        SUM(commission_amount) as total_commission
+    FROM tbl_commission_tracking
+    GROUP BY property_owner_id
+) ct_summary ON ps.owner_id = ct_summary.property_owner_id
+GROUP BY ps.owner_id;
+
+-- Create trigger to automatically calculate commission when booking is confirmed
+DELIMITER $$
+CREATE TRIGGER IF NOT EXISTS `tr_calculate_commission_after_booking` 
+AFTER UPDATE ON `tbl_book`
+FOR EACH ROW
+BEGIN
+    DECLARE commission_rate_val DECIMAL(5,2);
+    DECLARE commission_amt DECIMAL(10,2);
+    DECLARE owner_payout_amt DECIMAL(10,2);
+    
+    -- Only calculate commission when booking status changes to confirmed and commission not yet calculated
+    IF NEW.book_status = 'confirmed' AND OLD.book_status != 'confirmed' AND NEW.commission_calculated = 0 THEN
+        -- Get current commission rate
+        SELECT commission_rate INTO commission_rate_val FROM tbl_commission_settings LIMIT 1;
+        
+        -- Calculate commission and owner payout
+        SET commission_amt = (NEW.total * commission_rate_val / 100);
+        SET owner_payout_amt = (NEW.total - commission_amt);
+        
+        -- Update booking with commission info
+        UPDATE tbl_book SET 
+            commission_calculated = 1,
+            commission_amount = commission_amt,
+            owner_payout = owner_payout_amt
+        WHERE id = NEW.id;
+        
+        -- Insert into commission tracking
+        INSERT INTO tbl_commission_tracking (
+            booking_id, property_owner_id, booking_amount, 
+            commission_rate, commission_amount, owner_payout, status
+        ) VALUES (
+            NEW.id, NEW.uid, NEW.total, 
+            commission_rate_val, commission_amt, owner_payout_amt, 'pending'
+        );
+    END IF;
+END$$
+DELIMITER ;
+
+-- Add foreign key constraints (optional but recommended)
+-- Note: Uncomment these if your tables support foreign keys
+-- ALTER TABLE `tbl_commission_tracking` 
+--   ADD CONSTRAINT `fk_commission_booking` FOREIGN KEY (`booking_id`) REFERENCES `tbl_book`(`id`) ON DELETE CASCADE;
+
+-- ALTER TABLE `payout_setting` 
+--   ADD CONSTRAINT `fk_payout_commission` FOREIGN KEY (`commission_tracking_id`) REFERENCES `tbl_commission_tracking`(`id`) ON DELETE SET NULL;
+
+SELECT 'Commission System setup completed successfully!' as Status;
