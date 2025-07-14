@@ -1,5 +1,7 @@
 <?php 
 require 'include/main_head.php';
+
+// Check if user is admin
 if($_SESSION['stype'] == 'Staff')
 {
     header('HTTP/1.1 401 Unauthorized');
@@ -17,28 +19,26 @@ if($_SESSION['stype'] == 'Staff')
 
 // Handle form submission
 if($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $fapshi_enabled = isset($_POST['fapshi_enabled']) ? 1 : 0;
-    $fapshi_api_user = trim($_POST['fapshi_api_user']);
+    $fapshi_enabled = isset($_POST['fapshi_enabled']) ? 'yes' : 'no';
     $fapshi_api_key = trim($_POST['fapshi_api_key']);
+    $fapshi_api_secret = trim($_POST['fapshi_api_secret']);
     $fapshi_webhook_secret = trim($_POST['fapshi_webhook_secret']);
-    $fapshi_sandbox_mode = isset($_POST['fapshi_sandbox_mode']) ? 1 : 0;
+    $fapshi_environment = isset($_POST['fapshi_sandbox_mode']) ? 'sandbox' : 'production';
     $fapshi_callback_url = trim($_POST['fapshi_callback_url']);
     $fapshi_return_url = trim($_POST['fapshi_return_url']);
     
     // Update settings
     $update_query = "UPDATE tbl_payment_settings SET 
-                    status = ?, 
-                    api_user = ?, 
                     api_key = ?, 
+                    api_secret = ?, 
                     webhook_secret = ?,
-                    sandbox_mode = ?, 
-                    callback_url = ?, 
-                    return_url = ?,
+                    environment = ?, 
+                    is_active = ?,
                     updated_at = NOW()
-                    WHERE gateway = 'fapshi'";
+                    WHERE payment_gateway = 'fapshi'";
     
     $stmt = $rstate->prepare($update_query);
-    $stmt->bind_param('isssiss', $fapshi_enabled, $fapshi_api_user, $fapshi_api_key, $fapshi_webhook_secret, $fapshi_sandbox_mode, $fapshi_callback_url, $fapshi_return_url);
+    $stmt->bind_param('sssss', $fapshi_api_key, $fapshi_api_secret, $fapshi_webhook_secret, $fapshi_environment, $fapshi_enabled);
     
     if($stmt->execute()) {
         $success_message = "Fapshi settings updated successfully!";
@@ -48,19 +48,28 @@ if($_SERVER['REQUEST_METHOD'] == 'POST') {
 }
 
 // Get current settings
-$settings_query = "SELECT * FROM tbl_payment_settings WHERE gateway = 'fapshi'";
+$settings_query = "SELECT * FROM tbl_payment_settings WHERE payment_gateway = 'fapshi'";
 $settings_result = $rstate->query($settings_query);
 
 if($settings_result->num_rows == 0) {
     // Create default settings if none exist
-    $insert_query = "INSERT INTO tbl_payment_settings (gateway, status, api_user, api_key, webhook_secret, sandbox_mode, callback_url, return_url, created_at, updated_at) 
-                     VALUES ('fapshi', 0, '', '', '', 1, '', '', NOW(), NOW())";
+    $insert_query = "INSERT INTO tbl_payment_settings (payment_gateway, api_key, api_secret, webhook_secret, environment, is_active, created_at, updated_at) 
+                     VALUES ('fapshi', '', '', '', 'sandbox', 'no', NOW(), NOW())";
     $rstate->query($insert_query);
     $settings_result = $rstate->query($settings_query);
 }
 
 $settings = $settings_result->fetch_assoc();
 ?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fapshi Configuration - Admin Panel</title>
+</head>
+<body>
     <!-- Loader ends-->
     <!-- page-wrapper Start-->
     <div class="page-wrapper compact-wrapper" id="pageWrapper">
@@ -122,27 +131,27 @@ $settings = $settings_result->fetch_assoc();
                             <div class="form-group">
                                 <label for="fapshi_enabled">Enable Fapshi Payment Gateway</label>
                                 <div class="custom-control custom-switch">
-                                    <input type="checkbox" class="custom-control-input" id="fapshi_enabled" name="fapshi_enabled" <?php echo $settings['status'] ? 'checked' : ''; ?>>
+                                    <input type="checkbox" class="custom-control-input" id="fapshi_enabled" name="fapshi_enabled" <?php echo $settings['is_active'] == 'yes' ? 'checked' : ''; ?>>
                                     <label class="custom-control-label" for="fapshi_enabled">Enable Fapshi payment processing</label>
                                 </div>
                             </div>
                             
                             <div class="form-group">
-                                <label for="fapshi_api_user">API User</label>
-                                <input type="text" class="form-control" id="fapshi_api_user" name="fapshi_api_user" 
-                                       value="<?php echo htmlspecialchars($settings['api_user']); ?>" required>
-                                <div class="invalid-feedback">
-                                    Please enter your Fapshi API User.
-                                </div>
-                                <small class="form-text text-muted">Your unique API user identifier from Fapshi</small>
-                            </div>
-                            
-                            <div class="form-group">
                                 <label for="fapshi_api_key">API Key</label>
-                                <input type="password" class="form-control" id="fapshi_api_key" name="fapshi_api_key" 
+                                <input type="text" class="form-control" id="fapshi_api_key" name="fapshi_api_key" 
                                        value="<?php echo htmlspecialchars($settings['api_key']); ?>" required>
                                 <div class="invalid-feedback">
                                     Please enter your Fapshi API Key.
+                                </div>
+                                <small class="form-text text-muted">Your API key for authentication</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="fapshi_api_secret">API Secret</label>
+                                <input type="password" class="form-control" id="fapshi_api_secret" name="fapshi_api_secret" 
+                                       value="<?php echo htmlspecialchars($settings['api_secret']); ?>" required>
+                                <div class="invalid-feedback">
+                                    Please enter your Fapshi API Secret.
                                 </div>
                                 <small class="form-text text-muted">Your secret API key for authentication</small>
                             </div>
@@ -160,7 +169,7 @@ $settings = $settings_result->fetch_assoc();
                             <div class="form-group">
                                 <label for="fapshi_sandbox_mode">Environment Mode</label>
                                 <div class="custom-control custom-switch">
-                                    <input type="checkbox" class="custom-control-input" id="fapshi_sandbox_mode" name="fapshi_sandbox_mode" <?php echo $settings['sandbox_mode'] ? 'checked' : ''; ?>>
+                                    <input type="checkbox" class="custom-control-input" id="fapshi_sandbox_mode" name="fapshi_sandbox_mode" <?php echo $settings['environment'] == 'sandbox' ? 'checked' : ''; ?>>
                                     <label class="custom-control-label" for="fapshi_sandbox_mode">Enable Sandbox Mode (uncheck for production)</label>
                                 </div>
                                 <small class="form-text text-muted">Use sandbox environment for testing, disable for live transactions</small>
@@ -173,7 +182,7 @@ $settings = $settings_result->fetch_assoc();
                             <div class="form-group">
                                 <label for="fapshi_callback_url">Webhook URL</label>
                                 <input type="url" class="form-control" id="fapshi_callback_url" name="fapshi_callback_url" 
-                                       value="<?php echo htmlspecialchars($settings['callback_url']); ?>">
+                                       value="<?php echo htmlspecialchars($settings['callback_url'] ?? ''); ?>">
                                 <div class="invalid-feedback">
                                     Please enter a valid webhook URL.
                                 </div>
@@ -183,7 +192,7 @@ $settings = $settings_result->fetch_assoc();
                             <div class="form-group">
                                 <label for="fapshi_return_url">Return URL</label>
                                 <input type="url" class="form-control" id="fapshi_return_url" name="fapshi_return_url" 
-                                       value="<?php echo htmlspecialchars($settings['return_url']); ?>">
+                                       value="<?php echo htmlspecialchars($settings['return_url'] ?? ''); ?>">
                                 <div class="invalid-feedback">
                                     Please enter a valid return URL.
                                 </div>
@@ -192,17 +201,17 @@ $settings = $settings_result->fetch_assoc();
                             
                             <div class="alert alert-info">
                                 <h6><i class="fa fa-info-circle"></i> Fapshi API Credentials</h6>
-                                <p class="mb-0">Fapshi uses API User and API Key for authentication. These credentials must be included in the headers of every API request.</p>
+                                <p class="mb-0">Fapshi uses API Key and API Secret for authentication. These credentials must be included in the headers of every API request.</p>
                             </div>
                             
                             <div class="alert alert-warning">
                                 <h6><i class="fa fa-exclamation-triangle"></i> Webhook Secret</h6>
-                                <p class="mb-0">The webhook secret is configured separately in your Fapshi dashboard and is used to verify webhook signatures. This is different from your API key.</p>
+                                <p class="mb-0">The webhook secret is configured separately in your Fapshi dashboard and is used to verify webhook signatures. This is different from your API secret.</p>
                             </div>
                             
                             <div class="alert alert-warning">
                                 <h6><i class="fa fa-exclamation-triangle"></i> Security Notice</h6>
-                                <p class="mb-0">Keep your API credentials and webhook secret secure and never share them publicly. Your API User and API Key combination is essentially your username and password for the Fapshi API.</p>
+                                <p class="mb-0">Keep your API credentials and webhook secret secure and never share them publicly. Your API Key and API Secret combination is essentially your username and password for the Fapshi API.</p>
                             </div>
                         </div>
                     </div>
