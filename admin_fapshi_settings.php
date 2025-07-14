@@ -16,53 +16,50 @@ if($_SESSION['stype'] == 'Staff')
 }
 
 // Handle form submission
-if(isset($_POST['update_fapshi_settings'])) {
-    $api_key = $_POST['api_key'];
-    $api_secret = $_POST['api_secret'];
-    $webhook_secret = $_POST['webhook_secret'];
-    $environment = $_POST['environment'];
-    $is_active = $_POST['is_active'];
+if($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $fapshi_enabled = isset($_POST['fapshi_enabled']) ? 1 : 0;
+    $fapshi_api_user = trim($_POST['fapshi_api_user']);
+    $fapshi_api_key = trim($_POST['fapshi_api_key']);
+    $fapshi_webhook_secret = trim($_POST['fapshi_webhook_secret']);
+    $fapshi_sandbox_mode = isset($_POST['fapshi_sandbox_mode']) ? 1 : 0;
+    $fapshi_callback_url = trim($_POST['fapshi_callback_url']);
+    $fapshi_return_url = trim($_POST['fapshi_return_url']);
     
-    // Update or insert Fapshi settings
-    $check_existing = $rstate->query("SELECT id FROM tbl_payment_settings WHERE payment_gateway = 'fapshi'");
+    // Update settings
+    $update_query = "UPDATE tbl_payment_settings SET 
+                    status = ?, 
+                    api_user = ?, 
+                    api_key = ?, 
+                    webhook_secret = ?,
+                    sandbox_mode = ?, 
+                    callback_url = ?, 
+                    return_url = ?,
+                    updated_at = NOW()
+                    WHERE gateway = 'fapshi'";
     
-    if($check_existing->num_rows > 0) {
-        // Update existing
-        $update_query = $rstate->prepare("UPDATE tbl_payment_settings SET 
-            api_key = ?, 
-            api_secret = ?, 
-            webhook_secret = ?, 
-            environment = ?, 
-            is_active = ?, 
-            updated_at = NOW() 
-            WHERE payment_gateway = 'fapshi'");
-        $update_query->bind_param("sssss", $api_key, $api_secret, $webhook_secret, $environment, $is_active);
-    } else {
-        // Insert new
-        $update_query = $rstate->prepare("INSERT INTO tbl_payment_settings 
-            (payment_gateway, api_key, api_secret, webhook_secret, environment, is_active) 
-            VALUES ('fapshi', ?, ?, ?, ?, ?)");
-        $update_query->bind_param("sssss", $api_key, $api_secret, $webhook_secret, $environment, $is_active);
-    }
+    $stmt = $rstate->prepare($update_query);
+    $stmt->bind_param('isssiss', $fapshi_enabled, $fapshi_api_user, $fapshi_api_key, $fapshi_webhook_secret, $fapshi_sandbox_mode, $fapshi_callback_url, $fapshi_return_url);
     
-    if($update_query->execute()) {
+    if($stmt->execute()) {
         $success_message = "Fapshi settings updated successfully!";
     } else {
-        $error_message = "Error updating Fapshi settings.";
+        $error_message = "Error updating Fapshi settings: " . $stmt->error;
     }
 }
 
-// Get current Fapshi settings
-$fapshi_settings = $rstate->query("SELECT * FROM tbl_payment_settings WHERE payment_gateway = 'fapshi'")->fetch_assoc();
-if(!$fapshi_settings) {
-    $fapshi_settings = [
-        'api_key' => '',
-        'api_secret' => '',
-        'webhook_secret' => '',
-        'environment' => 'sandbox',
-        'is_active' => 'no'
-    ];
+// Get current settings
+$settings_query = "SELECT * FROM tbl_payment_settings WHERE gateway = 'fapshi'";
+$settings_result = $rstate->query($settings_query);
+
+if($settings_result->num_rows == 0) {
+    // Create default settings if none exist
+    $insert_query = "INSERT INTO tbl_payment_settings (gateway, status, api_user, api_key, webhook_secret, sandbox_mode, callback_url, return_url, created_at, updated_at) 
+                     VALUES ('fapshi', 0, '', '', '', 1, '', '', NOW(), NOW())";
+    $rstate->query($insert_query);
+    $settings_result = $rstate->query($settings_query);
 }
+
+$settings = $settings_result->fetch_assoc();
 ?>
     <!-- Loader ends-->
     <!-- page-wrapper Start-->
@@ -84,7 +81,7 @@ if(!$fapshi_settings) {
             <div class="page-title">
               <div class="row">
                 <div class="col-6">
-                  <h3>Fapshi Payment Configuration</h3>
+                  <h3>Fapshi Configuration</h3>
                 </div>
                 <div class="col-6">
                   
@@ -101,199 +98,235 @@ if(!$fapshi_settings) {
                 
                 <?php if(isset($success_message)) { ?>
                     <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        <?php echo $success_message; ?>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        <i class="fa fa-check-circle"></i> <?php echo $success_message; ?>
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
                     </div>
                 <?php } ?>
                 
                 <?php if(isset($error_message)) { ?>
                     <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        <?php echo $error_message; ?>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        <i class="fa fa-exclamation-circle"></i> <?php echo $error_message; ?>
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
                     </div>
                 <?php } ?>
-                        
-                        <h5 class="h5_set"><i class="fa fa-credit-card"></i> Fapshi Payment Gateway Settings</h5>
-                <form method="post">
+                
+                <form method="POST" class="needs-validation" novalidate>
                     <div class="row">
-                        <div class="form-group mb-3 col-6">
-                            <label><span class="text-danger">*</span> Fapshi API Key</label>
-                            <input type="text" class="form-control" 
-                                   placeholder="Enter Fapshi API Key" 
-                                   value="<?php echo $fapshi_settings['api_key']; ?>" 
-                                   name="api_key" required="">
-                            <small class="text-muted">Your Fapshi API key from dashboard</small>
+                        <div class="col-md-6">
+                            <h5 class="h5_set"><i class="fa fa-toggle-on"></i> General Settings</h5>
+                            
+                            <div class="form-group">
+                                <label for="fapshi_enabled">Enable Fapshi Payment Gateway</label>
+                                <div class="custom-control custom-switch">
+                                    <input type="checkbox" class="custom-control-input" id="fapshi_enabled" name="fapshi_enabled" <?php echo $settings['status'] ? 'checked' : ''; ?>>
+                                    <label class="custom-control-label" for="fapshi_enabled">Enable Fapshi payment processing</label>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="fapshi_api_user">API User</label>
+                                <input type="text" class="form-control" id="fapshi_api_user" name="fapshi_api_user" 
+                                       value="<?php echo htmlspecialchars($settings['api_user']); ?>" required>
+                                <div class="invalid-feedback">
+                                    Please enter your Fapshi API User.
+                                </div>
+                                <small class="form-text text-muted">Your unique API user identifier from Fapshi</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="fapshi_api_key">API Key</label>
+                                <input type="password" class="form-control" id="fapshi_api_key" name="fapshi_api_key" 
+                                       value="<?php echo htmlspecialchars($settings['api_key']); ?>" required>
+                                <div class="invalid-feedback">
+                                    Please enter your Fapshi API Key.
+                                </div>
+                                <small class="form-text text-muted">Your secret API key for authentication</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="fapshi_webhook_secret">Webhook Secret</label>
+                                <input type="password" class="form-control" id="fapshi_webhook_secret" name="fapshi_webhook_secret" 
+                                       value="<?php echo htmlspecialchars($settings['webhook_secret']); ?>" required>
+                                <div class="invalid-feedback">
+                                    Please enter your Fapshi Webhook Secret.
+                                </div>
+                                <small class="form-text text-muted">Webhook secret configured in your Fapshi dashboard</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="fapshi_sandbox_mode">Environment Mode</label>
+                                <div class="custom-control custom-switch">
+                                    <input type="checkbox" class="custom-control-input" id="fapshi_sandbox_mode" name="fapshi_sandbox_mode" <?php echo $settings['sandbox_mode'] ? 'checked' : ''; ?>>
+                                    <label class="custom-control-label" for="fapshi_sandbox_mode">Enable Sandbox Mode (uncheck for production)</label>
+                                </div>
+                                <small class="form-text text-muted">Use sandbox environment for testing, disable for live transactions</small>
+                            </div>
                         </div>
                         
-                        <div class="form-group mb-3 col-6">
-                            <label><span class="text-danger">*</span> Fapshi API Secret</label>
-                            <input type="password" class="form-control" 
-                                   placeholder="Enter Fapshi API Secret" 
-                                   value="<?php echo $fapshi_settings['api_secret']; ?>" 
-                                   name="api_secret" required="">
-                            <small class="text-muted">Your Fapshi API secret key</small>
+                        <div class="col-md-6">
+                            <h5 class="h5_set"><i class="fa fa-cog"></i> Advanced Settings</h5>
+                            
+                            <div class="form-group">
+                                <label for="fapshi_callback_url">Webhook URL</label>
+                                <input type="url" class="form-control" id="fapshi_callback_url" name="fapshi_callback_url" 
+                                       value="<?php echo htmlspecialchars($settings['callback_url']); ?>">
+                                <div class="invalid-feedback">
+                                    Please enter a valid webhook URL.
+                                </div>
+                                <small class="form-text text-muted">URL for receiving payment notifications (e.g., https://yoursite.com/user_api/fapshi_webhook.php)</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="fapshi_return_url">Return URL</label>
+                                <input type="url" class="form-control" id="fapshi_return_url" name="fapshi_return_url" 
+                                       value="<?php echo htmlspecialchars($settings['return_url']); ?>">
+                                <div class="invalid-feedback">
+                                    Please enter a valid return URL.
+                                </div>
+                                <small class="form-text text-muted">URL where users are redirected after payment completion</small>
+                            </div>
+                            
+                            <div class="alert alert-info">
+                                <h6><i class="fa fa-info-circle"></i> Fapshi API Credentials</h6>
+                                <p class="mb-0">Fapshi uses API User and API Key for authentication. These credentials must be included in the headers of every API request.</p>
+                            </div>
+                            
+                            <div class="alert alert-warning">
+                                <h6><i class="fa fa-exclamation-triangle"></i> Webhook Secret</h6>
+                                <p class="mb-0">The webhook secret is configured separately in your Fapshi dashboard and is used to verify webhook signatures. This is different from your API key.</p>
+                            </div>
+                            
+                            <div class="alert alert-warning">
+                                <h6><i class="fa fa-exclamation-triangle"></i> Security Notice</h6>
+                                <p class="mb-0">Keep your API credentials and webhook secret secure and never share them publicly. Your API User and API Key combination is essentially your username and password for the Fapshi API.</p>
+                            </div>
                         </div>
-                        
-                        <div class="form-group mb-3 col-6">
-                            <label><span class="text-danger">*</span> Webhook Secret</label>
-                            <input type="text" class="form-control" 
-                                   placeholder="Enter Webhook Secret" 
-                                   value="<?php echo $fapshi_settings['webhook_secret']; ?>" 
-                                   name="webhook_secret" required="">
-                            <small class="text-muted">Secret key for webhook verification</small>
-                        </div>
-                        
-                        <div class="form-group mb-3 col-3">
-                            <label><span class="text-danger">*</span> Environment</label>
-                            <select class="form-control" name="environment" required="">
-                                <option value="">Select Environment</option>
-                                <option value="sandbox" <?php if($fapshi_settings['environment'] == 'sandbox') echo 'selected'; ?>>Sandbox (Test)</option>
-                                <option value="production" <?php if($fapshi_settings['environment'] == 'production') echo 'selected'; ?>>Production (Live)</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group mb-3 col-3">
-                            <label><span class="text-danger">*</span> Status</label>
-                            <select class="form-control" name="is_active" required="">
-                                <option value="">Select Status</option>
-                                <option value="yes" <?php if($fapshi_settings['is_active'] == 'yes') echo 'selected'; ?>>Active</option>
-                                <option value="no" <?php if($fapshi_settings['is_active'] == 'no') echo 'selected'; ?>>Inactive</option>
-                            </select>
-                        </div>
-                        
+                    </div>
+                    
+                    <div class="row mt-4">
                         <div class="col-12">
-                            <button type="submit" name="update_fapshi_settings" class="btn btn-primary mb-2">
-                                Update Fapshi Settings
+                            <h5 class="h5_set"><i class="fa fa-chart-bar"></i> Fapshi Transaction Statistics</h5>
+                        </div>
+                        
+                        <?php 
+                        // Get Fapshi transaction statistics
+                        $stats_query = "SELECT 
+                            COUNT(*) as total_transactions,
+                            SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as successful_transactions,
+                            SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) as failed_transactions,
+                            SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_transactions,
+                            SUM(CASE WHEN status = 'completed' THEN amount ELSE 0 END) as total_amount
+                            FROM tbl_wallet_transactions 
+                            WHERE payment_method = 'fapshi'";
+                        
+                        $stats_result = $rstate->query($stats_query);
+                        $stats = $stats_result->fetch_assoc();
+                        ?>
+                        
+                        <div class="col-md-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body">
+                                    <h4><?php echo number_format($stats['total_transactions']); ?></h4>
+                                    <p>Total Transactions</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body">
+                                    <h4><?php echo number_format($stats['successful_transactions']); ?></h4>
+                                    <p>Successful</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body">
+                                    <h4><?php echo number_format($stats['pending_transactions']); ?></h4>
+                                    <p>Pending</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <div class="card bg-danger text-white">
+                                <div class="card-body">
+                                    <h4><?php echo number_format($stats['failed_transactions']); ?></h4>
+                                    <p>Failed</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-12 mt-3">
+                            <div class="card bg-info text-white">
+                                <div class="card-body">
+                                    <h4><?php echo number_format($stats['total_amount'], 2); ?> FCFA</h4>
+                                    <p>Total Amount Processed</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fa fa-save"></i> Save Fapshi Settings
                             </button>
+                            
+                            <a href="test_fapshi_complete.php" class="btn btn-info" target="_blank">
+                                <i class="fa fa-test-tube"></i> Test Fapshi Integration
+                            </a>
                         </div>
                     </div>
                 </form>
                 
-                <!-- Configuration Instructions -->
-                <div class="row mt-4">
-                    <div class="col-12">
-                        <h5 class="h5_set"><i class="fa fa-info-circle"></i> Configuration Instructions</h5>
-                        <div class="card">
-                            <div class="card-body">
-                                <h6>1. Fapshi Account Setup</h6>
-                                <ul>
-                                    <li>Create an account at <a href="https://fapshi.com" target="_blank">https://fapshi.com</a></li>
-                                    <li>Complete your business verification</li>
-                                    <li>Navigate to API settings in your dashboard</li>
-                                </ul>
-                                
-                                <h6>2. API Keys</h6>
-                                <ul>
-                                    <li>Copy your API Key and API Secret from Fapshi dashboard</li>
-                                    <li>Generate a webhook secret key (recommended: strong random string)</li>
-                                    <li>Use sandbox mode for testing, production for live transactions</li>
-                                </ul>
-                                
-                                <h6>3. Webhook Configuration</h6>
-                                <ul>
-                                    <li>Set webhook URL in Fapshi dashboard to: <code><?php echo (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST']; ?>/user_api/fapshi_webhook.php</code></li>
-                                    <li>Use the same webhook secret configured above</li>
-                                    <li>Enable payment confirmation events</li>
-                                </ul>
-                                
-                                <h6>4. Testing</h6>
-                                <ul>
-                                    <li>Use sandbox mode with test MTN MoMo numbers</li>
-                                    <li>Test wallet top-up functionality</li>
-                                    <li>Verify webhook notifications are received</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Payment Statistics -->
-                <div class="row mt-4">
-                    <div class="col-12">
-                        <h5 class="h5_set"><i class="fa fa-chart-line"></i> Payment Statistics</h5>
-                    </div>
-                    
-                    <?php 
-                    // Get payment statistics
-                    $today_payments = $rstate->query("SELECT COUNT(*) as count, SUM(amount) as total FROM tbl_wallet_transactions WHERE DATE(created_at) = CURDATE() AND transaction_type = 'deposit' AND status = 'completed'")->fetch_assoc();
-                    $month_payments = $rstate->query("SELECT COUNT(*) as count, SUM(amount) as total FROM tbl_wallet_transactions WHERE MONTH(created_at) = MONTH(CURDATE()) AND YEAR(created_at) = YEAR(CURDATE()) AND transaction_type = 'deposit' AND status = 'completed'")->fetch_assoc();
-                    $failed_payments = $rstate->query("SELECT COUNT(*) as count FROM tbl_wallet_transactions WHERE transaction_type = 'deposit' AND status = 'failed'")->fetch_assoc();
-                    $pending_payments = $rstate->query("SELECT COUNT(*) as count FROM tbl_wallet_transactions WHERE transaction_type = 'deposit' AND status = 'pending'")->fetch_assoc();
-                    ?>
-                    
-                    <div class="col-lg-3 col-md-6 col-sm-6">
-                        <div class="card sale-chart">
-                            <div class="card-body">
-                                <div class="sale-detail">
-                                    <div class="icon"><i data-feather="calendar"></i></div>
-                                    <div class="sale-content">
-                                        <h6>Today's Payments</h6>
-                                        <p><?php echo ($today_payments['count'] ?: 0) . ' payments'; ?></p>
-                                        <small><?php echo number_format((float)($today_payments['total'] ?: 0), 2) . ' ' . $set['currency']; ?></small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="col-lg-3 col-md-6 col-sm-6">
-                        <div class="card sale-chart">
-                            <div class="card-body">
-                                <div class="sale-detail">
-                                    <div class="icon"><i data-feather="calendar"></i></div>
-                                    <div class="sale-content">
-                                        <h6>This Month's Payments</h6>
-                                        <p><?php echo ($month_payments['count'] ?: 0) . ' payments'; ?></p>
-                                        <small><?php echo number_format((float)($month_payments['total'] ?: 0), 2) . ' ' . $set['currency']; ?></small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="col-lg-3 col-md-6 col-sm-6">
-                        <div class="card sale-chart">
-                            <div class="card-body">
-                                <div class="sale-detail">
-                                    <div class="icon"><i data-feather="x-circle"></i></div>
-                                    <div class="sale-content">
-                                        <h6>Failed Payments</h6>
-                                        <p><?php echo ($failed_payments['count'] ?: 0) . ' payments'; ?></p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="col-lg-3 col-md-6 col-sm-6">
-                        <div class="card sale-chart">
-                            <div class="card-body">
-                                <div class="sale-detail">
-                                    <div class="icon"><i data-feather="clock"></i></div>
-                                    <div class="sale-content">
-                                        <h6>Pending Payments</h6>
-                                        <p><?php echo ($pending_payments['count'] ?: 0) . ' payments'; ?></p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
                 </div>
                 </div>
-              </div>
+               </div>
             </div>
           </div>
           <!-- Container-fluid Ends-->
         </div>
         <!-- footer start-->
-        
+        <?php require 'include/footer.php'; ?>
+        <!-- footer end-->
       </div>
     </div>
     <!-- latest jquery-->
-    <?php 
-require 'include/footer.php';
-?>
-  </body>
+    <script src="assets/js/jquery-3.6.0.min.js"></script>
+    <!-- Bootstrap js-->
+    <script src="assets/js/bootstrap/popper.min.js"></script>
+    <script src="assets/js/bootstrap/bootstrap.min.js"></script>
+    <!-- feather icon js-->
+    <script src="assets/js/icons/feather-icon/feather.min.js"></script>
+    <script src="assets/js/icons/feather-icon/feather-icon.js"></script>
+    <!-- Sidebar jquery-->
+    <script src="assets/js/sidebar-menu.js"></script>
+    <!-- Custom js-->
+    <script src="assets/js/script.js"></script>
+    <script>
+        // Form validation
+        (function() {
+            'use strict';
+            window.addEventListener('load', function() {
+                var forms = document.getElementsByClassName('needs-validation');
+                var validation = Array.prototype.filter.call(forms, function(form) {
+                    form.addEventListener('submit', function(event) {
+                        if (form.checkValidity() === false) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                        }
+                        form.classList.add('was-validated');
+                    }, false);
+                });
+            }, false);
+        })();
+    </script>
+</body>
 </html>

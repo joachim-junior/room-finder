@@ -12,14 +12,12 @@ if($data['uid'] == '' or $data['wallet'] == '')
 }
 else
 {
-    $wallet = strip_tags(mysqli_real_escape_string($rstate,$data['wallet']));
+$wallet = strip_tags(mysqli_real_escape_string($rstate,$data['wallet']));
 $uid =  strip_tags(mysqli_real_escape_string($rstate,$data['uid']));
 $checkimei = mysqli_num_rows(mysqli_query($rstate,"select * from tbl_user where  `id`=".$uid.""));
 
 if($checkimei != 0)
     {
-		
-		
       $vp = $rstate->query("select * from tbl_user where id=".$uid."")->fetch_assoc();
 	  
   $table="tbl_user";

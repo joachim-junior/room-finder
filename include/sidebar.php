@@ -121,7 +121,7 @@ else
                             <path d="M17.7778 8.33333V6.11111C17.7778 5.49746 17.4603 4.909 16.9046 4.48223C16.3489 4.05547 15.6044 3.83333 14.8333 3.83333H12C11.229 3.83333 10.4844 4.05547 9.92874 4.48223C9.37302 4.909 9.05556 5.49746 9.05556 6.11111V8.33333" stroke="#130F26" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
                           </g>
                         </g>
-                      </svg><span>Wallet Management</span></a>
+                      </svg><span>Wallet</span></a>
                     <ul class="sidebar-submenu">
                       <li><a href="admin_wallet_settings.php">Wallet Settings</a></li>
                       <li><a href="admin_wallet_transactions.php">Transaction History</a></li>
@@ -136,10 +136,10 @@ else
                             <path d="M12 14L8.21922 19.2169C7.94496 19.6276 8.25574 20.2 8.75574 20.2H15.2443C15.7443 20.2 16.055 19.6276 15.7808 19.2169L12 14Z" stroke="#130F26" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
                           </g>
                         </g>
-                      </svg><span>Commission Management</span></a>
+                      </svg><span>Commissions</span></a>
                     <ul class="sidebar-submenu">
                       <li><a href="admin_commission_settings.php">Commission Settings</a></li>
-                      <li><a href="admin_commission_reports.php">Commission Reports</a></li>
+                      <!-- <li><a href="admin_commission_reports.php">Commission Reports</a></li> -->
                       <li><a href="admin_property_owner_payouts.php">Property Owner Payouts</a></li>
                     </ul>
                   </li>

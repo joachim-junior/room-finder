@@ -44,6 +44,38 @@ if($transaction_query->num_rows == 0) {
 
 $transaction = $transaction_query->fetch_assoc();
 
+// If we have a Fapshi payment ID, check with Fapshi API
+if(!empty($transaction['fapshi_payment_id'])) {
+    $fapshi_config = getFapshiConfig($rstate);
+    if($fapshi_config) {
+        $fapshi_status = checkFapshiPaymentStatus($transaction['fapshi_payment_id'], $fapshi_config);
+        
+        if($fapshi_status['success']) {
+            // Update local transaction status if it changed
+            $fapshi_status_value = $fapshi_status['data']['status'];
+            $local_status = $transaction['status'];
+            
+            // Map Fapshi status to local status
+            $status_mapping = array(
+                'pending' => 'pending',
+                'success' => 'completed',
+                'failed' => 'failed',
+                'cancelled' => 'cancelled'
+            );
+            
+            $mapped_status = isset($status_mapping[$fapshi_status_value]) ? $status_mapping[$fapshi_status_value] : $fapshi_status_value;
+            
+            if($mapped_status !== $local_status) {
+                $h = new Estate();
+                $update_field = array('status' => $mapped_status);
+                $update_where = "WHERE id = " . $transaction['id'];
+                $h->restateupdateData_Api($update_field, "tbl_wallet_transactions", $update_where);
+                $transaction['status'] = $mapped_status;
+            }
+        }
+    }
+}
+
 // Format the response
 $status_message = "";
 switch($transaction['status']) {
@@ -70,9 +102,69 @@ $returnArr = array(
     "status" => $transaction['status'],
     "status_message" => $status_message,
     "payment_method" => $transaction['payment_method'],
+    "phone" => $transaction['phone'],
     "created_at" => date("jS F Y, h:i A", strtotime($transaction['created_at'])),
     "completed_at" => $transaction['completed_at'] ? date("jS F Y, h:i A", strtotime($transaction['completed_at'])) : null
 );
 
 echo json_encode($returnArr);
+
+// Helper function to get Fapshi configuration
+function getFapshiConfig($rstate) {
+    $config_query = $rstate->query("SELECT * FROM tbl_payment_settings WHERE gateway = 'fapshi' AND status = 1");
+    if($config_query->num_rows > 0) {
+        $config = $config_query->fetch_assoc();
+        return array(
+            'api_user' => $config['api_user'],
+            'api_key' => $config['api_key'],
+            'base_url' => $config['sandbox_mode'] ? 'https://sandbox.fapshi.com' : 'https://api.fapshi.com'
+        );
+    }
+    return false;
+}
+
+// Helper function to check Fapshi payment status
+function checkFapshiPaymentStatus($payment_id, $config) {
+    $url = $config['base_url'] . '/payment-status/' . $payment_id;
+    
+    $headers = array(
+        'apiuser: ' . $config['api_user'],
+        'apikey: ' . $config['api_key'],
+        'Content-Type: application/json',
+        'Accept: application/json'
+    );
+    
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HTTPGET, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    
+    $response = curl_exec($ch);
+    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    
+    if($response === false) {
+        return array(
+            'success' => false,
+            'message' => 'Network error occurred'
+        );
+    }
+    
+    $response_data = json_decode($response, true);
+    
+    if($http_code === 200 && isset($response_data['status'])) {
+        return array(
+            'success' => true,
+            'data' => $response_data
+        );
+    } else {
+        return array(
+            'success' => false,
+            'message' => isset($response_data['message']) ? $response_data['message'] : 'Unknown error occurred'
+        );
+    }
+}
 ?>
