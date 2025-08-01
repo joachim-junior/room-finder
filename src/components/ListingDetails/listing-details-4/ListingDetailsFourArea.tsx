@@ -17,10 +17,45 @@ import { useState } from "react";
 import Sidebar from "../listing-details-1/Sidebar";
 import Link from "next/link";
 
-const ListingDetailsFourArea = () => {
-  const selectHandler = (e: any) => {};
+interface ListingDetailsFourAreaProps {
+  propertyData?: any;
+}
 
+const ListingDetailsFourArea = ({
+  propertyData,
+}: ListingDetailsFourAreaProps) => {
   const [loginModal, setLoginModal] = useState<boolean>(false);
+
+  // Add null checks to prevent runtime errors during static generation
+  if (!propertyData) {
+    return (
+      <div className="listing-details-one theme-details-one bg-pink pt-180 lg-pt-150 pb-150 xl-pb-120">
+        <div className="container">
+          <div className="text-center">
+            <h3>Loading property details...</h3>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const propetydetails = propertyData?.propetydetails || {};
+  const facility = propertyData?.facility || [];
+
+  // Add null check for propetydetails
+  if (!propetydetails || Object.keys(propetydetails).length === 0) {
+    return (
+      <div className="listing-details-one theme-details-one bg-pink pt-180 lg-pt-150 pb-150 xl-pb-120">
+        <div className="container">
+          <div className="text-center">
+            <h3>Property not found</h3>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const selectHandler = (e: any) => {};
 
   return (
     <>
@@ -52,7 +87,7 @@ const ListingDetailsFourArea = () => {
                 </div>
               </div>
               <div className="property-amenities bottom-line-dark pb-40 mb-60">
-                <CommonAmenities />
+                <CommonAmenities facility={facility} />
               </div>
               <div className="property-video-tour bottom-line-dark pb-40 mb-60">
                 <CommonPropertyVideoTour />

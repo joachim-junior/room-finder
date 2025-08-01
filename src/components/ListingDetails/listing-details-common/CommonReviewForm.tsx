@@ -11,6 +11,10 @@ const CommonReviewForm = ({ propertyId }: { propertyId: string | number }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) {
+      setMessage("User information not available. Please log in again.");
+      return;
+    }
     setLoading(true);
     setMessage(null);
     try {

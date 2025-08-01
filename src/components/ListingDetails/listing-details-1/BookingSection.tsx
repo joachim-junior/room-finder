@@ -29,13 +29,17 @@ const BookingSection = ({ property }: { property: any }) => {
       toast.error("You must be logged in to book.");
       return;
     }
+    if (!user) {
+      toast.error("User information not available. Please log in again.");
+      return;
+    }
     if (wallet < price) {
       toast.error("Insufficient wallet balance. Please add funds.");
       return;
     }
     setLoading(true);
     // Generate a unique transaction_id
-    const transaction_id = `txn_${Date.now()}_${user?.id || "guest"}`;
+    const transaction_id = `txn_${Date.now()}_${user.id}`;
     try {
       const res = await fetch(
         "https://cpanel.roomfinder237.com/user_api/u_book.php",

@@ -23,8 +23,35 @@ interface ListingDetailsOneAreaProps {
 const ListingDetailsOneArea = ({
   propertyData,
 }: ListingDetailsOneAreaProps) => {
+  // Add null checks to prevent runtime errors during static generation
+  if (!propertyData) {
+    return (
+      <div className="listing-details-one theme-details-one bg-pink pt-180 lg-pt-150 pb-150 xl-pb-120">
+        <div className="container">
+          <div className="text-center">
+            <h3>Loading property details...</h3>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const { propetydetails, facility, gallery, reviewlist, total_review } =
-    propertyData;
+    propertyData || {};
+
+  // Add null check for propetydetails
+  if (!propetydetails) {
+    return (
+      <div className="listing-details-one theme-details-one bg-pink pt-180 lg-pt-150 pb-150 xl-pb-120">
+        <div className="container">
+          <div className="text-center">
+            <h3>Property not found</h3>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const selectHandler = (e: any) => {};
 
   // Combine main image and gallery

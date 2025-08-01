@@ -3,11 +3,15 @@ import ListingDetailsOneArea from "./ListingDetailsOneArea";
 import FancyBanner from "@/components/common/FancyBanner";
 import FooterFour from "@/layouts/footers/FooterFour";
 
-const ListingDetailsOne = () => {
+interface ListingDetailsOneProps {
+  propertyData?: any;
+}
+
+const ListingDetailsOne = ({ propertyData }: ListingDetailsOneProps) => {
   return (
     <>
       <HeaderOne style={true} />
-      <ListingDetailsOneArea />
+      <ListingDetailsOneArea propertyData={propertyData} />
       <FancyBanner />
       <FooterFour />
     </>

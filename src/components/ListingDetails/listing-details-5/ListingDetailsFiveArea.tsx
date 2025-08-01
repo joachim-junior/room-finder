@@ -1,22 +1,69 @@
-"use client"
-import property_feature_list from "@/data/inner-data/PropertyFeatureListData"
-import CommonBanner from "../listing-details-common/CommonBanner"
-import MediaGallery from "./MediaGallery"
-import PropertyOverview from "./PropertyOverview"
-import VideoTour from "./VideoTour"
-import FloorPlan from "./FloorPlan"
-import NearbyList from "./NearbyList"
-import SimilarProperty from "./SimilarProperty"
-import ProPertyScore from "../listing-details-3/ProPertyScore"
-import MortgageCalculator from "./MortgageCalculator"
-import Location from "./Location"
-import ReviewArea from "./ReviewArea"
-import ReviewFormArea from "./ReviewFormArea"
-import Sidebar from "../listing-details-1/Sidebar"
+"use client";
+import property_feature_list from "@/data/inner-data/PropertyFeatureListData";
+import CommonBanner from "../listing-details-common/CommonBanner";
+import MediaGallery from "./MediaGallery";
+import PropertyOverview from "./PropertyOverview";
+import VideoTour from "./VideoTour";
+import FloorPlan from "./FloorPlan";
+import NearbyList from "./NearbyList";
+import SimilarProperty from "./SimilarProperty";
+import ProPertyScore from "../listing-details-3/ProPertyScore";
+import MortgageCalculator from "./MortgageCalculator";
+import Location from "./Location";
+import ReviewArea from "./ReviewArea";
+import ReviewFormArea from "./ReviewFormArea";
+import Sidebar from "../listing-details-1/Sidebar";
+import React from "react";
 
-const ammenities_data: string[] = ["A/C & Heating", "Garages", "Garden", "Disabled Access", "Swimming Pool", "Parking", "Wifi", "Pet Friendly", "Ceiling Height", "Fireplace", "Play Ground", "Elevator"]
+interface ListingDetailsFiveAreaProps {
+  propertyData?: any;
+}
 
-const ListingDetailsFiveArea = () => {
+const ammenities_data: string[] = [
+  "A/C & Heating",
+  "Garages",
+  "Garden",
+  "Disabled Access",
+  "Swimming Pool",
+  "Parking",
+  "Wifi",
+  "Pet Friendly",
+  "Ceiling Height",
+  "Fireplace",
+  "Play Ground",
+  "Elevator",
+];
+
+const ListingDetailsFiveArea = ({
+  propertyData,
+}: ListingDetailsFiveAreaProps) => {
+  // Add null checks to prevent runtime errors during static generation
+  if (!propertyData) {
+    return (
+      <div className="listing-details-one theme-details-one mt-130 lg-mt-100 pb-150 xl-pb-120">
+        <div className="container">
+          <div className="text-center">
+            <h3>Loading property details...</h3>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const { propetydetails, facility, gallery, reviewlist, total_review } =
+    propertyData || {};
+  if (!propetydetails) {
+    return (
+      <div className="listing-details-one theme-details-one mt-130 lg-mt-100 pb-150 xl-pb-120">
+        <div className="container">
+          <div className="text-center">
+            <h3>Property not found</h3>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="listing-details-one theme-details-one mt-130 lg-mt-100 pb-150 xl-pb-120">
       <MediaGallery />
@@ -34,32 +81,67 @@ const ListingDetailsFiveArea = () => {
               <div className="accordion" id="accordionTwo">
                 <div className="accordion-item">
                   <h2 className="accordion-header">
-                    <button className="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOneA" aria-expanded="false" aria-controls="collapseOneA">
+                    <button
+                      className="accordion-button"
+                      type="button"
+                      data-bs-toggle="collapse"
+                      data-bs-target="#collapseOneA"
+                      aria-expanded="false"
+                      aria-controls="collapseOneA"
+                    >
                       Overview
                     </button>
                   </h2>
-                  <div id="collapseOneA" className="accordion-collapse collapse show">
+                  <div
+                    id="collapseOneA"
+                    className="accordion-collapse collapse show"
+                  >
                     <div className="accordion-body">
-                      <p className="fs-20 lh-lg m0">Risk management and compliance, when approached strategically, have the potential to go beyond mitigating threats and protecting a company’s operations &amp; reputation.They can actually generate value and create opportunities. </p>
+                      <p className="fs-20 lh-lg m0">
+                        Risk management and compliance, when approached
+                        strategically, have the potential to go beyond
+                        mitigating threats and protecting a company’s operations
+                        &amp; reputation.They can actually generate value and
+                        create opportunities.{" "}
+                      </p>
                     </div>
                   </div>
                 </div>
 
                 <div className="accordion-item">
                   <h2 className="accordion-header">
-                    <button className="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwoA" aria-expanded="false" aria-controls="collapseTwoA">
+                    <button
+                      className="accordion-button collapsed"
+                      type="button"
+                      data-bs-toggle="collapse"
+                      data-bs-target="#collapseTwoA"
+                      aria-expanded="false"
+                      aria-controls="collapseTwoA"
+                    >
                       Property Features
                     </button>
                   </h2>
-                  <div id="collapseTwoA" className="accordion-collapse collapse">
+                  <div
+                    id="collapseTwoA"
+                    className="accordion-collapse collapse"
+                  >
                     <div className="accordion-body">
-                      <p className="fs-20 lh-lg">Risk management and compliance, when approached strategically, have the potential to go beyond mitigating threats.</p>
+                      <p className="fs-20 lh-lg">
+                        Risk management and compliance, when approached
+                        strategically, have the potential to go beyond
+                        mitigating threats.
+                      </p>
                       <h5 className="pt-30 pb-25">Property Details</h5>
                       {property_feature_list.slice(0, 1).map((item) => (
                         <div key={item.id} className="feature-list-two">
                           <ul className="style-none d-flex flex-wrap justify-content-between">
                             {item.feature_list.map((list, i) => (
-                              <li key={i}><span>{list.title} </span> <span className="fw-500 color-dark">{list.count}</span></li>
+                              <li key={i}>
+                                <span>{list.title} </span>{" "}
+                                <span className="fw-500 color-dark">
+                                  {list.count}
+                                </span>
+                              </li>
                             ))}
                           </ul>
                         </div>
@@ -70,13 +152,26 @@ const ListingDetailsFiveArea = () => {
 
                 <div className="accordion-item">
                   <h2 className="accordion-header">
-                    <button className="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThreeA" aria-expanded="true" aria-controls="collapseThreeA">
+                    <button
+                      className="accordion-button collapsed"
+                      type="button"
+                      data-bs-toggle="collapse"
+                      data-bs-target="#collapseThreeA"
+                      aria-expanded="true"
+                      aria-controls="collapseThreeA"
+                    >
                       Amenities
                     </button>
                   </h2>
-                  <div id="collapseThreeA" className="accordion-collapse collapse">
+                  <div
+                    id="collapseThreeA"
+                    className="accordion-collapse collapse"
+                  >
                     <div className="accordion-body">
-                      <p className="fs-20 lh-lg pb-25">Risk management & compliance, when approached strategically, have the potential</p>
+                      <p className="fs-20 lh-lg pb-25">
+                        Risk management & compliance, when approached
+                        strategically, have the potential
+                      </p>
                       <ul className="style-none d-flex flex-wrap justify-content-between list-style-two">
                         {ammenities_data.map((list, i) => (
                           <li key={i}>{list}</li>
@@ -88,10 +183,10 @@ const ListingDetailsFiveArea = () => {
 
                 <VideoTour />
                 <FloorPlan />
-                <NearbyList/>
+                <NearbyList />
                 <SimilarProperty />
-                <ProPertyScore/>
-                <MortgageCalculator/>
+                <ProPertyScore />
+                <MortgageCalculator />
                 <Location />
                 <ReviewArea />
                 <ReviewFormArea />
@@ -102,7 +197,7 @@ const ListingDetailsFiveArea = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default ListingDetailsFiveArea
+export default ListingDetailsFiveArea;

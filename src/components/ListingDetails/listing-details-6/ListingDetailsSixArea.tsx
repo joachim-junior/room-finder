@@ -15,17 +15,52 @@ import Review from "@/components/inner-pages/agency/agency-details/Review";
 import { useState } from "react";
 import NiceSelect from "@/ui/NiceSelect";
 
-const ListingDetailsSixArea = () => {
-  const selectHandler = (e: any) => {};
+interface ListingDetailsSixAreaProps {
+  propertyData?: any;
+}
 
+const ListingDetailsSixArea = ({
+  propertyData,
+}: ListingDetailsSixAreaProps) => {
   const [loginModal, setLoginModal] = useState<boolean>(false);
+
+  // Add null checks to prevent runtime errors during static generation
+  if (!propertyData) {
+    return (
+      <div className="listing-details-one theme-details-one mt-200 xl-mt-150 pb-150 xl-mb-120">
+        <div className="container">
+          <div className="text-center">
+            <h3>Loading property details...</h3>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const propetydetails = propertyData?.propetydetails || {};
+  const facility = propertyData?.facility || [];
+
+  // Add null check for propetydetails
+  if (!propetydetails || Object.keys(propetydetails).length === 0) {
+    return (
+      <div className="listing-details-one theme-details-one mt-200 xl-mt-150 pb-150 xl-mb-120">
+        <div className="container">
+          <div className="text-center">
+            <h3>Property not found</h3>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const selectHandler = (e: any) => {};
 
   return (
     <>
       <div className="listing-details-one theme-details-one mt-200 xl-mt-150 pb-150 xl-mb-120">
         <div className="container">
           <CommonBanner style_3={true} />
-          <MediaGallery style={true} />
+          <MediaGallery gallery={propertyData?.gallery || []} />
           <div className="row pt-80 lg-pt-50">
             <div className="col-xl-8">
               <div className="property-overview bottom-line-dark pb-40 mb-60">
@@ -49,7 +84,7 @@ const ListingDetailsSixArea = () => {
                 </div>
               </div>
               <div className="property-amenities bottom-line-dark pb-40 mb-60">
-                <CommonAmenities />
+                <CommonAmenities facility={facility} />
               </div>
               <div className="property-video-tour bottom-line-dark pb-40 mb-60">
                 <CommonPropertyVideoTour />
