@@ -32,7 +32,7 @@ const TermsConditionsContent = () => {
               <div className="mb-5">
                 <h4>1. Acceptance of Terms</h4>
                 <p>
-                  By accessing and using RoomFinder (&quot;the Service&quot;),
+                  By accessing and using RoomFinder (&ldquo;the Service&rdquo;),
                   you accept and agree to be bound by the terms and provision of
                   this agreement. If you do not agree to abide by the above,
                   please do not use this service.

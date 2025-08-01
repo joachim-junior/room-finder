@@ -32,11 +32,11 @@ const PrivacyPolicyContent = () => {
               <div className="mb-5">
                 <h4>1. Introduction</h4>
                 <p>
-                  RoomFinder (&quot;we,&quot; &quot;our,&quot; or
-                  &quot;us&quot;) is committed to protecting your privacy. This
-                  Privacy Policy explains how we collect, use, disclose, and
-                  safeguard your information when you visit our website or use
-                  our services.
+                  RoomFinder (&ldquo;we,&rdquo; &ldquo;our,&rdquo; or
+                  &ldquo;us&rdquo;) is committed to protecting your privacy.
+                  This Privacy Policy explains how we collect, use, disclose,
+                  and safeguard your information when you visit our website or
+                  use our services.
                 </p>
               </div>
 

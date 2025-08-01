@@ -32,11 +32,11 @@ const CookiePolicyContent = () => {
               <div className="mb-5">
                 <h4>1. Introduction</h4>
                 <p>
-                  This Cookie Policy explains how RoomFinder (&quot;we,&quot;
-                  &quot;our,&quot; or &quot;us&quot;) uses cookies and similar
-                  technologies when you visit our website or use our services.
-                  This policy should be read alongside our Privacy Policy, which
-                  explains how we use your personal information.
+                  This Cookie Policy explains how RoomFinder (&ldquo;we,&rdquo;
+                  &ldquo;our,&rdquo; or &ldquo;us&rdquo;) uses cookies and
+                  similar technologies when you visit our website or use our
+                  services. This policy should be read alongside our Privacy
+                  Policy, which explains how we use your personal information.
                 </p>
               </div>
 

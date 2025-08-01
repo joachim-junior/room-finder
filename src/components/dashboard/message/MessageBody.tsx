@@ -127,7 +127,7 @@ const MessageBody = () => {
               <i className="bi bi-inbox fs-1 text-muted mb-3"></i>
               <h5 className="text-muted">No enquiries found</h5>
               <p className="text-muted">
-                You haven&apos;t made any property enquiries yet.
+                You have not made any property enquiries yet.
               </p>
             </div>
           ) : (

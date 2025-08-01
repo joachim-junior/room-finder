@@ -49,8 +49,8 @@ const FaqArea = () => {
                   Questions?
                 </h4>
                 <p className="mb-25">
-                  Can&apos;t find the answer you&apos;re looking for? Our
-                  support team is here to help.
+                  Cannot find the answer you are looking for? Our support team
+                  is here to help.
                 </p>
                 <Link href="/contact" className="btn-five">
                   Contact Support
