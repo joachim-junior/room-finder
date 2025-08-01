@@ -192,7 +192,7 @@ const CommonSimilarProperty = ({
                       <div className="tag bg-white text-dark fw-500 border-20">
                         {item.buyorrent?.toUpperCase()}
                       </div>
-                      <img
+                      <Image
                         src={
                           item.image &&
                           typeof item.image === "string" &&
@@ -204,13 +204,24 @@ const CommonSimilarProperty = ({
                         }
                         className="w-100 border-20"
                         alt={item.title}
+                        width={400}
+                        height={200}
                         style={{ maxHeight: 200, objectFit: "cover" }}
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
+                          console.log(
+                            `Similar property image failed to load: ${target.src}`
+                          );
                           if (!target.src.includes("no_image.jpg")) {
                             target.src = "/assets/images/media/no_image.jpg";
                           }
                         }}
+                        onLoad={() => {
+                          console.log(
+                            `Similar property image loaded successfully: ${item.image}`
+                          );
+                        }}
+                        unoptimized={true}
                       />
                       <Link
                         href={`/listing_details_01/${item.id}`}

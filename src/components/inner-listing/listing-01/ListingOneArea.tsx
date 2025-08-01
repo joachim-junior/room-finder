@@ -378,7 +378,7 @@ const ListingOneArea = () => {
                                 href={`/listing_details_01/${item.id}`}
                                 className="d-block"
                               >
-                                <img
+                                <Image
                                   src={
                                     item.image && item.image.trim() !== ""
                                       ? item.image.startsWith("http")
@@ -388,15 +388,26 @@ const ListingOneArea = () => {
                                   }
                                   className="w-100"
                                   alt={item.title || "Property image"}
+                                  width={400}
+                                  height={350}
                                   style={{
-                                    height: "350px",
                                     objectFit: "cover",
                                     objectPosition: "center",
                                   }}
                                   onError={(e) => {
-                                    const t = e.target as HTMLImageElement;
-                                    t.src = "/assets/images/media/no_image.jpg";
+                                    const target = e.target as HTMLImageElement;
+                                    console.log(
+                                      `Property image failed to load: ${target.src}`
+                                    );
+                                    target.src =
+                                      "/assets/images/media/no_image.jpg";
                                   }}
+                                  onLoad={() => {
+                                    console.log(
+                                      `Property image loaded successfully: ${item.image}`
+                                    );
+                                  }}
+                                  unoptimized={true}
                                 />
                               </Link>
                             </div>

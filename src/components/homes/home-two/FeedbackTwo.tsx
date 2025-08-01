@@ -102,24 +102,27 @@ const FeedbackTwo = () => {
                               {item.country}
                             </div>
                           </div>
-                          {typeof item.thumb === "string" ? (
-                            <img
-                              src={item.thumb}
-                              alt=""
-                              className="avatar"
-                              width={60}
-                              height={60}
-                              style={{ borderRadius: "50%" }}
-                            />
-                          ) : (
-                            <Image
-                              src={item.thumb}
-                              alt=""
-                              className="avatar"
-                              width={60}
-                              height={60}
-                            />
-                          )}
+                          <Image
+                            src={item.thumb}
+                            alt=""
+                            className="avatar"
+                            width={60}
+                            height={60}
+                            style={{ borderRadius: "50%" }}
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              console.log(
+                                `Feedback avatar failed to load: ${target.src}`
+                              );
+                              target.src = "/images/placeholder.jpg";
+                            }}
+                            onLoad={() => {
+                              console.log(
+                                `Feedback avatar loaded successfully: ${item.thumb}`
+                              );
+                            }}
+                            unoptimized={typeof item.thumb === "string"}
+                          />
                         </div>
                       </div>
                     </div>

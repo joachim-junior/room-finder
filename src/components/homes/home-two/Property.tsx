@@ -188,7 +188,7 @@ const Property = () => {
                           <div className="carousel-inner">
                             <div className="carousel-item active">
                               <Link href="#" className="d-block">
-                                <img
+                                <Image
                                   src={
                                     item.image
                                       ? item.image.startsWith("http")
@@ -198,18 +198,27 @@ const Property = () => {
                                   }
                                   className="w-100"
                                   alt={item.title}
+                                  width={400}
+                                  height={250}
                                   style={{
-                                    width: "400px",
-                                    height: "250px",
                                     objectFit: "cover",
                                   }}
                                   onError={(e) => {
                                     const target = e.target as HTMLImageElement;
+                                    console.log(
+                                      `Property image failed to load: ${target.src}`
+                                    );
                                     if (!target.src.includes("no_image.jpg")) {
                                       target.src =
                                         "/assets/images/media/no_image.jpg";
                                     }
                                   }}
+                                  onLoad={() => {
+                                    console.log(
+                                      `Property image loaded successfully: ${item.image}`
+                                    );
+                                  }}
+                                  unoptimized={true}
                                 />
                               </Link>
                             </div>

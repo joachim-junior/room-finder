@@ -47,7 +47,7 @@ const MediaGallery = ({ gallery }: { gallery?: string[] }) => {
                     key={idx}
                     className={`carousel-item${idx === 0 ? " active" : ""}`}
                   >
-                    <img
+                    <Image
                       src={
                         img.startsWith("http")
                           ? img
@@ -55,7 +55,22 @@ const MediaGallery = ({ gallery }: { gallery?: string[] }) => {
                       }
                       alt="Property"
                       className="w-100 border-20"
+                      width={800}
+                      height={400}
                       style={{ maxHeight: 400, objectFit: "cover" }}
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        console.log(
+                          `Gallery image failed to load: ${target.src}`
+                        );
+                        target.src = "/assets/images/media/no_image.jpg";
+                      }}
+                      onLoad={() => {
+                        console.log(
+                          `Gallery image loaded successfully: ${img}`
+                        );
+                      }}
+                      unoptimized={true}
                     />
                   </div>
                 ))}

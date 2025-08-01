@@ -32,11 +32,11 @@ const CookiePolicyContent = () => {
               <div className="mb-5">
                 <h4>1. Introduction</h4>
                 <p>
-                  This Cookie Policy explains how RoomFinder ("we," "our," or
-                  "us") uses cookies and similar technologies when you visit our
-                  website or use our services. This policy should be read
-                  alongside our Privacy Policy, which explains how we use your
-                  personal information.
+                  This Cookie Policy explains how RoomFinder (&quot;we,&quot;
+                  &quot;our,&quot; or &quot;us&quot;) uses cookies and similar
+                  technologies when you visit our website or use our services.
+                  This policy should be read alongside our Privacy Policy, which
+                  explains how we use your personal information.
                 </p>
               </div>
 
@@ -258,8 +258,8 @@ const CookiePolicyContent = () => {
 
                 <h5>6.2 Cookie Consent</h5>
                 <p>
-                  When you first visit RoomFinder, you'll see a cookie consent
-                  banner. You can:
+                  When you first visit RoomFinder, you&apos;ll see a cookie
+                  consent banner. You can:
                 </p>
                 <ul>
                   <li>Accept all cookies</li>
@@ -296,9 +296,9 @@ const CookiePolicyContent = () => {
                 </p>
                 <ul>
                   <li>You may need to log in repeatedly</li>
-                  <li>Your preferences won't be saved</li>
+                  <li>Your preferences won&apos;t be saved</li>
                   <li>Some website features may not work as expected</li>
-                  <li>Property search history won't be remembered</li>
+                  <li>Property search history won&apos;t be remembered</li>
                   <li>Personalized content may not be available</li>
                 </ul>
               </div>
@@ -310,7 +310,7 @@ const CookiePolicyContent = () => {
                   changes in our practices or for other operational, legal, or
                   regulatory reasons. We will notify you of any material changes
                   by posting the new Cookie Policy on this page and updating the
-                  "Last updated" date.
+                  &quot;Last updated&quot; date.
                 </p>
               </div>
 

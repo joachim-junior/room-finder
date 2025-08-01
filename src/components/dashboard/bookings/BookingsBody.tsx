@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import DashboardHeaderTwo from "@/layouts/headers/dashboard/DashboardHeaderTwo";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "react-toastify";
@@ -259,18 +260,34 @@ const BookingsBody = () => {
                   <div className="booking-card border rounded p-3 h-100">
                     <div className="d-flex align-items-start">
                       <div className="booking-image me-3">
-                        <img
-                          src={`https://cpanel.roomfinder237.com/${booking.prop_img}`}
+                        <Image
+                          src={
+                            booking.prop_img
+                              ? booking.prop_img.startsWith("http")
+                                ? booking.prop_img
+                                : `https://cpanel.roomfinder237.com/${booking.prop_img}`
+                              : "/images/placeholder.jpg"
+                          }
                           alt={booking.prop_title}
+                          width={80}
+                          height={60}
                           className="rounded"
                           style={{
-                            width: "80px",
-                            height: "60px",
                             objectFit: "cover",
                           }}
                           onError={(e) => {
-                            e.currentTarget.src = "/images/placeholder.jpg";
+                            const target = e.target as HTMLImageElement;
+                            console.log(
+                              `Booking image failed to load: ${target.src}`
+                            );
+                            target.src = "/images/placeholder.jpg";
                           }}
+                          onLoad={() => {
+                            console.log(
+                              `Booking image loaded successfully: ${booking.prop_img}`
+                            );
+                          }}
+                          unoptimized={true}
                         />
                       </div>
                       <div className="booking-details flex-grow-1">

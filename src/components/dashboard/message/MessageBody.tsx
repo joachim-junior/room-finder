@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import DashboardHeaderTwo from "@/layouts/headers/dashboard/DashboardHeaderTwo";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "react-toastify";
@@ -126,7 +127,7 @@ const MessageBody = () => {
               <i className="bi bi-inbox fs-1 text-muted mb-3"></i>
               <h5 className="text-muted">No enquiries found</h5>
               <p className="text-muted">
-                You haven't made any property enquiries yet.
+                You haven&apos;t made any property enquiries yet.
               </p>
             </div>
           ) : (
@@ -136,18 +137,32 @@ const MessageBody = () => {
                   <div className="enquiry-card border rounded p-3 h-100">
                     <div className="d-flex align-items-start">
                       <div className="enquiry-image me-3">
-                        <img
-                          src={`https://cpanel.roomfinder237.com/${enquiry.image}`}
+                        <Image
+                          src={
+                            enquiry.image
+                              ? enquiry.image.startsWith("http")
+                                ? enquiry.image
+                                : `https://cpanel.roomfinder237.com/${enquiry.image}`
+                              : "/images/placeholder.jpg"
+                          }
                           alt={enquiry.title}
+                          width={80}
+                          height={60}
                           className="rounded"
                           style={{
-                            width: "80px",
-                            height: "60px",
                             objectFit: "cover",
                           }}
                           onError={(e) => {
-                            e.currentTarget.src = "/images/placeholder.jpg";
+                            const target = e.target as HTMLImageElement;
+                            console.log(`Image failed to load: ${target.src}`);
+                            target.src = "/images/placeholder.jpg";
                           }}
+                          onLoad={() => {
+                            console.log(
+                              `Image loaded successfully: ${enquiry.image}`
+                            );
+                          }}
+                          unoptimized={true}
                         />
                       </div>
                       <div className="enquiry-details flex-grow-1">

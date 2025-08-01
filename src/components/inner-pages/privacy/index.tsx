@@ -32,10 +32,11 @@ const PrivacyPolicyContent = () => {
               <div className="mb-5">
                 <h4>1. Introduction</h4>
                 <p>
-                  RoomFinder ("we," "our," or "us") is committed to protecting
-                  your privacy. This Privacy Policy explains how we collect,
-                  use, disclose, and safeguard your information when you visit
-                  our website or use our services.
+                  RoomFinder (&quot;we,&quot; &quot;our,&quot; or
+                  &quot;us&quot;) is committed to protecting your privacy. This
+                  Privacy Policy explains how we collect, use, disclose, and
+                  safeguard your information when you visit our website or use
+                  our services.
                 </p>
               </div>
 
@@ -198,7 +199,7 @@ const PrivacyPolicyContent = () => {
               </div>
 
               <div className="mb-5">
-                <h4>9. Children's Privacy</h4>
+                <h4>9. Children&apos;s Privacy</h4>
                 <p>
                   Our services are not intended for children under 13 years of
                   age. We do not knowingly collect personal information from
@@ -223,7 +224,8 @@ const PrivacyPolicyContent = () => {
                 <p>
                   We may update this Privacy Policy from time to time. We will
                   notify you of any material changes by posting the new Privacy
-                  Policy on this page and updating the "Last updated" date.
+                  Policy on this page and updating the &quot;Last updated&quot;
+                  date.
                 </p>
               </div>
 

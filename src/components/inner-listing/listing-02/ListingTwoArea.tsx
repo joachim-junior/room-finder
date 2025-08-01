@@ -348,7 +348,7 @@ const ListingTwoArea = ({ style }: any) => {
                           background: "#f7f7f7",
                         }}
                       >
-                        <img
+                        <Image
                           src={
                             item.image && item.image.trim() !== ""
                               ? item.image.startsWith("http")
@@ -357,20 +357,22 @@ const ListingTwoArea = ({ style }: any) => {
                               : "/assets/images/media/no_image.jpg"
                           }
                           alt={item.title || "Property image"}
+                          fill
                           style={{
-                            width: "100%",
-                            height: "100%",
                             objectFit: "cover",
                             objectPosition: "center",
-                            display: "block",
-                            position: "absolute",
-                            top: "0",
-                            left: "0",
                           }}
                           onError={(e) => {
-                            const t = e.target as HTMLImageElement;
-                            t.src = "/assets/images/media/no_image.jpg";
+                            const target = e.target as HTMLImageElement;
+                            console.log(`Image failed to load: ${target.src}`);
+                            target.src = "/assets/images/media/no_image.jpg";
                           }}
+                          onLoad={() => {
+                            console.log(
+                              `Image loaded successfully: ${item.image}`
+                            );
+                          }}
+                          unoptimized={true}
                         />
                         <div
                           className={

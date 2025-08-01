@@ -18,7 +18,7 @@ const Review = ({ style, reviewlist = [], total_review = 0 }: any) => {
       <div className="review-wrapper mb-35">
         {displayedReviews.map((item: any, idx: number) => (
           <div key={idx} className="review">
-            <img
+            <Image
               src={
                 item.user_img?.startsWith("http")
                   ? item.user_img
@@ -29,6 +29,15 @@ const Review = ({ style, reviewlist = [], total_review = 0 }: any) => {
               width={50}
               height={50}
               style={{ objectFit: "cover" }}
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                console.log(`User image failed to load: ${target.src}`);
+                target.src = "/images/placeholder.jpg";
+              }}
+              onLoad={() => {
+                console.log(`User image loaded successfully: ${item.user_img}`);
+              }}
+              unoptimized={true}
             />
             <div className="text">
               <div className="d-sm-flex justify-content-between">
