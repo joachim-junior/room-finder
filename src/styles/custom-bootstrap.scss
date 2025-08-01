@@ -1,0 +1,108 @@
+// Custom Bootstrap configuration
+$primary: #0072c6;
+// Import Bootstrap with custom variables
+@import "~bootstrap/scss/bootstrap";
+// Additional custom styles for primary color
+.btn-primary {
+    background-color: #0072c6 !important;
+    border-color: #0072c6 !important;
+    color: white !important;
+    &:hover,
+    &:focus,
+    &:active {
+        background-color: darken(#0072c6, 10%) !important;
+        border-color: darken(#0072c6, 10%) !important;
+        color: white !important;
+    }
+}
+
+.bg-primary {
+    background-color: #0072c6 !important;
+}
+
+.text-primary {
+    color: #0072c6 !important;
+}
+
+.border-primary {
+    border-color: #0072c6 !important;
+}
+
+// Form controls
+.form-control:focus {
+    border-color: #0072c6 !important;
+    box-shadow: 0 0 0 0.2rem rgba(0, 114, 198, 0.25) !important;
+}
+
+// Links
+a {
+    color: #0072c6;
+    &:hover {
+        color: darken(#0072c6, 10%);
+    }
+}
+
+// Pagination
+.page-link {
+    color: #0072c6;
+    &:hover {
+        color: darken(#0072c6, 10%);
+    }
+}
+
+.page-item.active .page-link {
+    background-color: #0072c6;
+    border-color: #0072c6;
+}
+
+// Progress bars
+.progress-bar {
+    background-color: #0072c6;
+}
+
+// List group
+.list-group-item.active {
+    background-color: #0072c6;
+    border-color: #0072c6;
+}
+
+// Badges
+.badge-primary {
+    background-color: #0072c6;
+}
+
+// Alerts
+.alert-primary {
+    background-color: rgba(0, 114, 198, 0.1);
+    border-color: rgba(0, 114, 198, 0.2);
+    color: #0072c6;
+}
+
+// Custom dashboard styles
+.dash-btn-two {
+    background-color: #0072c6 !important;
+    border-color: #0072c6 !important;
+    color: white !important;
+    &:hover,
+    &:focus,
+    &:active {
+        background-color: darken(#0072c6, 10%) !important;
+        border-color: darken(#0072c6, 10%) !important;
+        color: white !important;
+    }
+}
+
+// NiceSelect custom styles
+.nice-select {
+    &:focus {
+        border-color: #0072c6 !important;
+    }
+    .option {
+        &:hover,
+        &.focus,
+        &.selected {
+            background-color: #0072c6 !important;
+            color: white !important;
+        }
+    }
+}

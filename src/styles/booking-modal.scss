@@ -1,0 +1,187 @@
+// Booking Modal Styles
+.modal {
+  .modal-content {
+    border-radius: 15px;
+    border: none;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    background-color: #fff;
+    position: relative;
+    z-index: 1060;
+  }
+  .modal-header {
+    border-bottom: 1px solid #e9ecef;
+    padding: 1.5rem 1.5rem 1rem;
+    .modal-title {
+      font-weight: 600;
+      color: #333;
+      margin: 0;
+    }
+    .btn-close {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: #6c757d;
+      cursor: pointer;
+      padding: 0;
+      width: auto;
+      height: auto;
+      &:hover {
+        color: #333;
+      }
+    }
+  }
+  .modal-body {
+    padding: 1.5rem;
+    .guesthouse-info {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      h6 {
+        color: #333;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+      }
+      p {
+        margin-bottom: 0.25rem;
+        &.fw-bold {
+          color: #0072c6;
+          font-size: 1.1rem;
+        }
+      }
+    }
+    .form-label {
+      font-weight: 500;
+      color: #495057;
+      margin-bottom: 0.5rem;
+    }
+    .form-control,
+    .form-select {
+      border: 1px solid #ced4da;
+      border-radius: 8px;
+      padding: 0.75rem;
+      font-size: 0.95rem;
+      &:focus {
+        border-color: #0072c6;
+        box-shadow: 0 0 0 0.2rem rgba(0, 114, 198, 0.25);
+      }
+    }
+    .form_error {
+      color: #dc3545;
+      font-size: 0.875rem;
+      margin-top: 0.25rem;
+      margin-bottom: 0;
+    }
+    .btn {
+      border-radius: 8px;
+      padding: 0.75rem 1.5rem;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      &.btn-primary {
+        background: linear-gradient(135deg, #0072c6 0%, #005a9e 100%);
+        border: none;
+        &:hover {
+          background: linear-gradient(135deg, #005a9e 0%, #004085 100%);
+          transform: translateY(-1px);
+        }
+        &:disabled {
+          background: #6c757d;
+          transform: none;
+        }
+      }
+      &.btn-outline-primary {
+        border: 1px solid #0072c6;
+        color: #0072c6;
+        background: transparent;
+        &:hover {
+          background: #0072c6;
+          color: white;
+        }
+      }
+      &.btn-outline-secondary {
+        border: 1px solid #6c757d;
+        color: #6c757d;
+        &:hover {
+          background: #6c757d;
+          color: white;
+        }
+      }
+    }
+  }
+}
+
+// Modal backdrop
+.modal-backdrop {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background-color: rgba(0, 0, 0, 0.5) !important;
+  z-index: 1040 !important;
+}
+
+// Modal container
+.modal.show {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 1050 !important;
+  overflow: auto !important;
+  display: block !important;
+}
+
+// Login required state
+.login-required {
+  text-align: center;
+  padding: 2rem 1rem;
+  .bi-lock-circle {
+    color: #6c757d;
+    margin-bottom: 1rem;
+    font-size: 3rem;
+  }
+  h5 {
+    color: #333;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+  p {
+    color: #6c757d;
+    margin-bottom: 1.5rem;
+  }
+  .btn {
+    margin: 0 0.5rem;
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 576px) {
+  .modal-dialog {
+    margin: 0.5rem !important;
+    max-width: calc(100% - 1rem) !important;
+  }
+  .modal-body {
+    padding: 1rem !important;
+  }
+  .modal-header {
+    padding: 1rem !important;
+  }
+  .btn {
+    width: 100%;
+    margin: 0.25rem 0;
+    padding: 0.75rem 1rem !important;
+  }
+  .guesthouse-info {
+    padding: 1rem !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .modal-dialog {
+    margin: 1rem !important;
+  }
+  .btn {
+    padding: 0.75rem 1.25rem !important;
+  }
+}

@@ -1,0 +1,11 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" rx="50" fill="#1884d7"/>
+  <path d="M120 100 Q120 350 300 350 Q480 350 300 200 Q120 50 300 200 Q480 350 300 350" stroke="white" stroke-width="32" fill="none"/>
+  <path d="M120 100 Q300 50 300 200 Q300 350 300 350" stroke="white" stroke-width="32" fill="none"/>
+  <!-- House icon in the bottom right -->
+  <g>
+    <circle cx="450" cy="450" r="28" fill="none" stroke="white" stroke-width="8"/>
+    <path d="M440 460V445L450 435L460 445V460H440Z" fill="none" stroke="white" stroke-width="4"/>
+    <rect x="447" y="455" width="6" height="5" fill="white"/>
+  </g>
+</svg>
