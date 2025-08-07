@@ -1,11 +1,11 @@
-import DashboardBody from "./DashboardBody"
+import DashboardBody from "./DashboardBody";
 
 const DashboardIndex = () => {
   return (
     <>
-      <DashboardBody/>
+      <DashboardBody />
     </>
-  )
-}
+  );
+};
 
-export default DashboardIndex
+export default DashboardIndex;

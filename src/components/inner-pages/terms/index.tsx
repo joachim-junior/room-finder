@@ -1,5 +1,4 @@
 import BreadcrumbOne from "@/components/common/breadcrumb/BreadcrumbOne";
-import FancyBanner from "@/components/common/FancyBanner";
 
 const TermsConditions = () => {
   return (
@@ -12,7 +11,6 @@ const TermsConditions = () => {
         style={false}
       />
       <TermsConditionsContent />
-      <FancyBanner style={false} />
     </>
   );
 };

@@ -1,13 +1,11 @@
-import DashboardHeaderOne from "@/layouts/headers/dashboard/DashboardHeaderOne";
 import SavedSearchBody from "./SavedSearchBody";
 
 const DashboardSavedSearch = () => {
-   return (
-      <>
-         <DashboardHeaderOne />
-         <SavedSearchBody />
-      </>
-   )
-}
+  return (
+    <div style={{ marginTop: "100px", padding: "20px 0" }}>
+      <SavedSearchBody />
+    </div>
+  );
+};
 
 export default DashboardSavedSearch;

@@ -1,13 +1,11 @@
-import DashboardHeaderOne from "@/layouts/headers/dashboard/DashboardHeaderOne"
-import AddPropertyBody from "./AddPropertyBody"
+import AddPropertyBody from "./AddPropertyBody";
 
 const DashboardAddProperty = () => {
-   return (
-      <>
-         <DashboardHeaderOne />
-         <AddPropertyBody />
-      </>
-   )
-}
+  return (
+    <div style={{ marginTop: "100px", padding: "20px 0" }}>
+      <AddPropertyBody />
+    </div>
+  );
+};
 
-export default DashboardAddProperty
+export default DashboardAddProperty;

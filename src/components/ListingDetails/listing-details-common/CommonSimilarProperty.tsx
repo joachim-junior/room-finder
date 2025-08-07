@@ -1,48 +1,9 @@
 "use client";
-import Fancybox from "@/components/common/Fancybox";
-import property_data from "@/data/home-data/PropertyData";
 import Image from "next/image";
 import Link from "next/link";
-import Slider from "react-slick";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "react-toastify";
-
-const setting = {
-  dots: true,
-  arrows: false,
-  centerPadding: "0px",
-  slidesToShow: 3,
-  slidesToScroll: 2,
-  autoplay: true,
-  autoplaySpeed: 3000,
-  responsive: [
-    {
-      breakpoint: 1400,
-      settings: {
-        slidesToShow: 2,
-      },
-    },
-    {
-      breakpoint: 1200,
-      settings: {
-        slidesToShow: 3,
-      },
-    },
-    {
-      breakpoint: 992,
-      settings: {
-        slidesToShow: 2,
-      },
-    },
-    {
-      breakpoint: 768,
-      settings: {
-        slidesToShow: 1,
-      },
-    },
-  ],
-};
 
 const CommonSimilarProperty = ({
   currentPropertyId,
@@ -52,11 +13,10 @@ const CommonSimilarProperty = ({
   const [properties, setProperties] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [openShare, setOpenShare] = useState<number | null>(null);
-  const shareMenuRef = useRef<HTMLDivElement>(null);
   const { isAuthenticated, user } = useAuth();
   const [favLoading, setFavLoading] = useState<{ [key: string]: boolean }>({});
   const [favorites, setFavorites] = useState<{ [key: string]: boolean }>({});
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const fetchProperties = async () => {
@@ -83,7 +43,7 @@ const CommonSimilarProperty = ({
           setProperties(
             data.HomeData.Featured_Property.filter(
               (item: any) => String(item.id) !== String(currentPropertyId)
-            )
+            ).slice(0, 6) // Show max 6 similar properties
           );
         } else {
           setProperties([]);
@@ -131,12 +91,6 @@ const CommonSimilarProperty = ({
     fetchFavorites();
   }, [user]);
 
-  // Helper to copy link
-  const handleCopy = (url: string) => {
-    navigator.clipboard.writeText(url);
-    alert("Link copied to clipboard!");
-  };
-
   const handleFavorite = async (
     propertyId: string | number,
     propertyType: string | number = 1
@@ -173,135 +127,254 @@ const CommonSimilarProperty = ({
     }
   };
 
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const target = e.target as HTMLImageElement;
+    console.log(`Similar property image failed to load: ${target.src}`);
+    setFailedImages((prev) => new Set(prev).add(target.src));
+    target.src =
+      "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjhmOWZhIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzZjNzU3ZCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkltYWdlPC90ZXh0Pjwvc3ZnPg==";
+  };
+
+  if (loading) {
+    return (
+      <div style={{ padding: "20px 0" }}>
+        <div style={{ textAlign: "center", color: "#717171" }}>
+          Loading similar properties...
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div style={{ padding: "20px 0" }}>
+        <div style={{ textAlign: "center", color: "#dc3545" }}>{error}</div>
+      </div>
+    );
+  }
+
+  if (properties.length === 0) {
+    return (
+      <div style={{ padding: "20px 0" }}>
+        <div style={{ textAlign: "center", color: "#717171" }}>
+          No similar properties found.
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="similar-property">
-      <h4 className="mb-40">Similar Homes You May Like</h4>
-      {loading ? (
-        <div>Loading...</div>
-      ) : error ? (
-        <div className="text-danger">{error}</div>
-      ) : (
-        <div className="row">
-          {properties.slice(0, 3).map((item, idx) => {
-            const propertyUrl = `${window.location.origin}/listing_details_01/${item.id}`;
-            return (
-              <div key={item.id} className="col-md-4 mb-4">
-                <div className="listing-card-one shadow4 style-three border-30 mb-50">
-                  <div className="img-gallery p-15">
-                    <div className="position-relative border-20 overflow-hidden">
-                      <div className="tag bg-white text-dark fw-500 border-20">
-                        {item.buyorrent?.toUpperCase()}
-                      </div>
-                      <Image
-                        src={
-                          item.image &&
-                          typeof item.image === "string" &&
-                          item.image.trim() !== ""
-                            ? item.image.startsWith("http")
-                              ? item.image
-                              : `https://cpanel.roomfinder237.com/${item.image}`
-                            : "/assets/images/media/no_image.jpg"
-                        }
-                        className="w-100 border-20"
-                        alt={item.title}
-                        width={400}
-                        height={200}
-                        style={{ maxHeight: 200, objectFit: "cover" }}
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          console.log(
-                            `Similar property image failed to load: ${target.src}`
-                          );
-                          if (!target.src.includes("no_image.jpg")) {
-                            target.src = "/assets/images/media/no_image.jpg";
-                          }
-                        }}
-                        onLoad={() => {
-                          console.log(
-                            `Similar property image loaded successfully: ${item.image}`
-                          );
-                        }}
-                        unoptimized={true}
-                      />
-                      <Link
-                        href={`/listing_details_01/${item.id}`}
-                        className="btn-four inverse rounded-circle position-absolute"
-                      >
-                        <i className="bi bi-arrow-up-right"></i>
-                      </Link>
-                    </div>
-                  </div>
+    <div style={{ marginBottom: "48px" }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+          gap: "20px",
+        }}
+      >
+        {properties.map((property) => (
+          <Link
+            key={property.id}
+            href={`/listing_details_01/${property.id}`}
+            style={{ textDecoration: "none", color: "inherit" }}
+          >
+            <div
+              style={{
+                backgroundColor: "#ffffff",
+                borderRadius: "16px",
+                overflow: "hidden",
+                boxShadow: "0 1px 2px rgba(0,0,0,0.08)",
+                border: "1px solid #f0f0f0",
+                transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                cursor: "pointer",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateY(-2px)";
+                e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "translateY(0)";
+                e.currentTarget.style.boxShadow = "0 1px 2px rgba(0,0,0,0.08)";
+              }}
+            >
+              {/* Property Image */}
+              <div style={{ position: "relative", height: "200px" }}>
+                <img
+                  src={
+                    property.image &&
+                    !failedImages.has(
+                      `https://cpanel.roomfinder237.com/${property.image}`
+                    )
+                      ? `https://cpanel.roomfinder237.com/${property.image}`
+                      : "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjhmOWZhIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzZjNzU3ZCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkltYWdlPC90ZXh0Pjwvc3ZnPg=="
+                  }
+                  alt={property.title}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                  }}
+                  onError={handleImageError}
+                />
+
+                {/* Favorite Button */}
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleFavorite(property.id, property.property_type);
+                  }}
+                  disabled={favLoading[property.id]}
+                  style={{
+                    position: "absolute",
+                    top: "12px",
+                    right: "12px",
+                    backgroundColor: "rgba(255,255,255,0.9)",
+                    border: "none",
+                    borderRadius: "50%",
+                    width: "32px",
+                    height: "32px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    cursor: "pointer",
+                    color: favorites[property.id] ? "#007bff" : "#222222",
+                    backdropFilter: "blur(4px)",
+                  }}
+                >
+                  <i
+                    className={`fas fa-heart ${
+                      favorites[property.id] ? "fas" : "far"
+                    }`}
+                    style={{ fontSize: "14px" }}
+                  ></i>
+                </button>
+
+                {/* Property Type Badge */}
+                {property.buyorrent && (
                   <div
-                    className="property-info pe-4 ps-4 position-relative"
-                    style={{ overflow: "visible" }}
+                    style={{
+                      position: "absolute",
+                      top: "12px",
+                      left: "12px",
+                      backgroundColor: "rgba(0,0,0,0.7)",
+                      color: "#ffffff",
+                      padding: "4px 8px",
+                      borderRadius: "6px",
+                      fontSize: "10px",
+                      fontWeight: "500",
+                      textTransform: "uppercase",
+                      backdropFilter: "blur(4px)",
+                    }}
                   >
-                    <Link
-                      href={`/listing_details_01/${item.id}`}
-                      className="title tran3s"
-                    >
-                      {item.title}
-                    </Link>
-                    <div className="address m0 pb-5">
-                      {item.city || "Cameroon"}
-                    </div>
-                    <div className="pl-footer m0 d-flex align-items-center justify-content-between">
-                      <strong className="price fw-500 color-dark">
-                        {item.price?.toLocaleString()} XAF
-                      </strong>
-                      <ul className="style-none d-flex align-items-center action-btns justify-content-end m-0">
-                        <li>
-                          <button
-                            type="button"
-                            className="d-flex align-items-center justify-content-center tran3s rounded-circle border-0 bg-transparent"
-                            style={{ padding: 0 }}
-                            disabled={favLoading[item.id]}
-                            onClick={() =>
-                              handleFavorite(item.id, item.property_type)
-                            }
-                          >
-                            <i
-                              className={
-                                favorites[item.id]
-                                  ? "fa-solid fa-bookmark"
-                                  : "fa-light fa-bookmark"
-                              }
-                              style={{
-                                fontSize: "0.95rem",
-                                color: favorites[item.id]
-                                  ? "#0072c6"
-                                  : undefined,
-                              }}
-                            ></i>
-                          </button>
-                        </li>
-                        <li>
-                          <button
-                            type="button"
-                            className="d-flex align-items-center justify-content-center tran3s rounded-circle border-0 bg-transparent"
-                            style={{ padding: 0 }}
-                            onClick={() => {
-                              const propertyUrl = `${window.location.origin}/listing_details_01/${item.id}`;
-                              navigator.clipboard.writeText(propertyUrl);
-                              toast.success(
-                                "Property link copied to clipboard!"
-                              );
-                            }}
-                          >
-                            <i
-                              className="fa-sharp fa-regular fa-share-nodes"
-                              style={{ fontSize: "0.95rem" }}
-                            ></i>
-                          </button>
-                        </li>
-                      </ul>
-                    </div>
+                    {property.buyorrent}
                   </div>
+                )}
+              </div>
+
+              {/* Property Details */}
+              <div style={{ padding: "16px" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "flex-start",
+                    marginBottom: "8px",
+                  }}
+                >
+                  <h3
+                    style={{
+                      fontSize: "16px",
+                      fontWeight: "500",
+                      color: "#222222",
+                      margin: 0,
+                      flex: 1,
+                      lineHeight: "1.3",
+                    }}
+                  >
+                    {property.title}
+                  </h3>
+                </div>
+
+                <p
+                  style={{
+                    color: "#717171",
+                    fontSize: "14px",
+                    marginBottom: "8px",
+                  }}
+                >
+                  {property.city || "Location not specified"}
+                </p>
+
+                {/* Property Features */}
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "8px",
+                    marginBottom: "12px",
+                    fontSize: "14px",
+                    color: "#717171",
+                  }}
+                >
+                  {property.beds && <span>{property.beds} beds</span>}
+                  {property.bathroom && (
+                    <span>• {property.bathroom} baths</span>
+                  )}
+                  {property.sqrft && <span>• {property.sqrft} sq ft</span>}
+                </div>
+
+                {/* Price and Rating */}
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <div>
+                    <span
+                      style={{
+                        fontSize: "16px",
+                        fontWeight: "600",
+                        color: "#222222",
+                      }}
+                    >
+                      {Number(property.price).toLocaleString()} XAF
+                    </span>
+                    <span
+                      style={{
+                        fontSize: "14px",
+                        color: "#717171",
+                        marginLeft: "4px",
+                      }}
+                    >
+                      /{property.buyorrent === "rent" ? "month" : "total"}
+                    </span>
+                  </div>
+
+                  {property.rate && (
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "4px",
+                      }}
+                    >
+                      <i
+                        className="fas fa-star"
+                        style={{ fontSize: "14px", color: "#ffc107" }}
+                      ></i>
+                      <span style={{ fontSize: "14px", color: "#717171" }}>
+                        {property.rate}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
-            );
-          })}
-        </div>
-      )}
+            </div>
+          </Link>
+        ))}
+      </div>
     </div>
   );
 };

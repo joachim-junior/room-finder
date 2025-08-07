@@ -1,11 +1,16 @@
 import DashboardBookings from "@/components/dashboard/bookings";
+import Wrapper from "@/layouts/Wrapper";
 
 export const metadata = {
-  title: "My Bookings - Room Finder",
+  title: "Dashboard Bookings - Roomfinder",
 };
 
-const index = () => {
-  return <DashboardBookings />;
+const BookingsPage = () => {
+  return (
+    <Wrapper>
+      <DashboardBookings />
+    </Wrapper>
+  );
 };
 
-export default index;
+export default BookingsPage;

@@ -1,13 +1,11 @@
-import DashboardHeaderOne from "@/layouts/headers/dashboard/DashboardHeaderOne"
-import MessageBody from "./MessageBody"
+import MessageBody from "./MessageBody";
 
 const DashboardMessage = () => {
-   return (
-      <>
-         <DashboardHeaderOne />
-         <MessageBody />
-      </>
-   )
-}
+  return (
+    <div style={{ marginTop: "100px", padding: "20px 0" }}>
+      <MessageBody />
+    </div>
+  );
+};
 
-export default DashboardMessage
+export default DashboardMessage;

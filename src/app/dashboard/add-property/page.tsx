@@ -1,10 +1,16 @@
 import DashboardAddProperty from "@/components/dashboard/add-property";
+import Wrapper from "@/layouts/Wrapper";
 
 export const metadata = {
-  title: "Dashboard Add Property Homy - Real Estate React Next js Template",
-};
-const index = () => {
-  return <DashboardAddProperty />;
+  title: "Dashboard Add Property - Roomfinder",
 };
 
-export default index;
+const AddPropertyPage = () => {
+  return (
+    <Wrapper>
+      <DashboardAddProperty />
+    </Wrapper>
+  );
+};
+
+export default AddPropertyPage;

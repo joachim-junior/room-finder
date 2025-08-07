@@ -1,12 +1,10 @@
-import DashboardHeaderOne from "@/layouts/headers/dashboard/DashboardHeaderOne";
 import BookingsBody from "./BookingsBody";
 
 const DashboardBookings = () => {
   return (
-    <>
-      <DashboardHeaderOne />
+    <div style={{ marginTop: "100px", padding: "20px 0" }}>
       <BookingsBody />
-    </>
+    </div>
   );
 };
 

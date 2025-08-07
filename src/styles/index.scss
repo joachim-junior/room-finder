@@ -123,3 +123,87 @@
     }
   }
 }
+
+/* Glovo-Style Dashboard */
+
+.dashboard-body {
+  background-color: #f8f9fa;
+  min-height: 100vh;
+  padding: 20px 0;
+  .container-fluid {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  .border-20 {
+    border-radius: 20px !important;
+  }
+  .bg-white {
+    background: white !important;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  }
+  /* User Profile Section */
+  .avatar {
+    .rounded-circle {
+      transition: all 0.3s ease;
+      &:hover {
+        transform: scale(1.05);
+      }
+    }
+  }
+  /* Primary Navigation Cards */
+  .row .col-6 {
+    .bg-white {
+      transition: all 0.3s ease;
+      cursor: pointer;
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+      }
+    }
+  }
+  /* Wallet Balance Card */
+  .bg-white {
+    .text-primary {
+      color: #ff6b35 !important;
+    }
+  }
+  /* Navigation List */
+  .nav-list {
+    .nav-item {
+      transition: all 0.2s ease;
+      border-radius: 10px;
+      margin-bottom: 2px;
+      &:hover {
+        background-color: #f8f9fa;
+        transform: translateX(5px);
+      }
+      &:last-child {
+        border-bottom: none !important;
+      }
+      .rounded-circle {
+        transition: all 0.3s ease;
+      }
+      &:hover .rounded-circle {
+        transform: scale(1.1);
+      }
+      .fas.fa-chevron-right {
+        transition: all 0.2s ease;
+      }
+      &:hover .fas.fa-chevron-right {
+        transform: translateX(3px);
+      }
+    }
+  }
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .container-fluid {
+      padding: 0 15px;
+    }
+    .bg-white {
+      margin-bottom: 15px;
+    }
+    .row .col-6 {
+      margin-bottom: 15px;
+    }
+  }
+}

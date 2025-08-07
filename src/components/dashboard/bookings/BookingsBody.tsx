@@ -1,9 +1,9 @@
 "use client";
 import { useState, useEffect } from "react";
-import Image from "next/image";
-import DashboardHeaderTwo from "@/layouts/headers/dashboard/DashboardHeaderTwo";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "react-toastify";
+import Link from "next/link";
+import LoadingSpinner from "@/components/common/LoadingSpinner";
 
 interface BookingData {
   book_id: number;
@@ -15,55 +15,47 @@ interface BookingData {
   total_day: number;
   rate: number;
   book_status: string;
+  check_in?: string;
+  check_out?: string;
+  booking_date?: string;
+  total_amount?: number;
 }
 
 const BookingsBody = () => {
   const { user } = useAuth();
-  const [bookings, setBookings] = useState<BookingData[]>([]);
   const [loading, setLoading] = useState(false);
-  const [selectedStatus, setSelectedStatus] = useState("active");
+  const [bookings, setBookings] = useState<BookingData[]>([]);
 
-  // Fetch bookings from API
+  // Fetch bookings data
   const fetchBookings = async () => {
-    if (!user) {
-      toast.error("❌ Please log in to view your bookings");
-      return;
-    }
-
-    setLoading(true);
-    toast.info("🔄 Loading your bookings...");
+    if (!user) return;
 
     try {
+      setLoading(true);
+
       const response = await fetch(
         "https://cpanel.roomfinder237.com/user_api/u_my_book.php",
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            uid: user.id.toString(),
-            status: selectedStatus,
+            uid: user.id,
+            status: "active",
           }),
         }
       );
-
       const data = await response.json();
-      console.log("Bookings response:", data);
 
       if (data.ResponseCode === "200" && data.Result === "true") {
         setBookings(data.statuswise || []);
-        toast.success("✅ Bookings loaded successfully!");
       } else {
         toast.error(
           `❌ Failed to load bookings: ${data.ResponseMsg || "Unknown error"}`
         );
-        setBookings([]);
       }
     } catch (error) {
       console.error("Error fetching bookings:", error);
-      toast.error("❌ An error occurred while loading your bookings");
-      setBookings([]);
+      toast.error("❌ An error occurred while loading bookings");
     } finally {
       setLoading(false);
     }
@@ -71,18 +63,16 @@ const BookingsBody = () => {
 
   // Cancel booking
   const cancelBooking = async (bookingId: number) => {
-    if (!user) return;
-
-    const cancelReason = window.prompt(
-      "Please provide a reason for cancellation:"
-    );
-    if (!cancelReason || cancelReason.trim() === "") {
-      toast.error("❌ Cancellation reason is required");
+    if (!user) {
+      toast.error("❌ Please log in to cancel bookings");
       return;
     }
 
-    if (!window.confirm("Are you sure you want to cancel this booking?")) {
-      return;
+    const reason = window.prompt(
+      "Please provide a reason for cancellation (optional):"
+    );
+    if (reason === null) {
+      return; // User cancelled the prompt
     }
 
     try {
@@ -90,25 +80,19 @@ const BookingsBody = () => {
         "https://cpanel.roomfinder237.com/user_api/u_my_book_cancle.php",
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            uid: user.id.toString(),
+            uid: user.id,
             book_id: bookingId,
-            cancle_reason: cancelReason.trim(),
+            cancle_reason: reason || "User cancelled booking",
           }),
         }
       );
-
       const data = await response.json();
-      console.log("Cancel booking response:", data);
 
       if (data.ResponseCode === "200" && data.Result === "true") {
-        setBookings((prev) =>
-          prev.filter((booking) => booking.book_id !== bookingId)
-        );
-        toast.success("✅ Booking cancelled successfully");
+        toast.success("✅ Booking cancelled successfully!");
+        fetchBookings(); // Refresh the list
       } else {
         toast.error(
           `❌ Failed to cancel booking: ${data.ResponseMsg || "Unknown error"}`
@@ -120,219 +104,251 @@ const BookingsBody = () => {
     }
   };
 
-  // Handle status change
-  const handleStatusChange = (status: string) => {
-    setSelectedStatus(status);
-  };
-
-  // Refresh bookings
-  const handleRefresh = async () => {
-    toast.info("🔄 Refreshing bookings...");
-    await fetchBookings();
-  };
-
-  // Load data on component mount and when status changes
-  useEffect(() => {
-    if (user) {
-      fetchBookings();
-    }
-  }, [user, selectedStatus]);
-
+  // Format date for display
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
+    return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
     });
   };
 
+  // Get status badge styling
   const getStatusBadge = (status: string) => {
     switch (status.toLowerCase()) {
       case "confirmed":
-        return <span className="badge bg-success">Confirmed</span>;
+        return "badge bg-success";
       case "pending":
-        return <span className="badge bg-warning">Pending</span>;
+        return "badge bg-warning";
       case "cancelled":
-        return <span className="badge bg-danger">Cancelled</span>;
+        return "badge bg-danger";
       case "completed":
-        return <span className="badge bg-info">Completed</span>;
+        return "badge bg-info";
       default:
-        return <span className="badge bg-secondary">{status}</span>;
+        return "badge bg-secondary";
     }
   };
 
-  return (
-    <div className="dashboard-body">
-      <div className="position-relative">
-        <DashboardHeaderTwo title="My Bookings" />
-        <h2 className="main-title d-block d-lg-none">My Bookings</h2>
+  // Load bookings on component mount
+  useEffect(() => {
+    fetchBookings();
+  }, [user]);
 
-        {/* Bookings Section */}
-        <div className="bg-white card-box border-20 mb-30">
-          <div className="d-flex justify-content-between align-items-center mb-3">
-            <h4 className="dash-title-three mb-0">Property Bookings</h4>
-            <div className="d-flex align-items-center">
-              <div className="btn-group me-3" role="group">
-                <button
-                  type="button"
-                  className={`btn btn-sm ${
-                    selectedStatus === "active"
-                      ? "btn-primary"
-                      : "btn-outline-primary"
-                  }`}
-                  onClick={() => handleStatusChange("active")}
-                >
-                  Active
-                </button>
-                <button
-                  type="button"
-                  className={`btn btn-sm ${
-                    selectedStatus === "completed"
-                      ? "btn-primary"
-                      : "btn-outline-primary"
-                  }`}
-                  onClick={() => handleStatusChange("completed")}
-                >
-                  Completed
-                </button>
-                <button
-                  type="button"
-                  className={`btn btn-sm ${
-                    selectedStatus === "cancelled"
-                      ? "btn-primary"
-                      : "btn-outline-primary"
-                  }`}
-                  onClick={() => handleStatusChange("cancelled")}
-                >
-                  Cancelled
-                </button>
-              </div>
-              <button
-                type="button"
-                className="btn btn-sm btn-primary"
-                onClick={handleRefresh}
-                disabled={loading}
-                style={{
-                  opacity: loading ? 0.7 : 1,
-                  cursor: loading ? "not-allowed" : "pointer",
-                }}
-              >
-                {loading ? (
-                  <>
-                    <div
-                      className="spinner-border spinner-border-sm me-2"
-                      role="status"
-                    >
-                      <span className="visually-hidden">Loading...</span>
-                    </div>
-                    Refreshing...
-                  </>
-                ) : (
-                  <>
-                    <i className="bi bi-arrow-clockwise me-2"></i>
-                    Refresh
-                  </>
-                )}
-              </button>
+  if (!user) {
+    return (
+      <div className="dashboard-body">
+        <div className="position-relative">
+          <div className="bg-white border-20 p-4 text-center">
+            <p>Please log in to view your bookings.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading spinner while fetching data
+  if (loading) {
+    return (
+      <div
+        className="dashboard-body"
+        style={{
+          marginTop: "100px",
+          padding: "20px 0",
+          backgroundColor: "#ffffff",
+          minHeight: "100vh",
+          width: "100%",
+        }}
+      >
+        <div className="container-fluid">
+          <LoadingSpinner
+            size="lg"
+            color="#007bff"
+            text="Loading bookings..."
+          />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="dashboard-body"
+      style={{
+        marginTop: "100px",
+        padding: "20px 0",
+        backgroundColor: "#ffffff",
+        minHeight: "100vh",
+        width: "100%",
+      }}
+    >
+      <div className="container-fluid">
+        {/* Breadcrumb Navigation */}
+        <div className="row mb-3">
+          <div className="col-12">
+            <nav aria-label="breadcrumb">
+              <ol className="breadcrumb mb-0">
+                <li className="breadcrumb-item">
+                  <Link href="/dashboard/home" className="text-decoration-none">
+                    <i className="fas fa-arrow-left me-2"></i>
+                    <span className="text-muted">Back to Dashboard</span>
+                  </Link>
+                </li>
+                <li className="breadcrumb-item active" aria-current="page">
+                  <span className="text-dark fw-bold">Bookings</span>
+                </li>
+              </ol>
+            </nav>
+          </div>
+        </div>
+
+        {/* Page Header */}
+        <div className="row mb-4">
+          <div className="col-12">
+            <div>
+              <h2 className="fw-bold text-dark mb-1">My Bookings</h2>
+              <p className="text-muted mb-0">Manage your property bookings</p>
             </div>
           </div>
+        </div>
 
-          {loading ? (
-            <div className="text-center py-4">
-              <div className="spinner-border text-primary" role="status">
-                <span className="visually-hidden">Loading...</span>
-              </div>
-              <p className="mt-2 text-muted">Loading your bookings...</p>
+        {/* Bookings List */}
+        {bookings.length === 0 ? (
+          <div
+            className="text-center py-5"
+            style={{
+              backgroundColor: "#ffffff",
+              border: "1px solid #e9ecef",
+              borderRadius: "12px",
+              boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+            }}
+          >
+            <div
+              className="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3"
+              style={{
+                width: "80px",
+                height: "80px",
+                backgroundColor: "#f8f9fa",
+                color: "#6c757d",
+              }}
+            >
+              <i
+                className="fas fa-calendar-times"
+                style={{ fontSize: "32px" }}
+              ></i>
             </div>
-          ) : bookings.length === 0 ? (
-            <div className="text-center py-4">
-              <i className="bi bi-calendar-x fs-1 text-muted mb-3"></i>
-              <h5 className="text-muted">No bookings found</h5>
-              <p className="text-muted">
-                You haven&apos;t made any property bookings yet.
-              </p>
-            </div>
-          ) : (
-            <div className="row">
-              {bookings.map((booking) => (
-                <div key={booking.book_id} className="col-lg-6 col-md-12 mb-4">
-                  <div className="booking-card border rounded p-3 h-100">
-                    <div className="d-flex align-items-start">
-                      <div className="booking-image me-3">
-                        <Image
-                          src={
-                            booking.prop_img
-                              ? booking.prop_img.startsWith("http")
-                                ? booking.prop_img
-                                : `https://cpanel.roomfinder237.com/${booking.prop_img}`
-                              : "/images/placeholder.jpg"
-                          }
-                          alt={booking.prop_title}
-                          width={80}
-                          height={60}
-                          className="rounded"
-                          style={{
-                            objectFit: "cover",
-                          }}
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            console.log(
-                              `Booking image failed to load: ${target.src}`
-                            );
-                            target.src = "/images/placeholder.jpg";
-                          }}
-                          onLoad={() => {
-                            console.log(
-                              `Booking image loaded successfully: ${booking.prop_img}`
-                            );
-                          }}
-                          unoptimized={true}
-                        />
+            <h5 className="text-muted mb-2">No bookings found</h5>
+            <p className="text-muted mb-0">
+              You haven't made any bookings yet. Start exploring properties!
+            </p>
+          </div>
+        ) : (
+          <div className="row">
+            {bookings.map((booking) => (
+              <div key={booking.book_id} className="col-lg-6 col-md-12 mb-4">
+                <div
+                  className="h-100"
+                  style={{
+                    backgroundColor: "#ffffff",
+                    border: "1px solid #e9ecef",
+                    borderRadius: "12px",
+                    boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+                    padding: "24px",
+                  }}
+                >
+                  <div className="d-flex align-items-start justify-content-between mb-3">
+                    <div className="flex-grow-1">
+                      <h6 className="fw-bold text-dark mb-1">
+                        {booking.prop_title}
+                      </h6>
+                      <span className={getStatusBadge(booking.book_status)}>
+                        {booking.book_status}
+                      </span>
+                    </div>
+                    <div className="text-end">
+                      <div className="fw-bold text-primary">
+                        {Number(booking.prop_price).toLocaleString()} XAF
                       </div>
-                      <div className="booking-details flex-grow-1">
-                        <div className="d-flex justify-content-between align-items-start mb-2">
-                          <h6 className="mb-0">{booking.prop_title}</h6>
-                          {getStatusBadge(booking.book_status)}
-                        </div>
-                        <div className="booking-info">
-                          <p className="mb-1">
-                            <i className="bi bi-currency-dollar me-2"></i>
-                            <strong>Price:</strong>{" "}
-                            {booking.prop_price.toLocaleString()} XAF
-                          </p>
-                          <p className="mb-1">
-                            <i className="bi bi-calendar-range me-2"></i>
-                            <strong>Duration:</strong> {booking.total_day} day
-                            {booking.total_day !== 1 ? "s" : ""}
-                          </p>
-                          <p className="mb-1">
-                            <i className="bi bi-star me-2"></i>
-                            <strong>Rating:</strong> {booking.rate}/5
-                          </p>
-                          <p className="mb-2">
-                            <i className="bi bi-hash me-2"></i>
-                            <strong>Booking ID:</strong> #{booking.book_id}
-                          </p>
-                        </div>
-                        {booking.book_status.toLowerCase() === "pending" && (
-                          <button
-                            type="button"
-                            className="btn btn-sm btn-outline-danger"
-                            onClick={() => cancelBooking(booking.book_id)}
-                          >
-                            <i className="bi bi-x-circle me-1"></i>
-                            Cancel Booking
-                          </button>
-                        )}
+                      <small className="text-muted">
+                        {booking.total_day} day
+                        {booking.total_day !== 1 ? "s" : ""}
+                      </small>
+                    </div>
+                  </div>
+
+                  <div className="row mb-3">
+                    <div className="col-6">
+                      <div
+                        className="text-center p-3"
+                        style={{
+                          backgroundColor: "#f8f9fa",
+                          borderRadius: "8px",
+                          border: "1px solid #e9ecef",
+                        }}
+                      >
+                        <small className="text-muted d-block">
+                          Property ID
+                        </small>
+                        <span className="fw-bold text-dark">
+                          #{booking.prop_id}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="col-6">
+                      <div
+                        className="text-center p-3"
+                        style={{
+                          backgroundColor: "#f8f9fa",
+                          borderRadius: "8px",
+                          border: "1px solid #e9ecef",
+                        }}
+                      >
+                        <small className="text-muted d-block">Rating</small>
+                        <span className="fw-bold text-dark">
+                          {booking.rate}/5
+                        </span>
                       </div>
                     </div>
                   </div>
+
+                  <div className="d-flex gap-2">
+                    <button
+                      className="btn btn-outline-primary btn-sm flex-fill"
+                      onClick={() => {
+                        toast.info(
+                          "View booking details functionality coming soon!"
+                        );
+                      }}
+                      style={{
+                        borderRadius: "8px",
+                        border: "1px solid #007bff",
+                        color: "#007bff",
+                        backgroundColor: "#ffffff",
+                      }}
+                    >
+                      <i className="fas fa-eye me-2"></i>
+                      View Details
+                    </button>
+                    {booking.book_status.toLowerCase() === "confirmed" && (
+                      <button
+                        className="btn btn-outline-danger btn-sm"
+                        onClick={() => cancelBooking(booking.book_id)}
+                        style={{
+                          borderRadius: "8px",
+                          border: "1px solid #dc3545",
+                          color: "#dc3545",
+                          backgroundColor: "#ffffff",
+                        }}
+                      >
+                        <i className="fas fa-times me-2"></i>
+                        Cancel
+                      </button>
+                    )}
+                  </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

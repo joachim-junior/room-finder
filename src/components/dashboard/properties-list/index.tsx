@@ -1,13 +1,11 @@
-import DashboardHeaderOne from "@/layouts/headers/dashboard/DashboardHeaderOne"
-import PropertyListBody from "./PropertyListBody"
+import PropertyListBody from "./PropertyListBody";
 
-const PropertyList = () => {
-   return (
-      <>
-         <DashboardHeaderOne />
-         <PropertyListBody />
-      </>
-   )
-}
+const DashboardPropertiesList = () => {
+  return (
+    <div style={{ marginTop: "100px", padding: "20px 0" }}>
+      <PropertyListBody />
+    </div>
+  );
+};
 
-export default PropertyList
+export default DashboardPropertiesList;

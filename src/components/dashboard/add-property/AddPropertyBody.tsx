@@ -1,510 +1,466 @@
 "use client";
 import { useState, useEffect } from "react";
-import DashboardHeaderTwo from "@/layouts/headers/dashboard/DashboardHeaderTwo";
-import Overview from "./Overview";
-import ListingDetails from "./ListingDetails";
-import Link from "next/link";
-import SelectAmenities from "./SelectAmenities";
-import AddressAndLocation from "../profile/AddressAndLocation";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "react-toastify";
-import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import LoadingSpinner from "@/components/common/LoadingSpinner";
 
-interface PropertyFormData {
-  title: string;
-  description: string;
-  category: string;
-  listed_in: string;
+interface PropertyForm {
+  property_name: string;
+  property_type: string;
   price: string;
-  yearly_tax_rate: string;
-  size: string;
-  bedrooms: number;
-  bathrooms: number;
-  kitchens: number;
-  garages: number;
-  garage_size: string;
-  year_built: string;
-  floors: number;
-  address: string;
-  country: string;
-  city: string;
-  zip_code: string;
-  state: string;
-  latitude: string;
-  longitude: string;
-  amenities: string[];
-  images: File[];
-  listing_description: string;
+  location: string;
+  description: string;
+  bedrooms: string;
+  bathrooms: string;
+  area: string;
+  contact_phone: string;
+  contact_email: string;
 }
 
 const AddPropertyBody = () => {
   const { user } = useAuth();
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const editPropertyId = searchParams.get("edit");
-
-  console.log("AddPropertyBody rendered, user:", user);
-
   const [loading, setLoading] = useState(false);
-  const [propertyTypes, setPropertyTypes] = useState([]);
-  const [formData, setFormData] = useState<PropertyFormData>({
-    title: "",
-    description: "",
-    category: "",
-    listed_in: "rent", // Default to rent
+  const [submitting, setSubmitting] = useState(false);
+  const [formData, setFormData] = useState<PropertyForm>({
+    property_name: "",
+    property_type: "",
     price: "",
-    yearly_tax_rate: "",
-    size: "",
-    bedrooms: 0,
-    bathrooms: 0,
-    kitchens: 0,
-    garages: 0,
-    garage_size: "",
-    year_built: "",
-    floors: 0,
-    address: "",
-    country: "1", // Default to first country
-    city: "",
-    zip_code: "",
-    state: "",
-    latitude: "4.0511", // Default coordinates
-    longitude: "9.7679", // Default coordinates
-    amenities: [],
-    images: [],
-    listing_description: "",
+    location: "",
+    description: "",
+    bedrooms: "",
+    bathrooms: "",
+    area: "",
+    contact_phone: "",
+    contact_email: "",
   });
 
-  // Fetch property types on component mount
-  useEffect(() => {
-    fetchPropertyTypes();
-    if (editPropertyId) {
-      fetchPropertyDetails(editPropertyId);
-    }
-  }, [editPropertyId]);
-
-  const fetchPropertyTypes = async () => {
-    try {
-      const response = await fetch(
-        "https://cpanel.roomfinder237.com/user_api/u_property_type.php",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({}),
-        }
-      );
-
-      const data = await response.json();
-      if (data.ResponseCode === "200" && data.Result === "true") {
-        setPropertyTypes(data.typelist || []);
-      }
-    } catch (error) {
-      console.error("Error fetching property types:", error);
-    }
+  // Handle form input changes
+  const handleInputChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
-  const fetchPropertyDetails = async (propertyId: string) => {
-    if (!user) return;
+  // Handle form submission
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!user) {
+      toast.error("❌ Please log in to add a property");
+      return;
+    }
+
+    // Validate required fields
+    const requiredFields = [
+      "property_name",
+      "property_type",
+      "price",
+      "location",
+      "description",
+      "contact_phone",
+      "contact_email",
+    ];
+
+    for (const field of requiredFields) {
+      if (!formData[field as keyof PropertyForm]) {
+        toast.error(`❌ Please fill in ${field.replace("_", " ")}`);
+        return;
+      }
+    }
 
     try {
+      setSubmitting(true);
+
       const response = await fetch(
-        "https://cpanel.roomfinder237.com/user_api/u_property_details.php",
+        "https://cpanel.roomfinder237.com/user_api/u_property_add.php",
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            uid: user.id.toString(),
-            prop_id: propertyId,
+            uid: user.id,
+            ...formData,
           }),
         }
       );
 
       const data = await response.json();
-      if (data.ResponseCode === "200" && data.Result === "true") {
-        const property = data.property;
+
+      if (data.Result === "true") {
+        toast.success("✅ Property added successfully!");
+        // Reset form
         setFormData({
-          title: property.title || "",
-          description: property.description || "",
-          category: property.property_type?.toString() || "",
-          listed_in: property.pbuysell || "rent",
-          price: property.price?.toString() || "",
-          yearly_tax_rate: property.yearly_tax_rate?.toString() || "",
-          size: property.sqft?.toString() || "",
-          bedrooms: property.beds || 0,
-          bathrooms: property.bathroom || 0,
-          kitchens: property.kitchens || 0,
-          garages: property.garages || 0,
-          garage_size: property.garage_size || "",
-          year_built: property.year_built || "",
-          floors: property.floors || 0,
-          address: property.address || "",
-          country: property.country_id?.toString() || "1",
-          city: property.ccount || "",
-          zip_code: property.zip_code || "",
-          state: property.state || "",
-          latitude: property.latitude || "4.0511",
-          longitude: property.longtitude || "9.7679",
-          amenities: property.facility ? property.facility.split(",") : [],
-          images: [],
-          listing_description: property.description || "",
+          property_name: "",
+          property_type: "",
+          price: "",
+          location: "",
+          description: "",
+          bedrooms: "",
+          bathrooms: "",
+          area: "",
+          contact_phone: "",
+          contact_email: "",
         });
+      } else {
+        toast.error(`❌ ${data.ResponseMsg || "Failed to add property"}`);
       }
     } catch (error) {
-      console.error("Error fetching property details:", error);
-      toast.error("Failed to load property details");
+      console.error("Error adding property:", error);
+      toast.error("❌ Failed to add property");
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  const handleFormDataChange = (section: string, field: string, value: any) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
-
-  const handleImageUpload = (files: FileList | null) => {
-    if (files) {
-      const newImages = Array.from(files);
-      setFormData((prev) => ({
-        ...prev,
-        images: [...prev.images, ...newImages],
-      }));
-    }
-  };
-
-  const removeImage = (index: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      images: prev.images.filter((_, i) => i !== index),
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    try {
-      e.preventDefault();
-      console.log("Form submission started");
-      console.log("Current form data:", formData);
-
-      if (!user) {
-        toast.error("Please log in to add a property");
-        return;
-      }
-
-      // Validate required fields
-      if (!formData.title.trim()) {
-        toast.error("Property title is required");
-        return;
-      }
-
-      if (!formData.description.trim()) {
-        toast.error("Property description is required");
-        return;
-      }
-
-      if (!formData.price.trim()) {
-        toast.error("Property price is required");
-        return;
-      }
-
-      if (!formData.address.trim()) {
-        toast.error("Property address is required");
-        return;
-      }
-
-      console.log("Validation passed, starting API call");
-      setLoading(true);
-
-      // Show initial loading toast
-      toast.info("Submitting property... Please wait.");
-
-      try {
-        // Convert images to base64
-        const imagePromises = formData.images.map((file) => {
-          return new Promise<string>((resolve) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result as string);
-            reader.readAsDataURL(file);
-          });
-        });
-
-        const base64Images = await Promise.all(imagePromises);
-        const firstImage = base64Images[0] || "";
-
-        const requestData: any = {
-          status: "1",
-          title: formData.title,
-          address: formData.address,
-          description: formData.description,
-          ccount: formData.city,
-          facility: formData.amenities.join(","),
-          ptype: formData.category,
-          beds: formData.bedrooms.toString(),
-          bathroom: formData.bathrooms.toString(),
-          sqft: formData.size,
-          rate: "4", // Default rating
-          latitude: formData.latitude || "4.0511",
-          longtitude: formData.longitude || "9.7679", // Note: API expects "longtitude" not "longitude"
-          mobile: user.mobile,
-          price: formData.price,
-          plimit: "4", // Default limit
-          country_id: formData.country || "1",
-          pbuysell: formData.listed_in,
-          uid: user.id.toString(),
-          img: firstImage,
-        };
-
-        if (editPropertyId) {
-          // Update existing property
-          requestData.prop_id = editPropertyId;
-          console.log("Updating property with data:", requestData);
-          toast.info("Updating property...");
-
-          const response = await fetch(
-            "https://cpanel.roomfinder237.com/user_api/u_property_edit.php",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify(requestData),
-            }
-          );
-
-          const data = await response.json();
-          console.log("Edit property response:", data);
-
-          if (data.ResponseCode === "200" && data.Result === "true") {
-            toast.success("✅ Property updated successfully!");
-            toast.info("Redirecting to properties list...");
-            setTimeout(() => {
-              router.push("/dashboard/properties-list");
-            }, 1500);
-          } else {
-            toast.error(
-              `❌ Failed to update property: ${
-                data.ResponseMsg || "Unknown error"
-              }`
-            );
-          }
-        } else {
-          // Add new property
-          console.log("Adding property with data:", requestData);
-          toast.info("Adding new property...");
-
-          const response = await fetch(
-            "https://cpanel.roomfinder237.com/user_api/u_property_add.php",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify(requestData),
-            }
-          );
-
-          const data = await response.json();
-          console.log("Add property response:", data);
-
-          if (data.ResponseCode === "200" && data.Result === "true") {
-            toast.success("✅ Property added successfully!");
-            toast.info("Redirecting to properties list...");
-            setTimeout(() => {
-              router.push("/dashboard/properties-list");
-            }, 1500);
-          } else {
-            toast.error(
-              `❌ Failed to add property: ${
-                data.ResponseMsg || "Unknown error"
-              }`
-            );
-          }
-        }
-      } catch (error) {
-        console.error("Error submitting property:", error);
-        toast.error(
-          "❌ An error occurred while submitting the property. Please try again."
-        );
-      } finally {
-        setLoading(false);
-      }
-    } catch (error) {
-      console.error("Error in handleSubmit:", error);
-      toast.error("❌ An unexpected error occurred. Please try again.");
-      setLoading(false);
-    }
-  };
+  if (!user) {
+    return (
+      <div className="dashboard-body">
+        <div className="position-relative">
+          <div className="bg-white border-20 p-4 text-center">
+            <p>Please log in to add a property.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="dashboard-body">
-      <div className="position-relative">
-        <DashboardHeaderTwo
-          title={editPropertyId ? "Edit Property" : "Add New Property"}
-        />
-        <h2 className="main-title d-block d-lg-none">
-          {editPropertyId ? "Edit Property" : "Add New Property"}
-        </h2>
-
-        <form onSubmit={handleSubmit}>
-          <Overview
-            formData={formData}
-            onFormDataChange={handleFormDataChange}
-            propertyTypes={propertyTypes}
-          />
-          <ListingDetails
-            formData={formData}
-            onFormDataChange={handleFormDataChange}
-          />
-
-          <div className="bg-white card-box border-20 mt-40">
-            <h4 className="dash-title-three">Photo & Video Attachment</h4>
-            <div className="dash-input-wrapper mb-20">
-              <label htmlFor="property-images">File Attachment*</label>
-
-              {formData.images.map((file, index) => (
-                <div
-                  key={index}
-                  className="attached-file d-flex align-items-center justify-content-between mb-15"
-                >
-                  <span>{file.name}</span>
-                  <button
-                    type="button"
-                    className="remove-btn"
-                    onClick={() => removeImage(index)}
-                  >
-                    <i className="bi bi-x"></i>
-                  </button>
-                </div>
-              ))}
-            </div>
-            <div className="dash-btn-one d-inline-block position-relative me-3">
-              <i className="bi bi-plus"></i>
-              Upload File
-              <input
-                type="file"
-                id="property-images"
-                name="property-images"
-                multiple
-                accept=".jpg,.jpeg,.png,.mp4"
-                onChange={(e) => handleImageUpload(e.target.files)}
-              />
-            </div>
-            <small>Upload file .jpg, .png, .mp4</small>
+    <div
+      className="dashboard-body"
+      style={{
+        marginTop: "100px",
+        padding: "20px 0",
+        backgroundColor: "#ffffff",
+        minHeight: "100vh",
+        width: "100%",
+      }}
+    >
+      <div className="container-fluid">
+        {/* Breadcrumb Navigation */}
+        <div className="row mb-3">
+          <div className="col-12">
+            <nav aria-label="breadcrumb">
+              <ol className="breadcrumb mb-0">
+                <li className="breadcrumb-item">
+                  <Link href="/dashboard/home" className="text-decoration-none">
+                    <i className="fas fa-arrow-left me-2"></i>
+                    <span className="text-muted">Back to Dashboard</span>
+                  </Link>
+                </li>
+                <li className="breadcrumb-item active" aria-current="page">
+                  <span className="text-dark fw-bold">Add Property</span>
+                </li>
+              </ol>
+            </nav>
           </div>
+        </div>
 
-          <SelectAmenities
-            selectedAmenities={formData.amenities}
-            onAmenitiesChange={(amenities) =>
-              handleFormDataChange("", "amenities", amenities)
-            }
-          />
-          <AddressAndLocation
-            formData={formData}
-            onFormDataChange={handleFormDataChange}
-          />
+        {/* Page Header */}
+        <div className="row mb-4">
+          <div className="col-12">
+            <div>
+              <h2 className="fw-bold text-dark mb-1">Add New Property</h2>
+              <p className="text-muted mb-0">
+                List your property for rent or sale
+              </p>
+            </div>
+          </div>
+        </div>
 
-          <div className="button-group d-inline-flex align-items-center mt-30">
-            <button
-              type="button"
-              className="dash-btn-two tran3s me-3"
-              disabled={loading}
-              onClick={() => {
-                console.log("Submit button clicked directly");
-                handleSubmit(new Event("submit") as any);
-              }}
+        {/* Property Form */}
+        <div className="row">
+          <div className="col-lg-10 mx-auto">
+            <div
+              className="p-5 rounded"
               style={{
-                opacity: loading ? 0.7 : 1,
-                cursor: loading ? "not-allowed" : "pointer",
+                backgroundColor: "#ffffff",
+                border: "1px solid #e9ecef",
+                borderRadius: "12px",
+                boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
               }}
             >
-              {loading ? (
-                <>
-                  <div
-                    className="spinner-border spinner-border-sm me-2"
-                    role="status"
-                  >
-                    <span className="visually-hidden">Loading...</span>
+              <form onSubmit={handleSubmit}>
+                <div className="row">
+                  {/* Property Name */}
+                  <div className="col-md-6 mb-4">
+                    <label className="form-label fw-bold text-dark">
+                      Property Name *
+                    </label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      name="property_name"
+                      value={formData.property_name}
+                      onChange={handleInputChange}
+                      placeholder="Enter property name"
+                      required
+                      style={{
+                        border: "1px solid #e9ecef",
+                        borderRadius: "8px",
+                        padding: "12px 16px",
+                        backgroundColor: "#ffffff",
+                      }}
+                    />
                   </div>
-                  {editPropertyId ? "Updating..." : "Submitting..."}
-                </>
-              ) : (
-                <>
-                  <i className="bi bi-check-circle me-2"></i>
-                  {editPropertyId ? "Update Property" : "Submit Property"}
-                </>
-              )}
-            </button>
-            <button
-              type="button"
-              className="dash-btn-two tran3s me-3"
-              onClick={async () => {
-                console.log("Test button clicked");
-                if (!user) {
-                  toast.error("No user found");
-                  return;
-                }
-                try {
-                  toast.info("Testing API connection...");
-                  const testData = {
-                    status: "1",
-                    title: "Test Property",
-                    address: "Test Address",
-                    description: "Test Description",
-                    ccount: "Test City",
-                    facility: "",
-                    ptype: "1",
-                    beds: "1",
-                    bathroom: "1",
-                    sqft: "1000",
-                    rate: "4",
-                    latitude: "4.0511",
-                    longtitude: "9.7679",
-                    mobile: user.mobile,
-                    price: "10000",
-                    plimit: "4",
-                    country_id: "1",
-                    pbuysell: "rent",
-                    uid: user.id.toString(),
-                    img: "",
-                  };
-                  console.log("Sending test data:", testData);
-                  const response = await fetch(
-                    "https://cpanel.roomfinder237.com/user_api/u_property_add.php",
-                    {
-                      method: "POST",
-                      headers: {
-                        "Content-Type": "application/json",
-                      },
-                      body: JSON.stringify(testData),
-                    }
-                  );
-                  const data = await response.json();
-                  console.log("Test API response:", data);
-                  if (data.ResponseCode === "200" && data.Result === "true") {
-                    toast.success("✅ Test property added successfully!");
-                  } else {
-                    toast.error(
-                      `❌ Test failed: ${data.ResponseMsg || "Unknown error"}`
-                    );
-                  }
-                } catch (error) {
-                  console.error("Test error:", error);
-                  toast.error("❌ Test failed: Network error");
-                }
-              }}
-            >
-              Test API
-            </button>
-            <Link
-              href="/dashboard/properties-list"
-              className="dash-cancel-btn tran3s"
-            >
-              Cancel
-            </Link>
+
+                  {/* Property Type */}
+                  <div className="col-md-6 mb-4">
+                    <label className="form-label fw-bold text-dark">
+                      Property Type *
+                    </label>
+                    <select
+                      className="form-select"
+                      name="property_type"
+                      value={formData.property_type}
+                      onChange={handleInputChange}
+                      required
+                      style={{
+                        border: "1px solid #e9ecef",
+                        borderRadius: "8px",
+                        padding: "12px 16px",
+                        backgroundColor: "#ffffff",
+                      }}
+                    >
+                      <option value="">Select property type</option>
+                      <option value="Apartment">Apartment</option>
+                      <option value="House">House</option>
+                      <option value="Studio">Studio</option>
+                      <option value="Room">Room</option>
+                      <option value="Office">Office</option>
+                      <option value="Land">Land</option>
+                    </select>
+                  </div>
+
+                  {/* Price */}
+                  <div className="col-md-6 mb-4">
+                    <label className="form-label fw-bold text-dark">
+                      Price (XAF) *
+                    </label>
+                    <input
+                      type="number"
+                      className="form-control"
+                      name="price"
+                      value={formData.price}
+                      onChange={handleInputChange}
+                      placeholder="Enter price"
+                      required
+                      style={{
+                        border: "1px solid #e9ecef",
+                        borderRadius: "8px",
+                        padding: "12px 16px",
+                        backgroundColor: "#ffffff",
+                      }}
+                    />
+                  </div>
+
+                  {/* Location */}
+                  <div className="col-md-6 mb-4">
+                    <label className="form-label fw-bold text-dark">
+                      Location *
+                    </label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      name="location"
+                      value={formData.location}
+                      onChange={handleInputChange}
+                      placeholder="Enter location"
+                      required
+                      style={{
+                        border: "1px solid #e9ecef",
+                        borderRadius: "8px",
+                        padding: "12px 16px",
+                        backgroundColor: "#ffffff",
+                      }}
+                    />
+                  </div>
+
+                  {/* Bedrooms */}
+                  <div className="col-md-4 mb-4">
+                    <label className="form-label fw-bold text-dark">
+                      Bedrooms
+                    </label>
+                    <input
+                      type="number"
+                      className="form-control"
+                      name="bedrooms"
+                      value={formData.bedrooms}
+                      onChange={handleInputChange}
+                      placeholder="Number of bedrooms"
+                      min="0"
+                      style={{
+                        border: "1px solid #e9ecef",
+                        borderRadius: "8px",
+                        padding: "12px 16px",
+                        backgroundColor: "#ffffff",
+                      }}
+                    />
+                  </div>
+
+                  {/* Bathrooms */}
+                  <div className="col-md-4 mb-4">
+                    <label className="form-label fw-bold text-dark">
+                      Bathrooms
+                    </label>
+                    <input
+                      type="number"
+                      className="form-control"
+                      name="bathrooms"
+                      value={formData.bathrooms}
+                      onChange={handleInputChange}
+                      placeholder="Number of bathrooms"
+                      min="0"
+                      style={{
+                        border: "1px solid #e9ecef",
+                        borderRadius: "8px",
+                        padding: "12px 16px",
+                        backgroundColor: "#ffffff",
+                      }}
+                    />
+                  </div>
+
+                  {/* Area */}
+                  <div className="col-md-4 mb-4">
+                    <label className="form-label fw-bold text-dark">
+                      Area (sq ft)
+                    </label>
+                    <input
+                      type="number"
+                      className="form-control"
+                      name="area"
+                      value={formData.area}
+                      onChange={handleInputChange}
+                      placeholder="Property area"
+                      min="0"
+                      style={{
+                        border: "1px solid #e9ecef",
+                        borderRadius: "8px",
+                        padding: "12px 16px",
+                        backgroundColor: "#ffffff",
+                      }}
+                    />
+                  </div>
+
+                  {/* Contact Phone */}
+                  <div className="col-md-6 mb-4">
+                    <label className="form-label fw-bold text-dark">
+                      Contact Phone *
+                    </label>
+                    <input
+                      type="tel"
+                      className="form-control"
+                      name="contact_phone"
+                      value={formData.contact_phone}
+                      onChange={handleInputChange}
+                      placeholder="Enter contact phone"
+                      required
+                      style={{
+                        border: "1px solid #e9ecef",
+                        borderRadius: "8px",
+                        padding: "12px 16px",
+                        backgroundColor: "#ffffff",
+                      }}
+                    />
+                  </div>
+
+                  {/* Contact Email */}
+                  <div className="col-md-6 mb-4">
+                    <label className="form-label fw-bold text-dark">
+                      Contact Email *
+                    </label>
+                    <input
+                      type="email"
+                      className="form-control"
+                      name="contact_email"
+                      value={formData.contact_email}
+                      onChange={handleInputChange}
+                      placeholder="Enter contact email"
+                      required
+                      style={{
+                        border: "1px solid #e9ecef",
+                        borderRadius: "8px",
+                        padding: "12px 16px",
+                        backgroundColor: "#ffffff",
+                      }}
+                    />
+                  </div>
+
+                  {/* Description */}
+                  <div className="col-12 mb-4">
+                    <label className="form-label fw-bold text-dark">
+                      Description *
+                    </label>
+                    <textarea
+                      className="form-control"
+                      name="description"
+                      value={formData.description}
+                      onChange={handleInputChange}
+                      placeholder="Describe your property..."
+                      rows={5}
+                      required
+                      style={{
+                        border: "1px solid #e9ecef",
+                        borderRadius: "8px",
+                        padding: "12px 16px",
+                        backgroundColor: "#ffffff",
+                        resize: "vertical",
+                      }}
+                    ></textarea>
+                  </div>
+
+                  {/* Submit Button */}
+                  <div className="col-12">
+                    <div className="d-flex justify-content-between">
+                      <Link
+                        href="/dashboard/properties-list"
+                        className="btn btn-outline-secondary"
+                        style={{
+                          padding: "12px 24px",
+                          borderRadius: "8px",
+                          border: "1px solid #e9ecef",
+                          backgroundColor: "#ffffff",
+                          color: "#6c757d",
+                        }}
+                      >
+                        <i className="fas fa-arrow-left me-2"></i>
+                        Back to Properties
+                      </Link>
+                      <button
+                        type="submit"
+                        className="btn btn-primary"
+                        disabled={submitting}
+                        style={{
+                          padding: "12px 24px",
+                          borderRadius: "8px",
+                          backgroundColor: "#007bff",
+                          border: "none",
+                        }}
+                      >
+                        {submitting ? (
+                          <>
+                            <i className="fas fa-spinner fa-spin me-2"></i>
+                            Adding Property...
+                          </>
+                        ) : (
+                          <>
+                            <i className="fas fa-plus me-2"></i>
+                            Add Property
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </div>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );

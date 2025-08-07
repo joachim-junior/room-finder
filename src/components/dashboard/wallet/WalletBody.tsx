@@ -1,565 +1,596 @@
 "use client";
 import { useState, useEffect } from "react";
-import DashboardHeaderTwo from "@/layouts/headers/dashboard/DashboardHeaderTwo";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "react-toastify";
+import Link from "next/link";
+import LoadingSpinner from "@/components/common/LoadingSpinner";
 
 interface WalletData {
-  wallet: number;
-  code: string;
-  signupcredit: number;
-  refercredit: number;
-  tax: number;
+  balance: string;
+  signup_credit: string;
+  referral_credit: string;
+  transactions: Transaction[];
 }
 
-interface TransactionItem {
+interface Transaction {
+  id: number;
   message: string;
-  status: "Credit" | "Debit";
+  status: string;
   amt: number;
   tdate: string;
 }
 
+interface PaymentMethod {
+  id: number;
+  title: string;
+  status: number;
+}
+
 const WalletBody = () => {
   const { user } = useAuth();
-  const [walletData, setWalletData] = useState<WalletData | null>(null);
-  const [transactions, setTransactions] = useState<TransactionItem[]>([]);
   const [loading, setLoading] = useState(false);
-  const [topupLoading, setTopupLoading] = useState(false);
-  const [topupAmount, setTopupAmount] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState<"mtn" | "orange" | "">("");
+  const [walletData, setWalletData] = useState<WalletData>({
+    balance: "0",
+    signup_credit: "0",
+    referral_credit: "0",
+    transactions: [],
+  });
+  const [showAddFundsModal, setShowAddFundsModal] = useState(false);
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("");
+  const [amount, setAmount] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [refreshInterval, setRefreshInterval] = useState<NodeJS.Timeout | null>(
-    null
-  );
+  const [email, setEmail] = useState("");
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   // Fetch wallet data
   const fetchWalletData = async () => {
     if (!user) return;
 
-    setLoading(true);
     try {
-      // Get wallet balance and transactions from u_wallet_report.php
+      setLoading(true);
+
+      // Fetch wallet report
       const walletResponse = await fetch(
         "https://cpanel.roomfinder237.com/user_api/u_wallet_report.php",
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            uid: user.id.toString(),
-          }),
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ uid: user.id }),
         }
       );
+      const walletResult = await walletResponse.json();
 
-      const walletData = await walletResponse.json();
-
-      // Get signup credit, referral credit, and tax rate from u_getdata.php
-      const getDataResponse = await fetch(
+      // Fetch user data for credits
+      const userResponse = await fetch(
         "https://cpanel.roomfinder237.com/user_api/u_getdata.php",
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            uid: user.id.toString(),
-          }),
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ uid: user.id }),
         }
       );
+      const userResult = await userResponse.json();
 
-      const getData = await getDataResponse.json();
-
-      if (
-        walletData.ResponseCode === "200" &&
-        walletData.Result === "true" &&
-        getData.ResponseCode === "200" &&
-        getData.Result === "true"
-      ) {
+      if (walletResult.Result === "true" && userResult.Result === "true") {
         setWalletData({
-          wallet: walletData.wallet || 0,
-          code: getData.code || "",
-          signupcredit: getData.signupcredit || 0,
-          refercredit: getData.refercredit || 0,
-          tax: getData.tax || 0,
+          balance: walletResult.wallet || "0",
+          signup_credit: userResult.signupcredit || "0",
+          referral_credit: userResult.refercredit || "0",
+          transactions: walletResult.Walletitem || [],
         });
-        setTransactions(walletData.Walletitem || []);
       } else {
-        toast.error("Failed to load wallet data");
+        toast.error("❌ Failed to load wallet data");
       }
     } catch (error) {
       console.error("Error fetching wallet data:", error);
-      toast.error("An error occurred while loading wallet data");
+      toast.error("❌ Failed to load wallet data");
     } finally {
       setLoading(false);
     }
   };
 
-  // Check payment status
-  const checkPaymentStatus = async (transactionId: string) => {
-    try {
-      const response = await fetch(
-        "https://cpanel.roomfinder237.com/user_api/u_payment_status.php",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            transaction_id: transactionId,
-            uid: user?.id.toString(),
-          }),
-        }
-      );
-
-      const data = await response.json();
-      console.log("Payment status check:", data);
-
-      if (data.ResponseCode === "200" && data.Result === "true") {
-        if (data.status === "completed") {
-          toast.success("✅ Payment completed successfully!");
-          toast.info("🔄 Updating wallet balance...");
-          await fetchWalletData();
-          toast.success("✅ Wallet updated with new balance!");
-
-          // Clear the interval since payment is completed
-          if (refreshInterval) {
-            clearInterval(refreshInterval);
-            setRefreshInterval(null);
-          }
-        } else if (data.status === "pending") {
-          console.log("Payment still pending...");
-        } else if (data.status === "failed") {
-          toast.error("❌ Payment failed. Please try again.");
-          // Clear the interval since payment failed
-          if (refreshInterval) {
-            clearInterval(refreshInterval);
-            setRefreshInterval(null);
-          }
-        } else {
-          console.log("Payment status:", data.status);
-        }
-      } else {
-        console.error("Payment status check failed:", data.ResponseMsg);
-      }
-    } catch (error) {
-      console.error("Error checking payment status:", error);
-    }
+  // Fetch payment methods
+  const fetchPaymentMethods = async () => {
+    // Set static payment methods
+    setPaymentMethods([
+      { id: 1, title: "MTN Mobile Money", status: 1 },
+      { id: 2, title: "Orange Money", status: 1 },
+    ]);
   };
 
-  // Handle wallet top-up
-  const handleTopup = async () => {
-    console.log("handleTopup function called");
-    console.log("Current state:", {
-      topupAmount,
-      paymentMethod,
-      phoneNumber,
-      user,
-    });
+  // Handle add funds
+  const handleAddFunds = () => {
+    setShowAddFundsModal(true);
+    fetchPaymentMethods();
+    // Pre-fill with user data
+    setPhoneNumber(user?.mobile || "");
+    setEmail(user?.email || "");
+  };
 
-    if (!user) {
-      toast.error("❌ Please log in to top up your wallet");
+  // Handle payment submission
+  const handlePaymentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!selectedPaymentMethod || !amount || !phoneNumber || !email) {
+      toast.error("❌ Please fill in all required fields");
       return;
     }
 
-    const amount = parseFloat(topupAmount);
-    if (!amount || amount <= 0) {
+    if (parseFloat(amount) <= 0) {
       toast.error("❌ Please enter a valid amount");
       return;
     }
 
-    if (!paymentMethod) {
-      toast.error("❌ Please select a payment method");
-      return;
-    }
-
-    if (!phoneNumber || phoneNumber.length < 9) {
-      toast.error("❌ Please enter a valid phone number");
-      return;
-    }
-
-    setTopupLoading(true);
-
-    // Show initial loading toast
-    toast.info("🔄 Initializing payment... Please wait.");
-
     try {
+      setIsProcessingPayment(true);
+
+      // Generate transaction ID
+      const transactionId = `WALLET_${Date.now()}_${user?.id}`;
+
+      // Call wallet topup API
       const response = await fetch(
         "https://cpanel.roomfinder237.com/user_api/u_wallet_topup_fapshi.php",
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            uid: user.id.toString(),
-            amount: amount,
-            payment_method: paymentMethod,
+            uid: user?.id,
+            amount: parseFloat(amount),
+            payment_method: selectedPaymentMethod,
             phone_number: phoneNumber,
+            email: email,
+            transaction_id: transactionId,
           }),
         }
       );
 
-      const data = await response.json();
-      console.log("Payment response:", data);
+      const result = await response.json();
 
-      if (data.ResponseCode === "200" && data.Result === "true") {
+      if (result.Result === "true") {
         toast.success("✅ Payment initialized successfully!");
-        toast.info("🔄 Setting up payment monitoring...");
-
-        // Store transaction ID for status checking
-        if (data.transaction_id) {
-          toast.info(
-            "📱 Payment link will open in a new tab. Please complete the payment."
-          );
-
-          // Start polling for payment status
-          const interval = setInterval(async () => {
-            await checkPaymentStatus(data.transaction_id);
-          }, 5000); // Check every 5 seconds
-
-          setRefreshInterval(interval);
-
-          // Stop polling after 2 minutes
-          setTimeout(() => {
-            if (interval) {
-              clearInterval(interval);
-              setRefreshInterval(null);
-              toast.info(
-                "⏰ Payment monitoring stopped. You can manually refresh to check status."
-              );
-            }
-          }, 120000);
-        }
-
-        // Redirect to payment URL if provided
-        if (data.payment_url) {
-          toast.info("🔗 Opening payment page in new tab...");
-          setTimeout(() => {
-            window.open(data.payment_url, "_blank");
-          }, 1000);
-        }
-
-        // Clear form fields
-        setTopupAmount("");
-        setPaymentMethod("");
-        setPhoneNumber("");
-
+        setShowAddFundsModal(false);
+        setAmount("");
+        setSelectedPaymentMethod("");
         // Refresh wallet data
-        toast.info("🔄 Refreshing wallet data...");
-        await fetchWalletData();
-        toast.success("✅ Wallet data updated!");
+        fetchWalletData();
       } else {
-        toast.error(
-          `❌ Failed to initialize payment: ${
-            data.ResponseMsg || "Unknown error"
-          }`
-        );
+        toast.error(`❌ ${result.ResponseMsg || "Payment failed"}`);
       }
     } catch (error) {
-      console.error("Error initializing payment:", error);
-      toast.error(
-        "❌ An error occurred while processing payment. Please try again."
-      );
+      console.error("Error processing payment:", error);
+      toast.error("❌ Payment processing failed");
     } finally {
-      setTopupLoading(false);
+      setIsProcessingPayment(false);
     }
   };
 
-  // Refresh data manually
-  const handleRefresh = async () => {
-    toast.info("🔄 Refreshing wallet data...");
-    try {
-      await fetchWalletData();
-      toast.success("✅ Wallet data refreshed successfully!");
-    } catch (error) {
-      console.error("Error refreshing wallet data:", error);
-      toast.error("❌ Failed to refresh wallet data. Please try again.");
+  // Format date for display
+  const formatDate = (dateString: string) => {
+    return dateString; // API already returns formatted date
+  };
+
+  // Get transaction type styling
+  const getTransactionTypeStyle = (type: string) => {
+    switch (type.toLowerCase()) {
+      case "credit":
+        return "text-success";
+      case "debit":
+        return "text-danger";
+      default:
+        return "text-muted";
     }
   };
 
-  // Load data on component mount
+  // Load wallet data on component mount
   useEffect(() => {
     fetchWalletData();
   }, [user]);
 
-  // Cleanup interval on unmount
-  useEffect(() => {
-    return () => {
-      if (refreshInterval) {
-        clearInterval(refreshInterval);
-      }
-    };
-  }, [refreshInterval]);
-
-  return (
-    <div className="dashboard-body">
-      <div className="position-relative">
-        <DashboardHeaderTwo title="Wallet" />
-        <h2 className="main-title d-block d-lg-none">Wallet</h2>
-
-        {/* Wallet Balance Section */}
-        <div className="bg-white card-box border-20 mb-30">
-          <div className="d-flex justify-content-between align-items-center mb-3">
-            <h4 className="dash-title-three mb-0">Wallet Balance</h4>
-            <button
-              type="button"
-              className="btn btn-sm btn-primary"
-              onClick={handleRefresh}
-              disabled={loading}
-              style={{
-                opacity: loading ? 0.7 : 1,
-                cursor: loading ? "not-allowed" : "pointer",
-              }}
-            >
-              {loading ? (
-                <>
-                  <div
-                    className="spinner-border spinner-border-sm me-2"
-                    role="status"
-                  >
-                    <span className="visually-hidden">Loading...</span>
-                  </div>
-                  Refreshing...
-                </>
-              ) : (
-                <>
-                  <i className="bi bi-arrow-clockwise me-2"></i>
-                  Refresh
-                </>
-              )}
-            </button>
-          </div>
-          <div className="row">
-            <div className="col-lg-6">
-              <div className="wallet-balance-card bg-primary text-white p-4 rounded-3 mb-3">
-                <h3 className="mb-2">Current Balance</h3>
-                <div className="balance-amount fs-1 fw-bold">
-                  {loading
-                    ? "Loading..."
-                    : `${Number(walletData?.wallet || 0).toLocaleString()} XAF`}
-                </div>
-                <small className="text-white-50">
-                  Available for booking guesthouses
-                </small>
-              </div>
-            </div>
-            <div className="col-lg-6">
-              <div className="wallet-info">
-                <div className="info-item d-flex justify-content-between mb-2">
-                  <span>Signup Credit:</span>
-                  <span className="fw-bold">
-                    {Number(walletData?.signupcredit || 0).toLocaleString()} XAF
-                  </span>
-                </div>
-                <div className="info-item d-flex justify-content-between mb-2">
-                  <span>Referral Credit:</span>
-                  <span className="fw-bold">
-                    {Number(walletData?.refercredit || 0).toLocaleString()} XAF
-                  </span>
-                </div>
-                <div className="info-item d-flex justify-content-between">
-                  <span>Tax Rate:</span>
-                  <span className="fw-bold">{walletData?.tax || 0}%</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Top-up Section */}
-        <div className="bg-white card-box border-20 mb-30">
-          <h4 className="dash-title-three">Add Funds</h4>
-
-          {/* Payment Method Selection - Full Width */}
-          <div className="dash-input-wrapper mb-20">
-            <label>Payment Method</label>
-            <div className="payment-methods d-flex gap-4">
-              <div className="payment-option">
-                <div className="d-flex align-items-center">
-                  <input
-                    type="radio"
-                    id="mtn"
-                    name="paymentMethod"
-                    value="mtn"
-                    checked={paymentMethod === "mtn"}
-                    onChange={(e) =>
-                      setPaymentMethod(e.target.value as "mtn" | "orange")
-                    }
-                    style={{ transform: "scale(0.8)", marginRight: "6px" }}
-                  />
-                  <label htmlFor="mtn" className="mb-0">
-                    MTN Mobile Money
-                  </label>
-                </div>
-              </div>
-              <div className="payment-option">
-                <div className="d-flex align-items-center">
-                  <input
-                    type="radio"
-                    id="orange"
-                    name="paymentMethod"
-                    value="orange"
-                    checked={paymentMethod === "orange"}
-                    onChange={(e) =>
-                      setPaymentMethod(e.target.value as "mtn" | "orange")
-                    }
-                    style={{ transform: "scale(0.8)", marginRight: "6px" }}
-                  />
-                  <label htmlFor="orange" className="mb-0">
-                    Orange Money
-                  </label>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Amount and Payment Number Row */}
-          <div className="row">
-            <div className="col-lg-4">
-              <div className="dash-input-wrapper mb-20">
-                <label htmlFor="topup-amount">Amount (XAF)</label>
-                <input
-                  type="number"
-                  id="topup-amount"
-                  value={topupAmount}
-                  onChange={(e) => setTopupAmount(e.target.value)}
-                  placeholder="Enter amount"
-                  min="100"
-                  step="100"
-                />
-                <small className="text-muted">Min: 100 XAF</small>
-              </div>
-            </div>
-
-            <div className="col-lg-4">
-              <div className="dash-input-wrapper mb-20">
-                <label htmlFor="phone-number">Payment Number</label>
-                <input
-                  type="tel"
-                  id="phone-number"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  placeholder="Phone number"
-                  className="type-input"
-                />
-                <small className="text-muted">
-                  {paymentMethod === "mtn"
-                    ? "MTN"
-                    : paymentMethod === "orange"
-                    ? "Orange"
-                    : "Mobile"}{" "}
-                  number
-                </small>
-              </div>
-            </div>
-          </div>
-
-          {/* Submit Button Row */}
-          <div className="row">
-            <div className="col-lg-3">
-              <button
-                type="button"
-                className="dash-btn-two tran3s w-100"
-                onClick={() => {
-                  console.log("Wallet button clicked");
-                  handleTopup();
-                }}
-                disabled={
-                  topupLoading || !topupAmount || !paymentMethod || !phoneNumber
-                }
-                style={{
-                  height: "45px",
-                  fontSize: "14px",
-                  opacity:
-                    topupLoading ||
-                    !topupAmount ||
-                    !paymentMethod ||
-                    !phoneNumber
-                      ? 0.7
-                      : 1,
-                  cursor:
-                    topupLoading ||
-                    !topupAmount ||
-                    !paymentMethod ||
-                    !phoneNumber
-                      ? "not-allowed"
-                      : "pointer",
-                }}
-              >
-                {topupLoading ? (
-                  <>
-                    <div
-                      className="spinner-border spinner-border-sm me-2"
-                      role="status"
-                    >
-                      <span className="visually-hidden">Loading...</span>
-                    </div>
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    <i className="bi bi-wallet2 me-2"></i>
-                    Add Funds
-                  </>
-                )}
-              </button>
-            </div>
-            <div className="col-lg-3">
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={() => {
-                  console.log("Test button clicked");
-                  toast.success("Test toast notification");
-                }}
-              >
-                Test Button
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Transaction History Section */}
-        <div className="bg-white card-box border-20">
-          <h4 className="dash-title-three">Transaction History</h4>
-          <div className="transaction-list">
-            {transactions.length > 0 ? (
-              transactions.map((transaction, index) => (
-                <div
-                  key={index}
-                  className="transaction-item d-flex align-items-center justify-content-between p-3 border-bottom"
-                >
-                  <div className="transaction-info">
-                    <div className="transaction-message fw-semibold">
-                      {transaction.message}
-                    </div>
-                    <div className="transaction-date text-muted small">
-                      {transaction.tdate}
-                    </div>
-                  </div>
-                  <div className="transaction-amount">
-                    <span
-                      className={`badge ${
-                        transaction.status === "Credit"
-                          ? "bg-success"
-                          : "bg-danger"
-                      }`}
-                    >
-                      {transaction.status === "Credit" ? "+" : "-"}{" "}
-                      {Number(transaction.amt).toLocaleString()} XAF
-                    </span>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="text-center py-4">
-                <p className="text-muted">No transactions found</p>
-              </div>
-            )}
+  if (!user) {
+    return (
+      <div className="dashboard-body">
+        <div className="position-relative">
+          <div className="bg-white border-20 p-4 text-center">
+            <p>Please log in to view your wallet.</p>
           </div>
         </div>
       </div>
+    );
+  }
+
+  // Show loading spinner while fetching data
+  if (loading) {
+    return (
+      <div
+        className="dashboard-body"
+        style={{
+          marginTop: "100px",
+          padding: "20px 0",
+          backgroundColor: "#ffffff",
+          minHeight: "100vh",
+          width: "100%",
+        }}
+      >
+        <div className="container-fluid">
+          <LoadingSpinner
+            size="lg"
+            color="#007bff"
+            text="Loading wallet data..."
+          />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="dashboard-body"
+      style={{
+        marginTop: "100px",
+        padding: "20px 0",
+        backgroundColor: "#ffffff",
+        minHeight: "100vh",
+        width: "100%",
+      }}
+    >
+      <div className="container-fluid">
+        {/* Breadcrumb Navigation */}
+        <div className="row mb-3">
+          <div className="col-12">
+            <nav aria-label="breadcrumb">
+              <ol className="breadcrumb mb-0">
+                <li className="breadcrumb-item">
+                  <Link href="/dashboard/home" className="text-decoration-none">
+                    <i className="fas fa-arrow-left me-2"></i>
+                    <span className="text-muted">Back to Dashboard</span>
+                  </Link>
+                </li>
+                <li className="breadcrumb-item active" aria-current="page">
+                  <span className="text-dark fw-bold">Wallet</span>
+                </li>
+              </ol>
+            </nav>
+          </div>
+        </div>
+
+        {/* Page Header */}
+        <div className="row mb-4">
+          <div className="col-12">
+            <div>
+              <h2 className="fw-bold text-dark mb-1">Wallet</h2>
+              <p className="text-muted mb-0">
+                Manage your wallet and transactions
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Balance Card */}
+        <div className="row mb-4">
+          <div className="col-12">
+            <div
+              className="p-4 rounded"
+              style={{
+                backgroundColor: "#f8f9fa",
+                borderRadius: "12px",
+                border: "1px solid #e9ecef",
+              }}
+            >
+              <div className="row align-items-center">
+                <div className="col-md-8">
+                  <h6 className="text-muted mb-2">Total Balance</h6>
+                  <h1 className="fw-bold mb-3 text-dark">
+                    {loading
+                      ? "..."
+                      : Number(walletData.balance).toLocaleString()}{" "}
+                    XAF
+                  </h1>
+                  <div className="d-flex align-items-center">
+                    <span className="text-muted me-3">
+                      <i className="fas fa-shield-alt me-1"></i>
+                      Secure
+                    </span>
+                    <span className="text-muted">
+                      <i className="fas fa-clock me-1"></i>
+                      Real-time
+                    </span>
+                  </div>
+                </div>
+                <div className="col-md-4 text-end">
+                  <button
+                    className="btn btn-primary rounded-pill"
+                    onClick={handleAddFunds}
+                    style={{
+                      borderRadius: "8px",
+                      padding: "10px 20px",
+                    }}
+                  >
+                    <i className="fas fa-plus me-2"></i>
+                    Add Funds
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Stats Cards */}
+        <div className="row g-3 mb-4">
+          <div className="col-lg-6 col-md-6">
+            <div
+              className="p-3 rounded"
+              style={{
+                backgroundColor: "#ffffff",
+                borderRadius: "8px",
+                border: "1px solid #e9ecef",
+              }}
+            >
+              <div className="d-flex align-items-center mb-2">
+                <div
+                  className="rounded-circle d-flex align-items-center justify-content-center me-3"
+                  style={{
+                    width: "40px",
+                    height: "40px",
+                    backgroundColor: "#e8f5e8",
+                    color: "#28a745",
+                  }}
+                >
+                  <i className="fas fa-gift"></i>
+                </div>
+                <div>
+                  <h6 className="mb-0 fw-bold text-dark">Signup Credit</h6>
+                  <h6 className="mb-0 text-success">
+                    {Number(walletData.signup_credit).toLocaleString()} XAF
+                  </h6>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="col-lg-6 col-md-6">
+            <div
+              className="p-3 rounded"
+              style={{
+                backgroundColor: "#ffffff",
+                borderRadius: "8px",
+                border: "1px solid #e9ecef",
+              }}
+            >
+              <div className="d-flex align-items-center mb-2">
+                <div
+                  className="rounded-circle d-flex align-items-center justify-content-center me-3"
+                  style={{
+                    width: "40px",
+                    height: "40px",
+                    backgroundColor: "#e8f4f8",
+                    color: "#17a2b8",
+                  }}
+                >
+                  <i className="fas fa-share-alt"></i>
+                </div>
+                <div>
+                  <h6 className="mb-0 fw-bold text-dark">Referral Credit</h6>
+                  <h6 className="mb-0 text-info">
+                    {Number(walletData.referral_credit).toLocaleString()} XAF
+                  </h6>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Recent Transactions */}
+        <div className="row">
+          <div className="col-12">
+            <div
+              className="p-4 rounded"
+              style={{
+                backgroundColor: "#ffffff",
+                borderRadius: "8px",
+                border: "1px solid #e9ecef",
+              }}
+            >
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <h5 className="mb-0 fw-bold text-dark">Recent Transactions</h5>
+              </div>
+
+              {walletData.transactions.length > 0 ? (
+                <div className="table-responsive">
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th className="border-0 text-muted fw-bold">Type</th>
+                        <th className="border-0 text-muted fw-bold">Amount</th>
+                        <th className="border-0 text-muted fw-bold">
+                          Description
+                        </th>
+                        <th className="border-0 text-muted fw-bold">Date</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {walletData.transactions.map((transaction, index) => (
+                        <tr key={index}>
+                          <td>
+                            <span
+                              className={`fw-bold ${getTransactionTypeStyle(
+                                transaction.status
+                              )}`}
+                            >
+                              {transaction.status.charAt(0).toUpperCase() +
+                                transaction.status.slice(1)}
+                            </span>
+                          </td>
+                          <td className="fw-bold">
+                            <span
+                              className={
+                                transaction.status.toLowerCase() === "credit"
+                                  ? "text-success"
+                                  : "text-danger"
+                              }
+                            >
+                              {transaction.status.toLowerCase() === "credit"
+                                ? "+"
+                                : "-"}
+                              {transaction.amt.toLocaleString()} XAF
+                            </span>
+                          </td>
+                          <td className="text-muted">{transaction.message}</td>
+                          <td className="text-muted">
+                            {formatDate(transaction.tdate)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="text-center py-4">
+                  <i
+                    className="fas fa-receipt mb-3"
+                    style={{ fontSize: "40px", color: "#6c757d" }}
+                  ></i>
+                  <h6 className="text-muted mb-2">No Transactions Yet</h6>
+                  <p className="text-muted mb-0">
+                    Your transaction history will appear here once you start
+                    using your wallet
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Add Funds Modal */}
+      {showAddFundsModal && (
+        <div
+          className="modal fade show"
+          style={{
+            display: "block",
+            backgroundColor: "rgba(0,0,0,0.5)",
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            zIndex: 1050,
+          }}
+        >
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title fw-bold">Add Funds to Wallet</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setShowAddFundsModal(false)}
+                  disabled={isProcessingPayment}
+                ></button>
+              </div>
+              <form onSubmit={handlePaymentSubmit}>
+                <div className="modal-body">
+                  <div className="mb-3">
+                    <label className="form-label fw-bold">Amount (XAF) *</label>
+                    <input
+                      type="number"
+                      className="form-control"
+                      value={amount}
+                      onChange={(e) => setAmount(e.target.value)}
+                      placeholder="Enter amount"
+                      min="100"
+                      step="100"
+                      required
+                      disabled={isProcessingPayment}
+                      style={{ borderRadius: "8px" }}
+                    />
+                    <small className="text-muted">
+                      Minimum amount: 100 XAF
+                    </small>
+                  </div>
+
+                  <div className="mb-3">
+                    <label className="form-label fw-bold">
+                      Payment Method *
+                    </label>
+                    <select
+                      className="form-select"
+                      value={selectedPaymentMethod}
+                      onChange={(e) => setSelectedPaymentMethod(e.target.value)}
+                      required
+                      disabled={isProcessingPayment}
+                      style={{ borderRadius: "8px" }}
+                    >
+                      <option value="">Select payment method</option>
+                      {paymentMethods.map((method) => (
+                        <option key={method.id} value={method.id}>
+                          {method.title}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="mb-3">
+                    <label className="form-label fw-bold">Phone Number *</label>
+                    <input
+                      type="tel"
+                      className="form-control"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      placeholder="Enter phone number"
+                      required
+                      disabled={isProcessingPayment}
+                      style={{ borderRadius: "8px" }}
+                    />
+                  </div>
+
+                  <div className="mb-3">
+                    <label className="form-label fw-bold">
+                      Email Address *
+                    </label>
+                    <input
+                      type="email"
+                      className="form-control"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Enter email address"
+                      required
+                      disabled={isProcessingPayment}
+                      style={{ borderRadius: "8px" }}
+                    />
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button
+                    type="button"
+                    className="btn btn-secondary rounded-pill"
+                    onClick={() => setShowAddFundsModal(false)}
+                    disabled={isProcessingPayment}
+                    style={{ borderRadius: "8px" }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn btn-primary rounded-pill"
+                    disabled={isProcessingPayment}
+                    style={{ borderRadius: "8px" }}
+                  >
+                    {isProcessingPayment ? (
+                      <>
+                        <i className="fas fa-spinner fa-spin me-2"></i>
+                        Processing...
+                      </>
+                    ) : (
+                      <>Proceed to Payment</>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

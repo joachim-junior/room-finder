@@ -1,10 +1,12 @@
 import BreadcrumbThree from "@/components/common/breadcrumb/BreadcrumbThree";
 import BlogOneArea from "./BlogOneArea";
 import FancyBanner from "@/components/common/FancyBanner";
+import HeaderTwo from "@/layouts/headers/HeaderTwo";
 
 const BlogOne = () => {
   return (
     <>
+      <HeaderTwo />
       <BreadcrumbThree
         title="Blog Grid"
         link="#"

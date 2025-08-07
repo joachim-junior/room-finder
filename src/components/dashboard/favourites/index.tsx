@@ -1,11 +1,11 @@
-import FavouriteBody from './FavouriteBody';
+import FavouriteBody from "./FavouriteBody";
 
-const DashboardFavourite = () => {
-   return (
-      <>
-         <FavouriteBody />
-      </>
-   )
-}
+const DashboardFavourites = () => {
+  return (
+    <div style={{ marginTop: "100px", padding: "20px 0" }}>
+      <FavouriteBody />
+    </div>
+  );
+};
 
-export default DashboardFavourite;
+export default DashboardFavourites;

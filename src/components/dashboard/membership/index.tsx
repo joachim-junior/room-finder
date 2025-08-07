@@ -1,13 +1,11 @@
-import DashboardHeaderOne from "@/layouts/headers/dashboard/DashboardHeaderOne";
 import MembershipBody from "./MembershipBody";
 
 const DashboardMembership = () => {
   return (
-    <>
-      <DashboardHeaderOne/>
+    <div style={{ marginTop: "100px", padding: "20px 0" }}>
       <MembershipBody />
-    </>
-  )
-}
+    </div>
+  );
+};
 
 export default DashboardMembership;

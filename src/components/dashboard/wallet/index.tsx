@@ -1,12 +1,10 @@
-import DashboardHeaderOne from "@/layouts/headers/dashboard/DashboardHeaderOne";
 import WalletBody from "./WalletBody";
 
 const DashboardWallet = () => {
   return (
-    <>
-      <DashboardHeaderOne />
+    <div style={{ marginTop: "100px", padding: "20px 0" }}>
       <WalletBody />
-    </>
+    </div>
   );
 };
 

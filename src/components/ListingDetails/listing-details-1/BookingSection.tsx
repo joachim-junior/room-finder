@@ -86,106 +86,344 @@ const BookingSection = ({ property }: { property: any }) => {
   return (
     <div style={{ display: "flex", justifyContent: "center" }}>
       <div
-        className="bg-white shadow4 border-20 p-30 mt-40"
-        style={{ maxWidth: 350, width: "100%" }}
+        style={{
+          backgroundColor: "#ffffff",
+          borderRadius: "20px",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.08)",
+          padding: "32px",
+          maxWidth: 380,
+          width: "100%",
+          border: "1px solid #f0f0f0",
+        }}
       >
-        <h4 className="mb-20">Book this Property</h4>
+        <div style={{ marginBottom: "24px" }}>
+          <h4
+            style={{
+              fontSize: "24px",
+              fontWeight: "700",
+              color: "#212529",
+              marginBottom: "8px",
+            }}
+          >
+            Book this Property
+          </h4>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "8px 16px",
+              backgroundColor: "#f8f9fa",
+              borderRadius: "12px",
+              fontSize: "14px",
+              color: "#495057",
+            }}
+          >
+            <span style={{ fontWeight: "600" }}>Price:</span>
+            <span style={{ fontWeight: "700", fontSize: "16px" }}>
+              {price?.toLocaleString()} XAF
+            </span>
+          </div>
+        </div>
+
         {isAuthenticated && (
-          <div className="mb-3">
-            <span className="fw-bold">Wallet Balance:</span>{" "}
-            {wallet?.toLocaleString()} XAF
+          <div
+            style={{
+              marginBottom: "20px",
+              padding: "12px 16px",
+              backgroundColor: "#e8f5e8",
+              borderRadius: "12px",
+              border: "1px solid #c8e6c9",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                marginBottom: "4px",
+              }}
+            >
+              <div
+                style={{
+                  width: "8px",
+                  height: "8px",
+                  backgroundColor: "#4caf50",
+                  borderRadius: "50%",
+                }}
+              ></div>
+              <span
+                style={{
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  color: "#2e7d32",
+                }}
+              >
+                Wallet Balance
+              </span>
+            </div>
+            <span
+              style={{ fontSize: "18px", fontWeight: "700", color: "#2e7d32" }}
+            >
+              {wallet?.toLocaleString()} XAF
+            </span>
           </div>
         )}
+
         {!isAuthenticated ? (
-          <div className="alert alert-info">
-            <span>You must </span>
-            <a
-              href="/login"
-              className="color-dark fw-500 text-decoration-underline"
-            >
-              Sign in
-            </a>
-            <span> to book this property.</span>
+          <div
+            style={{
+              padding: "16px",
+              backgroundColor: "#e3f2fd",
+              borderRadius: "12px",
+              border: "1px solid #bbdefb",
+              textAlign: "center",
+            }}
+          >
+            <span style={{ color: "#1976d2", fontSize: "14px" }}>
+              You must{" "}
+              <a
+                href="/login"
+                style={{
+                  color: "#007bff",
+                  fontWeight: "600",
+                  textDecoration: "none",
+                }}
+              >
+                Sign in
+              </a>{" "}
+              to book this property.
+            </span>
           </div>
         ) : wallet < price ? (
-          <div className="alert alert-warning d-flex flex-column align-items-start">
-            <span>Insufficient wallet balance to book this property.</span>
+          <div
+            style={{
+              padding: "16px",
+              backgroundColor: "#fff3e0",
+              borderRadius: "12px",
+              border: "1px solid #ffe0b2",
+              textAlign: "center",
+            }}
+          >
+            <div style={{ marginBottom: "12px" }}>
+              <span style={{ color: "#f57c00", fontSize: "14px" }}>
+                Insufficient wallet balance to book this property.
+              </span>
+            </div>
             <button
-              className="btn mt-2"
               style={{
-                background: "#0072c6",
-                color: "#fff",
-                border: "1.5px solid #0072c6",
-                fontWeight: 600,
-                textTransform: "uppercase",
-                transition: "all 0.2s",
+                backgroundColor: "#007bff",
+                color: "#ffffff",
+                border: "none",
+                borderRadius: "25px",
+                padding: "12px 24px",
+                fontSize: "14px",
+                fontWeight: "600",
+                cursor: "pointer",
+                transition: "all 0.3s ease",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                margin: "0 auto",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#0056b3";
+                e.currentTarget.style.transform = "translateY(-2px)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "#007bff";
+                e.currentTarget.style.transform = "translateY(0)";
               }}
               onClick={() => router.push("/dashboard/wallet")}
             >
-              <i className="bi bi-wallet me-2"></i> Add Funds
+              <i className="bi bi-wallet" style={{ fontSize: "16px" }}></i>
+              Add Funds
             </button>
           </div>
         ) : (
           <form onSubmit={handleSubmit}>
-            <div className="mb-3">
-              <label className="form-label">Check-in</label>
+            <div style={{ marginBottom: "20px" }}>
+              <label
+                style={{
+                  display: "block",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  color: "#495057",
+                  marginBottom: "8px",
+                }}
+              >
+                Check-in
+              </label>
               <input
                 type="date"
-                className="form-control"
                 value={checkIn}
                 onChange={(e) => setCheckIn(e.target.value)}
                 required
+                style={{
+                  width: "100%",
+                  padding: "12px 16px",
+                  borderRadius: "25px",
+                  border: "2px solid #e9ecef",
+                  fontSize: "14px",
+                  backgroundColor: "#ffffff",
+                  transition: "all 0.3s ease",
+                  outline: "none",
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = "#007bff";
+                  e.target.style.boxShadow = "0 0 0 3px rgba(0,123,255,0.1)";
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = "#e9ecef";
+                  e.target.style.boxShadow = "none";
+                }}
               />
             </div>
-            <div className="mb-3">
-              <label className="form-label">Check-out</label>
+
+            <div style={{ marginBottom: "20px" }}>
+              <label
+                style={{
+                  display: "block",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  color: "#495057",
+                  marginBottom: "8px",
+                }}
+              >
+                Check-out
+              </label>
               <input
                 type="date"
-                className="form-control"
                 value={checkOut}
                 onChange={(e) => setCheckOut(e.target.value)}
                 required
+                style={{
+                  width: "100%",
+                  padding: "12px 16px",
+                  borderRadius: "25px",
+                  border: "2px solid #e9ecef",
+                  fontSize: "14px",
+                  backgroundColor: "#ffffff",
+                  transition: "all 0.3s ease",
+                  outline: "none",
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = "#007bff";
+                  e.target.style.boxShadow = "0 0 0 3px rgba(0,123,255,0.1)";
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = "#e9ecef";
+                  e.target.style.boxShadow = "none";
+                }}
               />
             </div>
-            <div className="mb-3">
-              <label className="form-label">Guests</label>
+
+            <div style={{ marginBottom: "24px" }}>
+              <label
+                style={{
+                  display: "block",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  color: "#495057",
+                  marginBottom: "8px",
+                }}
+              >
+                Guests
+              </label>
               <input
                 type="number"
-                className="form-control"
                 min={1}
                 max={property.plimit || 10}
                 value={guests}
                 onChange={(e) => setGuests(Number(e.target.value))}
                 required
+                style={{
+                  width: "100%",
+                  padding: "12px 16px",
+                  borderRadius: "25px",
+                  border: "2px solid #e9ecef",
+                  fontSize: "14px",
+                  backgroundColor: "#ffffff",
+                  transition: "all 0.3s ease",
+                  outline: "none",
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = "#007bff";
+                  e.target.style.boxShadow = "0 0 0 3px rgba(0,123,255,0.1)";
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = "#e9ecef";
+                  e.target.style.boxShadow = "none";
+                }}
               />
             </div>
+
             <button
               type="submit"
-              className="btn w-100"
-              style={{
-                background: "#fff",
-                color: "#0072c6",
-                border: "1.5px solid #0072c6",
-                fontWeight: 600,
-                textTransform: "uppercase",
-                transition: "all 0.2s",
-              }}
-              onMouseOver={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.background =
-                  "#0072c6";
-                (e.currentTarget as HTMLButtonElement).style.color = "#fff";
-              }}
-              onMouseOut={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.background =
-                  "#fff";
-                (e.currentTarget as HTMLButtonElement).style.color = "#0072c6";
-              }}
               disabled={loading}
+              style={{
+                width: "100%",
+                backgroundColor: "#007bff",
+                color: "#ffffff",
+                border: "none",
+                borderRadius: "25px",
+                padding: "16px 24px",
+                fontSize: "16px",
+                fontWeight: "600",
+                cursor: "pointer",
+                transition: "all 0.3s ease",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "8px",
+              }}
+              onMouseEnter={(e) => {
+                if (!loading) {
+                  e.currentTarget.style.backgroundColor = "#0056b3";
+                  e.currentTarget.style.transform = "translateY(-2px)";
+                  e.currentTarget.style.boxShadow =
+                    "0 8px 25px rgba(0,123,255,0.3)";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!loading) {
+                  e.currentTarget.style.backgroundColor = "#007bff";
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow = "none";
+                }
+              }}
             >
-              {loading ? "Booking..." : "Book & Pay"}
+              {loading ? (
+                <>
+                  <div
+                    style={{
+                      width: "16px",
+                      height: "16px",
+                      border: "2px solid #ffffff",
+                      borderTop: "2px solid transparent",
+                      borderRadius: "20px",
+                      animation: "spin 1s linear infinite",
+                    }}
+                  ></div>
+                  Booking...
+                </>
+              ) : (
+                <>Book Now</>
+              )}
             </button>
           </form>
         )}
+
+        <style jsx>{`
+          @keyframes spin {
+            0% {
+              transform: rotate(0deg);
+            }
+            100% {
+              transform: rotate(360deg);
+            }
+          }
+        `}</style>
       </div>
     </div>
   );

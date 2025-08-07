@@ -311,7 +311,7 @@ const FavouriteArea = () => {
                 </ul>
                 <div className="pl-footer top-border d-flex align-items-center justify-content-between">
                   <strong className="price fw-500 color-dark">
-                    {item.price.toLocaleString()} XAF
+                    {Number(item.price).toLocaleString()} XAF
                     {item.buyorrent === "rent" && (
                       <>
                         / <sub>m</sub>

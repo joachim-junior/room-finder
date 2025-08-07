@@ -101,7 +101,7 @@ const CommonBanner = ({ propetydetails, style_3 }: any) => {
           <div className="price color-dark fw-500">
             Price:{" "}
             {propetydetails?.price
-              ? `${propetydetails.price.toLocaleString()} XAF`
+              ? `${Number(propetydetails.price).toLocaleString()} XAF`
               : "-"}
           </div>
           <ul className="style-none d-flex align-items-center action-btns justify-content-end mt-2">

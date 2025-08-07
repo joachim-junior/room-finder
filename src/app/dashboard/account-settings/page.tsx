@@ -1,10 +1,16 @@
 import DashboardAccountSettings from "@/components/dashboard/account-settings";
+import Wrapper from "@/layouts/Wrapper";
 
 export const metadata = {
-  title: "Dashboard Account Settings Homy - Real Estate React Next js Template",
-};
-const index = () => {
-  return <DashboardAccountSettings />;
+  title: "Dashboard Account Settings - Roomfinder",
 };
 
-export default index;
+const AccountSettingsPage = () => {
+  return (
+    <Wrapper>
+      <DashboardAccountSettings />
+    </Wrapper>
+  );
+};
+
+export default AccountSettingsPage;

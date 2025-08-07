@@ -1,12 +1,10 @@
-import DashboardHeaderOne from "@/layouts/headers/dashboard/DashboardHeaderOne";
 import ReferralBody from "./ReferralBody";
 
 const DashboardReferral = () => {
   return (
-    <>
-      <DashboardHeaderOne />
+    <div style={{ marginTop: "100px", padding: "20px 0" }}>
       <ReferralBody />
-    </>
+    </div>
   );
 };
 

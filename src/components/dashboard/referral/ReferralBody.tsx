@@ -1,8 +1,9 @@
 "use client";
 import { useState, useEffect } from "react";
-import DashboardHeaderTwo from "@/layouts/headers/dashboard/DashboardHeaderTwo";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "react-toastify";
+import Link from "next/link";
+import LoadingSpinner from "@/components/common/LoadingSpinner";
 
 interface ReferralData {
   referral_code: string;
@@ -108,8 +109,11 @@ const ReferralBody = () => {
       const data = await response.json();
 
       if (data.ResponseCode === "200" && data.Result === "true") {
-        toast.success("✅ Referral code retrieved successfully!");
-        await fetchReferralData(); // Refresh data
+        setReferralData((prev) => ({
+          ...prev!,
+          referral_code: data.code || (user as any).refercode || "",
+        }));
+        toast.success("✅ Referral code generated successfully!");
       } else {
         toast.error(
           `❌ Failed to generate referral code: ${
@@ -128,7 +132,7 @@ const ReferralBody = () => {
   // Copy referral code to clipboard
   const copyReferralCode = async () => {
     if (!referralData?.referral_code) {
-      toast.error("❌ No referral code available");
+      toast.error("❌ No referral code available to copy");
       return;
     }
 
@@ -136,7 +140,7 @@ const ReferralBody = () => {
       await navigator.clipboard.writeText(referralData.referral_code);
       toast.success("✅ Referral code copied to clipboard!");
     } catch (error) {
-      console.error("Error copying to clipboard:", error);
+      console.error("Error copying referral code:", error);
       toast.error("❌ Failed to copy referral code");
     }
   };
@@ -144,264 +148,338 @@ const ReferralBody = () => {
   // Refresh referral data
   const handleRefresh = async () => {
     setRefreshing(true);
-    toast.info("🔄 Refreshing referral data...");
     await fetchReferralData();
     setRefreshing(false);
   };
 
-  // Load data on component mount
-  useEffect(() => {
-    fetchReferralData();
-  }, [user]);
-
-  // Helper function to format date
+  // Format date for display
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
+    return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
     });
   };
 
-  // Helper function to get status badge
+  // Get status badge styling
   const getStatusBadge = (status: string) => {
-    const statusMap: { [key: string]: { class: string; text: string } } = {
-      active: { class: "badge bg-success", text: "Active" },
-      pending: { class: "badge bg-warning", text: "Pending" },
-      completed: { class: "badge bg-info", text: "Completed" },
-      cancelled: { class: "badge bg-danger", text: "Cancelled" },
-    };
-
-    const statusInfo = statusMap[status.toLowerCase()] || {
-      class: "badge bg-secondary",
-      text: status,
-    };
-
-    return <span className={statusInfo.class}>{statusInfo.text}</span>;
+    switch (status.toLowerCase()) {
+      case "active":
+        return "badge bg-success";
+      case "pending":
+        return "badge bg-warning";
+      case "inactive":
+        return "badge bg-danger";
+      default:
+        return "badge bg-secondary";
+    }
   };
 
-  return (
-    <div className="dashboard-body">
-      <div className="position-relative">
-        <DashboardHeaderTwo title="Referral Program" />
-        <h2 className="main-title d-block d-lg-none">Referral Program</h2>
+  // Load referral data on component mount
+  useEffect(() => {
+    fetchReferralData();
+  }, [user]);
 
-        {/* Referral Overview Section */}
-        <div className="bg-white card-box border-20 mb-30">
-          <div className="d-flex justify-content-between align-items-center mb-4">
-            <h4 className="dash-title-three mb-0">Referral Overview</h4>
-            <button
-              type="button"
-              className="btn btn-sm btn-primary"
-              onClick={handleRefresh}
-              disabled={refreshing}
-              style={{
-                backgroundColor: "var(--bs-primary)",
-                color: "white",
-                borderColor: "var(--bs-primary)",
-              }}
-            >
-              {refreshing ? (
-                <>
-                  <div
-                    className="spinner-border spinner-border-sm me-2"
-                    role="status"
-                  ></div>
-                  Refreshing...
-                </>
-              ) : (
-                <>
-                  <i className="bi bi-arrow-clockwise me-2"></i>
-                  Refresh
-                </>
-              )}
-            </button>
+  if (!user) {
+    return (
+      <div className="dashboard-body">
+        <div className="position-relative">
+          <div className="bg-white border-20 p-4 text-center">
+            <p>Please log in to view your referral data.</p>
           </div>
+        </div>
+      </div>
+    );
+  }
 
-          <div className="row">
-            {/* Referral Code Section */}
-            <div className="col-lg-6 mb-4">
-              <div className="referral-code-card border rounded p-4 h-100">
-                <div className="d-flex justify-content-between align-items-center mb-3">
-                  <h5 className="mb-0">
-                    <i className="bi bi-share me-2"></i>
-                    Your Referral Code
-                  </h5>
-                </div>
+  // Show loading spinner while fetching data
+  if (loading) {
+    return (
+      <div
+        className="dashboard-body"
+        style={{
+          marginTop: "100px",
+          padding: "20px 0",
+          backgroundColor: "#ffffff",
+          minHeight: "100vh",
+          width: "100%",
+        }}
+      >
+        <div className="container-fluid">
+          <LoadingSpinner
+            size="lg"
+            color="#007bff"
+            text="Loading referral data..."
+          />
+        </div>
+      </div>
+    );
+  }
 
-                {referralData?.referral_code ? (
-                  <div className="referral-code-display">
-                    <div className="input-group">
-                      <input
-                        type="text"
-                        className="form-control"
-                        value={referralData.referral_code}
-                        readOnly
-                        style={{ fontFamily: "monospace", fontWeight: "bold" }}
-                      />
-                      <button
-                        className="btn btn-outline-primary"
-                        type="button"
-                        onClick={copyReferralCode}
-                      >
-                        <i className="bi bi-clipboard"></i>
-                      </button>
-                    </div>
-                    <small className="text-muted mt-2 d-block">
-                      Share this code with friends to earn referral credits
-                    </small>
-                  </div>
-                ) : (
-                  <div className="text-center">
-                    <div className="mb-3">
-                      <i
-                        className="bi bi-share-circle text-muted"
-                        style={{ fontSize: "3rem" }}
-                      ></i>
-                    </div>
-                    <h5 className="text-muted">
-                      No referral code generated yet
-                    </h5>
-                    <p className="text-muted mb-3">
-                      Generate your referral code to start earning
-                    </p>
-                    <button
-                      type="button"
-                      className="btn btn-primary"
-                      onClick={generateReferralCode}
-                      disabled={loading}
-                    >
-                      {loading ? "Generating..." : "Generate Referral Code"}
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
+  return (
+    <div
+      className="dashboard-body"
+      style={{
+        marginTop: "100px",
+        padding: "20px 0",
+        backgroundColor: "#ffffff",
+        minHeight: "100vh",
+        width: "100%",
+      }}
+    >
+      <div className="container-fluid">
+        {/* Breadcrumb Navigation */}
+        <div className="row mb-3">
+          <div className="col-12">
+            <nav aria-label="breadcrumb">
+              <ol className="breadcrumb mb-0">
+                <li className="breadcrumb-item">
+                  <Link href="/dashboard/home" className="text-decoration-none">
+                    <i className="fas fa-arrow-left me-2"></i>
+                    <span className="text-muted">Back to Dashboard</span>
+                  </Link>
+                </li>
+                <li className="breadcrumb-item active" aria-current="page">
+                  <span className="text-dark fw-bold">Referral</span>
+                </li>
+              </ol>
+            </nav>
+          </div>
+        </div>
 
-            {/* Referral Statistics */}
-            <div className="col-lg-6 mb-4">
-              <div className="referral-stats-card border rounded p-4 h-100">
-                <h5 className="mb-3">
-                  <i className="bi bi-graph-up me-2"></i>
-                  Referral Statistics
-                </h5>
-
-                <div className="row">
-                  <div className="col-4 mb-2">
-                    <div className="text-center">
-                      <h5 className="text-primary mb-1">
-                        {referralData?.total_referrals || 0}
-                      </h5>
-                      <small className="text-muted">Total Referrals</small>
-                    </div>
-                  </div>
-                  <div className="col-4 mb-2">
-                    <div className="text-center">
-                      <h5 className="text-success mb-1">
-                        {referralData?.total_earnings?.toLocaleString() || 0}
-                      </h5>
-                      <small className="text-muted">Total Earnings (XAF)</small>
-                    </div>
-                  </div>
-                  <div className="col-4 mb-2">
-                    <div className="text-center">
-                      <h5 className="text-info mb-1">
-                        {referralData?.referral_credit || 0}
-                      </h5>
-                      <small className="text-muted">Referral Credit</small>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Progress bar for referral credit */}
-                {referralData?.referral_credit && (
-                  <div className="mt-3">
-                    <div className="d-flex justify-content-between mb-1">
-                      <small>Credit Progress</small>
-                      <small>
-                        {referralData.referral_credit > 0
-                          ? (referralData.referral_credit / 100) * 100
-                          : 0}
-                        %
-                      </small>
-                    </div>
-                    <div className="progress" style={{ height: "8px" }}>
-                      <div
-                        className="progress-bar bg-info"
-                        style={{
-                          width: `${
-                            referralData.referral_credit > 0
-                              ? (referralData.referral_credit / 100) * 100
-                              : 0
-                          }%`,
-                        }}
-                      ></div>
-                    </div>
-                  </div>
-                )}
-              </div>
+        {/* Page Header */}
+        <div className="row mb-4">
+          <div className="col-12">
+            <div>
+              <h2 className="fw-bold text-dark mb-1">Referral Program</h2>
+              <p className="text-muted mb-0">
+                Earn rewards by inviting friends
+              </p>
             </div>
           </div>
         </div>
 
-        {/* Referral History Section */}
-        <div className="bg-white card-box border-20">
-          <h4 className="dash-title-three mb-3">Referral History</h4>
-
-          {loading ? (
-            <div className="text-center py-4">
-              <div className="spinner-border text-primary" role="status"></div>
-              <p className="mt-2 text-muted">Loading referral history...</p>
-            </div>
-          ) : referralHistory.length === 0 ? (
-            <div className="text-center py-4">
-              <i
-                className="bi bi-people text-muted"
-                style={{ fontSize: "3rem" }}
-              ></i>
-              <h5 className="text-muted mt-3">No referrals yet</h5>
-              <p className="text-muted">
-                Start sharing your referral code to see your referral history
+        {/* Referral Code Section */}
+        <div className="row mb-4">
+          <div className="col-12">
+            <div
+              className="p-4 rounded"
+              style={{
+                backgroundColor: "#ffffff",
+                border: "1px solid #e9ecef",
+                borderRadius: "12px",
+                boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+              }}
+            >
+              <div className="d-flex align-items-center mb-3">
+                <div
+                  className="rounded-circle d-flex align-items-center justify-content-center me-3"
+                  style={{
+                    width: "40px",
+                    height: "40px",
+                    backgroundColor: "#28a745",
+                    color: "white",
+                  }}
+                >
+                  <i className="fas fa-share-alt"></i>
+                </div>
+                <h5 className="mb-0 fw-bold text-dark">Your Referral Code</h5>
+              </div>
+              <div className="input-group">
+                <input
+                  type="text"
+                  className="form-control"
+                  value={referralData?.referral_code || ""}
+                  readOnly
+                  style={{
+                    border: "1px solid #dee2e6",
+                    borderRadius: "8px 0 0 8px",
+                    padding: "12px 16px",
+                    fontSize: "16px",
+                    backgroundColor: "#f8f9fa",
+                  }}
+                />
+                <button
+                  className="btn btn-primary"
+                  onClick={copyReferralCode}
+                  style={{
+                    borderRadius: "0 8px 8px 0",
+                    padding: "12px 20px",
+                    border: "none",
+                    backgroundColor: "#007bff",
+                  }}
+                >
+                  <i className="fas fa-copy me-2"></i>
+                  Copy
+                </button>
+              </div>
+              <p className="text-muted mt-2 mb-0">
+                Share this code with friends to earn rewards
               </p>
             </div>
-          ) : (
-            <div className="table-responsive">
-              <table className="table table-hover">
-                <thead>
-                  <tr>
-                    <th>Referred User</th>
-                    <th>Email</th>
-                    <th>Signup Date</th>
-                    <th>Status</th>
-                    <th>Earnings</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {referralHistory.map((referral) => (
-                    <tr key={referral.id}>
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <div className="avatar-sm bg-primary rounded-circle d-flex align-items-center justify-content-center me-2">
-                            <span className="text-white fw-bold">
-                              {referral.referred_user.charAt(0).toUpperCase()}
-                            </span>
-                          </div>
-                          <span>{referral.referred_user}</span>
-                        </div>
-                      </td>
-                      <td>{referral.referred_email}</td>
-                      <td>{formatDate(referral.signup_date)}</td>
-                      <td>{getStatusBadge(referral.status)}</td>
-                      <td className="fw-bold text-success">
-                        {referral.earnings.toLocaleString()} XAF
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          </div>
+        </div>
+
+        {/* Stats Cards */}
+        <div className="row mb-4">
+          <div className="col-md-4 mb-3">
+            <div
+              className="p-4 rounded text-center"
+              style={{
+                backgroundColor: "#ffffff",
+                border: "1px solid #e9ecef",
+                borderRadius: "12px",
+                boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+              }}
+            >
+              <div
+                className="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3"
+                style={{
+                  width: "50px",
+                  height: "50px",
+                  backgroundColor: "#28a745",
+                  color: "white",
+                }}
+              >
+                <i className="fas fa-users"></i>
+              </div>
+              <h6 className="fw-bold text-dark mb-1">
+                {referralData?.total_referrals || 0}
+              </h6>
+              <small className="text-muted">Total Referrals</small>
             </div>
-          )}
+          </div>
+          <div className="col-md-4 mb-3">
+            <div
+              className="p-4 rounded text-center"
+              style={{
+                backgroundColor: "#ffffff",
+                border: "1px solid #e9ecef",
+                borderRadius: "12px",
+                boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+              }}
+            >
+              <div
+                className="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3"
+                style={{
+                  width: "50px",
+                  height: "50px",
+                  backgroundColor: "#ffc107",
+                  color: "white",
+                }}
+              >
+                <i className="fas fa-coins"></i>
+              </div>
+              <h6 className="fw-bold text-dark mb-1">
+                {Number(referralData?.total_earnings || 0).toLocaleString()} XAF
+              </h6>
+              <small className="text-muted">Total Earnings</small>
+            </div>
+          </div>
+          <div className="col-md-4 mb-3">
+            <div
+              className="p-4 rounded text-center"
+              style={{
+                backgroundColor: "#ffffff",
+                border: "1px solid #e9ecef",
+                borderRadius: "12px",
+                boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+              }}
+            >
+              <div
+                className="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3"
+                style={{
+                  width: "50px",
+                  height: "50px",
+                  backgroundColor: "#17a2b8",
+                  color: "white",
+                }}
+              >
+                <i className="fas fa-wallet"></i>
+              </div>
+              <h6 className="fw-bold text-dark mb-1">
+                {Number(referralData?.referral_credit || 0).toLocaleString()}{" "}
+                XAF
+              </h6>
+              <small className="text-muted">Referral Credit</small>
+            </div>
+          </div>
+        </div>
+
+        {/* Referral History */}
+        <div className="row">
+          <div className="col-12">
+            <div
+              className="p-4 rounded"
+              style={{
+                backgroundColor: "#ffffff",
+                border: "1px solid #e9ecef",
+                borderRadius: "12px",
+                boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+              }}
+            >
+              <h5 className="fw-bold text-dark mb-3">Referral History</h5>
+              {referralHistory.length > 0 ? (
+                <div className="table-responsive">
+                  <table className="table table-hover">
+                    <thead>
+                      <tr>
+                        <th className="border-0 text-muted">User</th>
+                        <th className="border-0 text-muted">Email</th>
+                        <th className="border-0 text-muted">Signup Date</th>
+                        <th className="border-0 text-muted">Status</th>
+                        <th className="border-0 text-muted">Earnings</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {referralHistory.map((referral) => (
+                        <tr key={referral.id}>
+                          <td className="fw-bold text-dark">
+                            {referral.referred_user}
+                          </td>
+                          <td className="text-muted">
+                            {referral.referred_email}
+                          </td>
+                          <td className="text-muted">
+                            {formatDate(referral.signup_date)}
+                          </td>
+                          <td>
+                            <span className={getStatusBadge(referral.status)}>
+                              {referral.status}
+                            </span>
+                          </td>
+                          <td className="fw-bold text-success">
+                            {referral.earnings.toLocaleString()} XAF
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="text-center py-5">
+                  <div
+                    className="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3"
+                    style={{
+                      width: "60px",
+                      height: "60px",
+                      backgroundColor: "#f8f9fa",
+                      color: "#6c757d",
+                    }}
+                  >
+                    <i
+                      className="fas fa-history"
+                      style={{ fontSize: "24px" }}
+                    ></i>
+                  </div>
+                  <h6 className="text-muted mb-2">No Referral History</h6>
+                  <p className="text-muted mb-0">
+                    Start sharing your referral code to see history here
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>

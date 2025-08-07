@@ -1,13 +1,11 @@
-import DashboardHeaderOne from "@/layouts/headers/dashboard/DashboardHeaderOne"
-import PasswordChangeBody from "./PasswordChangeBody"
+import PasswordChangeBody from "./PasswordChangeBody";
 
-const PasswordChange = () => {
-   return (
-      <>
-         <DashboardHeaderOne />
-         <PasswordChangeBody />
-      </>
-   )
-}
+const DashboardPasswordChange = () => {
+  return (
+    <div style={{ marginTop: "100px", padding: "20px 0" }}>
+      <PasswordChangeBody />
+    </div>
+  );
+};
 
-export default PasswordChange
+export default DashboardPasswordChange;

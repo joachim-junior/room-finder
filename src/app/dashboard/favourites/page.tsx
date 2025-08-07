@@ -1,10 +1,16 @@
 import DashboardFavourites from "@/components/dashboard/favourites";
+import Wrapper from "@/layouts/Wrapper";
 
 export const metadata = {
-  title: "Dashboard Favourites Homy - Real Estate React Next js Template",
-};
-const index = () => {
-  return <DashboardFavourites />;
+  title: "Dashboard Favourites - Roomfinder",
 };
 
-export default index;
+const FavouritesPage = () => {
+  return (
+    <Wrapper>
+      <DashboardFavourites />
+    </Wrapper>
+  );
+};
+
+export default FavouritesPage;

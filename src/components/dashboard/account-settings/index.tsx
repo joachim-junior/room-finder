@@ -1,13 +1,11 @@
-import DashboardHeaderOne from "@/layouts/headers/dashboard/DashboardHeaderOne";
 import AccountSettingBody from "./AccountSettingBody";
 
-const DashboardAccountSetting = () => {
-   return (
-      <>
-         <DashboardHeaderOne />
-         <AccountSettingBody />
-      </>
-   )
-}
+const DashboardAccountSettings = () => {
+  return (
+    <div style={{ marginTop: "100px", padding: "20px 0" }}>
+      <AccountSettingBody />
+    </div>
+  );
+};
 
-export default DashboardAccountSetting;
+export default DashboardAccountSettings;

@@ -1,10 +1,16 @@
 import DashboardPropertiesList from "@/components/dashboard/properties-list";
+import Wrapper from "@/layouts/Wrapper";
 
 export const metadata = {
-  title: "Dashboard Properties List Homy - Real Estate React Next js Template",
-};
-const index = () => {
-  return <DashboardPropertiesList />;
+  title: "Dashboard Properties List - Roomfinder",
 };
 
-export default index;
+const PropertiesListPage = () => {
+  return (
+    <Wrapper>
+      <DashboardPropertiesList />
+    </Wrapper>
+  );
+};
+
+export default PropertiesListPage;

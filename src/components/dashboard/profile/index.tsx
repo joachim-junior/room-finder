@@ -1,13 +1,11 @@
-import DashboardHeaderOne from "@/layouts/headers/dashboard/DashboardHeaderOne"
-import ProfileBody from "./ProfileBody"
+import ProfileBody from "./ProfileBody";
 
 const DashboardProfile = () => {
-   return (
-      <>
-         <DashboardHeaderOne />
-         <ProfileBody />
-      </>
-   )
-}
+  return (
+    <div style={{ marginTop: "100px", padding: "20px 0" }}>
+      <ProfileBody />
+    </div>
+  );
+};
 
-export default DashboardProfile
+export default DashboardProfile;

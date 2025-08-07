@@ -1,0 +1,944 @@
+/* Homepage Responsive Styles */
+
+/* Mobile Styles (max-width: 768px) */
+
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 2rem !important;
+  }
+  .hero-subtitle {
+    font-size: 1rem !important;
+    margin-bottom: 30px !important;
+  }
+  .search-container {
+    border-radius: 24px !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    background-color: transparent !important;
+  }
+  /* Hide desktop search on mobile */
+  .desktop-only {
+    display: none !important;
+  }
+  /* Show mobile search input */
+  .mobile-search-input {
+    display: flex !important;
+    border-radius: 24px !important;
+    background-color: #f7f7f7 !important;
+    border: 1px solid #e0e0e0 !important;
+    padding: 16px 20px !important;
+  }
+  /* Properties Section Mobile Responsiveness */
+  .properties-container {
+    padding: 0 20px !important;
+  }
+  .properties-header {
+    margin-bottom: 30px !important;
+    padding: 0 10px !important;
+  }
+  .properties-title {
+    font-size: 24px !important;
+    margin-bottom: 6px !important;
+  }
+  .properties-subtitle {
+    font-size: 14px !important;
+  }
+  .properties-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+    padding: 0 8px !important;
+  }
+  /* Mobile: Compact cards */
+  .property-card {
+    height: auto !important;
+    min-height: 160px !important;
+  }
+  .property-image-container {
+    height: 100px !important;
+  }
+  .property-details {
+    padding: 8px !important;
+    min-height: 60px !important;
+  }
+  .property-title {
+    font-size: 13px !important;
+    line-height: 1.2 !important;
+  }
+  .property-features {
+    font-size: 11px !important;
+    gap: 4px !important;
+    margin-bottom: 6px !important;
+  }
+  .property-price {
+    font-size: 13px !important;
+  }
+  .property-unit {
+    font-size: 11px !important;
+    margin-left: 3px !important;
+  }
+  .favorite-button {
+    width: 28px !important;
+    height: 28px !important;
+    top: 8px !important;
+    right: 8px !important;
+  }
+  .favorite-button i {
+    font-size: 12px !important;
+  }
+  .guest-favorite-badge {
+    padding: 3px 6px !important;
+    border-radius: 4px !important;
+    font-size: 9px !important;
+    top: 8px !important;
+    left: 8px !important;
+  }
+  .property-skeleton {
+    height: 140px !important;
+  }
+  .property-skeleton-content {
+    padding: 8px !important;
+  }
+  .property-skeleton-line {
+    height: 10px !important;
+    margin-bottom: 6px !important;
+  }
+  .property-skeleton-line-small {
+    height: 8px !important;
+  }
+  .no-properties {
+    padding: 60px 0 !important;
+  }
+  .no-properties-title {
+    font-size: 18px !important;
+  }
+  .no-properties-text {
+    font-size: 14px !important;
+  }
+  /* How It Works Section Mobile Responsiveness */
+  /* Section container */
+  .how-it-works-section {
+    padding: 40px 0 !important;
+  }
+  .how-it-works-container {
+    padding: 0 20px !important;
+  }
+  .how-it-works-header {
+    margin-bottom: 40px !important;
+  }
+  .how-it-works-title {
+    font-size: 24px !important;
+    margin-bottom: 12px !important;
+  }
+  .how-it-works-subtitle {
+    font-size: 14px !important;
+    max-width: 100% !important;
+  }
+  /* Timeline container */
+  .timeline-container {
+    padding: 0 10px !important;
+  }
+  /* Timeline line - hide on mobile */
+  .timeline-line {
+    display: none !important;
+  }
+  /* Steps container */
+  .timeline-steps {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 20px !important;
+  }
+  /* Individual step */
+  .timeline-step {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    margin-bottom: 0 !important;
+  }
+  /* Desktop step cards - hide on mobile */
+  .step-card {
+    display: none !important;
+  }
+  /* Mobile step cards - show on mobile */
+  .step-card-mobile {
+    display: block !important;
+    width: 100% !important;
+    max-width: 320px !important;
+    padding: 20px !important;
+    margin: 0 auto !important;
+  }
+  /* Step icon container */
+  .step-icon-container {
+    width: 50px !important;
+    height: 50px !important;
+    margin-bottom: 12px !important;
+  }
+  /* Step content */
+  .step-content {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 12px !important;
+    margin-bottom: 0 !important;
+  }
+  /* Step badge */
+  .step-badge {
+    font-size: 11px !important;
+    padding: 4px 10px !important;
+  }
+  /* Step title */
+  .step-title {
+    font-size: 16px !important;
+  }
+  /* Step description */
+  .step-description {
+    font-size: 14px !important;
+    line-height: 1.4 !important;
+  }
+  /* Step dot - hide on mobile */
+  .timeline-dot {
+    display: none !important;
+  }
+  /* Empty side containers - hide on mobile */
+  .timeline-empty-side {
+    display: none !important;
+  }
+  /* Why Choose RoomFinder Section Mobile Responsiveness */
+  /* Section container */
+  .why-choose-section {
+    padding: 40px 20px !important;
+  }
+  .why-choose-container {
+    padding: 0 15px !important;
+  }
+  .why-choose-header {
+    margin-bottom: 40px !important;
+  }
+  .why-choose-badge {
+    padding: 6px 12px !important;
+    margin-bottom: 16px !important;
+  }
+  .why-choose-badge-text {
+    font-size: 12px !important;
+  }
+  .why-choose-title {
+    font-size: 28px !important;
+    margin-bottom: 16px !important;
+  }
+  .why-choose-subtitle {
+    font-size: 16px !important;
+    max-width: 100% !important;
+  }
+  /* Features grid */
+  .why-choose-features-grid {
+    grid-template-columns: 1fr !important;
+    gap: 20px !important;
+    padding: 0 !important;
+  }
+  /* Feature cards */
+  .why-choose-feature-card {
+    padding: 24px 20px !important;
+    border-radius: 16px !important;
+  }
+  /* Feature icon */
+  .feature-icon-container {
+    margin-bottom: 16px !important;
+  }
+  .feature-icon-container svg {
+    width: 40px !important;
+    height: 40px !important;
+  }
+  /* Feature content */
+  .feature-title {
+    font-size: 18px !important;
+    margin-bottom: 12px !important;
+  }
+  .feature-description {
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+  }
+  /* Background pattern */
+  .feature-background-pattern {
+    width: 80px !important;
+    height: 80px !important;
+  }
+  /* Decorative element */
+  .feature-decorative-element {
+    height: 3px !important;
+  }
+}
+
+/* Tablet Styles (768px - 1024px) */
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .hero-title {
+    font-size: 2.25rem !important;
+  }
+  .hero-subtitle {
+    font-size: 1.05rem !important;
+  }
+  .search-container {
+    max-width: 90% !important;
+  }
+  .properties-grid {
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 16px !important;
+  }
+  /* How It Works Section Tablet Responsiveness */
+  .how-it-works-section {
+    padding: 60px 0 !important;
+  }
+  .how-it-works-container {
+    padding: 0 40px !important;
+  }
+  .how-it-works-title {
+    font-size: 28px !important;
+  }
+  .how-it-works-subtitle {
+    font-size: 15px !important;
+  }
+  .timeline-container {
+    padding: 0 15px !important;
+  }
+  .step-card {
+    padding: 24px !important;
+  }
+  .step-icon-container {
+    width: 55px !important;
+    height: 55px !important;
+  }
+  .step-title {
+    font-size: 18px !important;
+  }
+  .step-description {
+    font-size: 15px !important;
+  }
+  /* Why Choose RoomFinder Section Tablet Responsiveness */
+  .why-choose-section {
+    padding: 60px 40px !important;
+  }
+  .why-choose-container {
+    padding: 0 40px !important;
+  }
+  .why-choose-title {
+    font-size: 32px !important;
+  }
+  .why-choose-features-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 24px !important;
+  }
+  .why-choose-feature-card {
+    padding: 32px 24px !important;
+  }
+  .feature-title {
+    font-size: 20px !important;
+  }
+  .feature-description {
+    font-size: 15px !important;
+  }
+}
+
+/* Small Mobile Styles (max-width: 480px) */
+
+@media (max-width: 480px) {
+  .hero-title {
+    font-size: 1.75rem !important;
+  }
+  .hero-subtitle {
+    font-size: 0.9rem !important;
+    margin-bottom: 25px !important;
+  }
+  .search-container {
+    border-radius: 20px !important;
+    padding: 0 !important;
+  }
+  .mobile-search-input {
+    border-radius: 20px !important;
+    padding: 14px 18px !important;
+  }
+  .properties-grid {
+    gap: 6px !important;
+    padding: 0 6px !important;
+  }
+  /* Small Mobile: Even more compact */
+  .property-card {
+    height: auto !important;
+    min-height: 140px !important;
+  }
+  .property-image-container {
+    height: 80px !important;
+  }
+  .property-details {
+    padding: 6px !important;
+    min-height: 50px !important;
+  }
+  .property-title {
+    font-size: 12px !important;
+  }
+  .property-features {
+    font-size: 10px !important;
+  }
+  .property-price {
+    font-size: 12px !important;
+  }
+  .property-unit {
+    font-size: 10px !important;
+  }
+  /* How It Works Section Small Mobile */
+  .how-it-works-section {
+    padding: 30px 0 !important;
+  }
+  .how-it-works-container {
+    padding: 0 15px !important;
+  }
+  .how-it-works-header {
+    margin-bottom: 30px !important;
+  }
+  .how-it-works-title {
+    font-size: 20px !important;
+    margin-bottom: 8px !important;
+  }
+  .how-it-works-subtitle {
+    font-size: 13px !important;
+  }
+  .timeline-container {
+    padding: 0 5px !important;
+  }
+  .step-card {
+    padding: 16px !important;
+    max-width: 280px !important;
+  }
+  .step-icon-container {
+    width: 45px !important;
+    height: 45px !important;
+    margin-bottom: 10px !important;
+  }
+  .step-content {
+    gap: 10px !important;
+  }
+  .step-badge {
+    font-size: 10px !important;
+    padding: 3px 8px !important;
+  }
+  .step-title {
+    font-size: 14px !important;
+  }
+  .step-description {
+    font-size: 13px !important;
+    line-height: 1.3 !important;
+  }
+  /* Why Choose RoomFinder Section Small Mobile */
+  .why-choose-section {
+    padding: 30px 15px !important;
+  }
+  .why-choose-container {
+    padding: 0 10px !important;
+  }
+  .why-choose-header {
+    margin-bottom: 30px !important;
+  }
+  .why-choose-badge {
+    padding: 5px 10px !important;
+    margin-bottom: 12px !important;
+  }
+  .why-choose-badge-text {
+    font-size: 11px !important;
+  }
+  .why-choose-title {
+    font-size: 24px !important;
+    margin-bottom: 12px !important;
+  }
+  .why-choose-subtitle {
+    font-size: 14px !important;
+  }
+  .why-choose-features-grid {
+    gap: 16px !important;
+  }
+  .why-choose-feature-card {
+    padding: 20px 16px !important;
+    border-radius: 12px !important;
+  }
+  .feature-icon-container {
+    margin-bottom: 12px !important;
+  }
+  .feature-icon-container svg {
+    width: 36px !important;
+    height: 36px !important;
+  }
+  .feature-title {
+    font-size: 16px !important;
+    margin-bottom: 8px !important;
+  }
+  .feature-description {
+    font-size: 13px !important;
+  }
+  .feature-background-pattern {
+    width: 60px !important;
+    height: 60px !important;
+  }
+}
+
+/* Desktop Styles (min-width: 1025px) */
+
+@media (min-width: 1025px) {
+  /* Hide mobile search on desktop */
+  .mobile-search-input {
+    display: none !important;
+  }
+  /* Show desktop search */
+  .desktop-only {
+    display: flex !important;
+  }
+  /* Desktop: 7 columns with longer images and minimal spacing */
+  .properties-grid {
+    grid-template-columns: repeat(7, 1fr) !important;
+    gap: 8px !important;
+    padding: 0 10px !important;
+  }
+  .property-card {
+    height: auto !important;
+    min-height: 240px !important;
+    max-width: none !important;
+  }
+  .property-image-container {
+    height: 160px !important;
+  }
+  .property-details {
+    padding: 8px !important;
+    min-height: 60px !important;
+  }
+  .property-title {
+    font-size: 13px !important;
+    line-height: 1.1 !important;
+    margin-bottom: 4px !important;
+  }
+  .property-features {
+    font-size: 11px !important;
+    gap: 4px !important;
+    margin-bottom: 6px !important;
+  }
+  .property-price {
+    font-size: 13px !important;
+  }
+  .property-unit {
+    font-size: 11px !important;
+    margin-left: 2px !important;
+  }
+  .favorite-button {
+    width: 26px !important;
+    height: 26px !important;
+    top: 8px !important;
+    right: 8px !important;
+  }
+  .favorite-button i {
+    font-size: 11px !important;
+  }
+  .guest-favorite-badge {
+    padding: 2px 4px !important;
+    border-radius: 3px !important;
+    font-size: 8px !important;
+    top: 6px !important;
+    left: 6px !important;
+  }
+  /* Why Choose RoomFinder Section Desktop */
+  .why-choose-section {
+    padding: 80px 0 !important;
+  }
+  .why-choose-container {
+    padding: 0 80px !important;
+  }
+  .why-choose-features-grid {
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)) !important;
+    gap: 32px !important;
+    padding: 0 20px !important;
+  }
+  .why-choose-feature-card {
+    padding: 40px 32px !important;
+  }
+  .feature-icon-container svg {
+    width: 48px !important;
+    height: 48px !important;
+  }
+  .feature-title {
+    font-size: 22px !important;
+  }
+  .feature-description {
+    font-size: 16px !important;
+  }
+  .feature-background-pattern {
+    width: 120px !important;
+    height: 120px !important;
+  }
+}
+
+/* Call to Action Section Mobile Styles */
+
+@media (max-width: 768px) {
+  .cta-section {
+    padding: 60px 20px !important;
+  }
+  .cta-container {
+    padding: 0 15px !important;
+  }
+  .cta-content-wrapper {
+    flex-direction: column !important;
+    gap: 40px !important;
+    text-align: center !important;
+  }
+  .cta-badge {
+    padding: 6px 12px !important;
+    margin-bottom: 16px !important;
+  }
+  .cta-badge-text {
+    font-size: 12px !important;
+  }
+  .cta-title {
+    font-size: 32px !important;
+    margin-bottom: 16px !important;
+  }
+  .cta-subtitle {
+    font-size: 16px !important;
+    margin-bottom: 30px !important;
+  }
+  .cta-features-list {
+    gap: 12px !important;
+    margin-bottom: 30px !important;
+  }
+  .cta-feature-item {
+    gap: 10px !important;
+  }
+  .cta-feature-icon {
+    width: 18px !important;
+    height: 18px !important;
+  }
+  .cta-feature-icon svg {
+    width: 10px !important;
+    height: 10px !important;
+  }
+  .cta-feature-text {
+    font-size: 14px !important;
+  }
+  .cta-buttons {
+    flex-direction: column !important;
+    gap: 12px !important;
+    align-items: center !important;
+  }
+  .cta-primary-button,
+  .cta-secondary-button {
+    width: 100% !important;
+    max-width: 280px !important;
+    padding: 14px 24px !important;
+    font-size: 16px !important;
+  }
+  .cta-visual-element {
+    order: -1 !important;
+  }
+  .cta-animation-container {
+    width: 200px !important;
+    height: 200px !important;
+  }
+  .cta-floating-element-1 {
+    width: 40px !important;
+    height: 40px !important;
+    top: 10px !important;
+    right: 10px !important;
+  }
+  .cta-floating-element-1 svg {
+    width: 16px !important;
+    height: 16px !important;
+  }
+  .cta-floating-element-2 {
+    width: 30px !important;
+    height: 30px !important;
+    bottom: 20px !important;
+    left: 5px !important;
+  }
+  .cta-floating-element-2 svg {
+    width: 12px !important;
+    height: 12px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .cta-section {
+    padding: 40px 15px !important;
+  }
+  .cta-container {
+    padding: 0 10px !important;
+  }
+  .cta-content-wrapper {
+    gap: 30px !important;
+  }
+  .cta-badge {
+    padding: 5px 10px !important;
+    margin-bottom: 12px !important;
+  }
+  .cta-badge-text {
+    font-size: 11px !important;
+  }
+  .cta-title {
+    font-size: 24px !important;
+    margin-bottom: 12px !important;
+  }
+  .cta-subtitle {
+    font-size: 14px !important;
+    margin-bottom: 24px !important;
+  }
+  .cta-features-list {
+    gap: 10px !important;
+    margin-bottom: 24px !important;
+  }
+  .cta-feature-item {
+    gap: 8px !important;
+  }
+  .cta-feature-icon {
+    width: 16px !important;
+    height: 16px !important;
+  }
+  .cta-feature-icon svg {
+    width: 8px !important;
+    height: 8px !important;
+  }
+  .cta-feature-text {
+    font-size: 13px !important;
+  }
+  .cta-buttons {
+    gap: 10px !important;
+  }
+  .cta-primary-button,
+  .cta-secondary-button {
+    padding: 12px 20px !important;
+    font-size: 14px !important;
+  }
+  .cta-animation-container {
+    width: 150px !important;
+    height: 150px !important;
+  }
+  .cta-floating-element-1 {
+    width: 30px !important;
+    height: 30px !important;
+    top: 5px !important;
+    right: 5px !important;
+  }
+  .cta-floating-element-1 svg {
+    width: 12px !important;
+    height: 12px !important;
+  }
+  .cta-floating-element-2 {
+    width: 24px !important;
+    height: 24px !important;
+    bottom: 15px !important;
+    left: 2px !important;
+  }
+  .cta-floating-element-2 svg {
+    width: 10px !important;
+    height: 10px !important;
+  }
+}
+
+/* Tablet Styles for Call to Action */
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .cta-section {
+    padding: 80px 40px !important;
+  }
+  .cta-container {
+    padding: 0 40px !important;
+  }
+  .cta-content-wrapper {
+    gap: 40px !important;
+  }
+  .cta-title {
+    font-size: 36px !important;
+  }
+  .cta-subtitle {
+    font-size: 18px !important;
+  }
+  .cta-animation-container {
+    width: 250px !important;
+    height: 250px !important;
+  }
+  .cta-floating-element-1 {
+    width: 50px !important;
+    height: 50px !important;
+  }
+  .cta-floating-element-1 svg {
+    width: 20px !important;
+    height: 20px !important;
+  }
+  .cta-floating-element-2 {
+    width: 35px !important;
+    height: 35px !important;
+  }
+  .cta-floating-element-2 svg {
+    width: 14px !important;
+    height: 14px !important;
+  }
+}
+
+/* Desktop Styles for Call to Action */
+
+@media (min-width: 1025px) {
+  .cta-section {
+    padding: 100px 0 !important;
+  }
+  .cta-container {
+    padding: 0 80px !important;
+  }
+  .cta-content-wrapper {
+    gap: 60px !important;
+  }
+  .cta-title {
+    font-size: 48px !important;
+  }
+  .cta-subtitle {
+    font-size: 20px !important;
+  }
+  .cta-animation-container {
+    width: 300px !important;
+    height: 300px !important;
+  }
+  .cta-floating-element-1 {
+    width: 60px !important;
+    height: 60px !important;
+  }
+  .cta-floating-element-1 svg {
+    width: 24px !important;
+    height: 24px !important;
+  }
+  .cta-floating-element-2 {
+    width: 40px !important;
+    height: 40px !important;
+  }
+  .cta-floating-element-2 svg {
+    width: 16px !important;
+    height: 16px !important;
+  }
+}
+
+/* Bottom Navigation Mobile Styles */
+
+@media (max-width: 768px) {
+  .bottom-navigation {
+    display: flex !important;
+  }
+  /* Add bottom padding to main content to prevent overlap */
+  .main-content {
+    padding-bottom: 80px !important;
+  }
+  /* Mobile Booking Button */
+  .mobile-booking-button {
+    display: block !important;
+  }
+  /* Hide desktop booking widget on mobile */
+  .desktop-booking-widget {
+    display: none !important;
+  }
+  /* Add bottom padding to prevent overlap with mobile booking button */
+  .listing-details-one {
+    padding-bottom: 100px !important;
+  }
+  /* Mobile Layout */
+  .mobile-layout {
+    display: block !important;
+  }
+  /* Desktop Layout */
+  .desktop-layout {
+    display: none !important;
+  }
+  /* Mobile Property Overview - Reduced Size */
+  .mobile-layout .property-overview-section {
+    margin-bottom: 24px !important;
+  }
+  .mobile-layout .property-overview-section h2 {
+    font-size: 18px !important;
+    margin-bottom: 12px !important;
+  }
+  .mobile-layout .property-overview-section p {
+    font-size: 14px !important;
+    line-height: 1.4 !important;
+    margin-bottom: 12px !important;
+  }
+  /* Reduce spacing in property overview components */
+  .mobile-layout .property-overview-section .row {
+    margin-bottom: 8px !important;
+  }
+  .mobile-layout .property-overview-section .col-md-6 {
+    padding: 8px !important;
+  }
+  .mobile-layout .property-overview-section .single-property-overview {
+    padding: 12px !important;
+    margin-bottom: 8px !important;
+  }
+  .mobile-layout .property-overview-section .single-property-overview h6 {
+    font-size: 13px !important;
+    margin-bottom: 4px !important;
+  }
+  .mobile-layout .property-overview-section .single-property-overview span {
+    font-size: 12px !important;
+  }
+  /* Reduce property overview icons on mobile */
+  .mobile-layout .property-overview-section .single-property-overview i {
+    font-size: 16px !important;
+    width: 20px !important;
+    height: 20px !important;
+    display: "flex" !important;
+    align-items: "center" !important;
+    justify-content: "center" !important;
+  }
+  .mobile-layout .property-overview-section .single-property-overview .icon {
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    font-size: 14px !important;
+  }
+  .mobile-layout .property-overview-section .single-property-overview .icon i {
+    font-size: 14px !important;
+  }
+  /* Reduce amenities font size on mobile */
+  .mobile-layout .amenities-section h2 {
+    font-size: 18px !important;
+    margin-bottom: 12px !important;
+  }
+  .mobile-layout .amenities-section .amenity-item {
+    font-size: 13px !important;
+    margin-bottom: 8px !important;
+  }
+  .mobile-layout .amenities-section .amenity-item i {
+    font-size: 14px !important;
+    width: 16px !important;
+    margin-right: 8px !important;
+  }
+  .mobile-layout .amenities-section .amenity-item span {
+    font-size: 13px !important;
+  }
+  .mobile-layout .amenities-section .amenity-grid {
+    gap: 8px !important;
+  }
+  .mobile-layout .amenities-section .amenity-grid .col-md-6 {
+    padding: 6px !important;
+  }
+}
+
+@media (min-width: 769px) {
+  .bottom-navigation {
+    display: none !important;
+  }
+  /* Show desktop booking widget on desktop */
+  .desktop-booking-widget {
+    display: block !important;
+  }
+  /* Hide mobile booking button on desktop */
+  .mobile-booking-button {
+    display: none !important;
+  }
+  /* Desktop Layout */
+  .desktop-layout {
+    display: flex !important;
+  }
+  /* Mobile Layout */
+  .mobile-layout {
+    display: none !important;
+  }
+}

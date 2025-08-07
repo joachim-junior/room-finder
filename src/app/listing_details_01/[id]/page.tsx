@@ -1,6 +1,7 @@
 import Wrapper from "@/layouts/Wrapper";
 import ListingDetailsOneArea from "@/components/ListingDetails/listing-details-1/ListingDetailsOneArea";
 import { notFound } from "next/navigation";
+import "@/styles/homepage-responsive.css";
 
 async function getProperty(id: string) {
   const res = await fetch(

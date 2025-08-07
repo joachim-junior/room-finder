@@ -1,100 +1,133 @@
-import DashboardHeaderTwo from "@/layouts/headers/dashboard/DashboardHeaderTwo"
-import Image from "next/image";
-import Link from "next/link"
+"use client";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
-import icon_1 from "@/assets/images/icon/icon_46.svg";
-
-interface DataType {
-   id: number;
-   title: string;
-   date: string;
-}[];
-const table_data: DataType[] = [
-   {
-      id: 1,
-      title: "Galaxy Family Home",
-      date: "13 Sep, 2023"
-   },
-   {
-      id: 2,
-      title: "Big Apartments",
-      date: "27 Aug, 2023"
-   },
-   {
-      id: 3,
-      title: "Villa in California with pool",
-      date: "16 Jun, 2023"
-   },
-   {
-      id: 4,
-      title: "Small Houses",
-      date: "4 Apr, 2023"
-   },
-   {
-      id: 5,
-      title: "Flat for Rent USA",
-      date: "14 Feb, 2023"
-   },
-   {
-      id: 6,
-      title: "Apartments Near Market",
-      date: "8 Jan, 2023"
-   },
-   {
-      id: 7,
-      title: "Home for Rent",
-      date: "15 Dec, 2022"
-   },
-]
-const SavedSearchBody = () => {
-   return (
-      <div className="dashboard-body">
-         <div className="position-relative">
-            <DashboardHeaderTwo title="Saved Search" />
-            <h2 className="main-title d-block d-lg-none">Saved Search</h2>
-
-            <div className="bg-white card-box p0 border-20">
-               <div className="table-responsive pt-25 pb-25 pe-4 ps-4">
-                  <table className="table saved-search-table">
-                     <thead>
-                        <tr>
-                           <th scope="col">Title</th>
-                           <th scope="col">Date</th>
-                           <th scope="col">Action</th>
-                        </tr>
-                     </thead>
-                     <tbody className="border-0">
-                        {table_data.map((item) => (
-                           <tr key={item.id}>
-                              <td><Link href="#" className="property-name tran3s color-dark fw-500">{item.title}</Link></td>
-                              <td>{item.date}</td>
-                              <td>
-                                 <div className="d-flex justify-content-end btns-group">
-                                    <Link href="#"><i className="fa-sharp fa-regular fa-eye" data-bs-toggle="tooltip"
-                                       title="View"></i></Link>
-                                    <Link href="#" data-bs-toggle="tooltip" title="Delete"><i
-                                       className="fa-regular fa-trash"></i></Link>
-                                 </div>
-                              </td>
-                           </tr>
-                        ))}
-                     </tbody>
-                  </table>
-               </div>
-            </div>
-
-            <ul style={{marginLeft:"15px"}} className="pagination-one d-flex align-items-center style-none pt-40">
-               <li className="me-3"><Link href="#">1</Link></li>
-               <li className="selected"><Link href="#">2</Link></li>
-               <li><Link href="#">3</Link></li>
-               <li><Link href="#">4</Link></li>
-               <li>....</li>
-               <li className="ms-2"><Link href="#" className="d-flex align-items-center">
-                  Last <Image src={icon_1} alt="" className="ms-2" /></Link></li>
-            </ul>
-         </div>
-      </div>
-   )
+interface SavedSearch {
+  id: number;
+  search_name: string;
+  location: string;
+  property_type: string;
+  price_range: string;
+  created_date: string;
 }
 
-export default SavedSearchBody
+const SavedSearchBody = () => {
+  const { user } = useAuth();
+  const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchSavedSearches = async () => {
+      if (!user) return;
+
+      try {
+        setLoading(true);
+        // Mock data for now - replace with actual API call when available
+        setSavedSearches([
+          {
+            id: 1,
+            search_name: "Downtown Apartments",
+            location: "Downtown",
+            property_type: "Apartment",
+            price_range: "$500 - $1000",
+            created_date: "2024-01-15",
+          },
+          {
+            id: 2,
+            search_name: "Studio Rentals",
+            location: "City Center",
+            property_type: "Studio",
+            price_range: "$300 - $600",
+            created_date: "2024-01-10",
+          },
+        ]);
+      } catch (error) {
+        console.error("Error fetching saved searches:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSavedSearches();
+  }, [user]);
+
+  if (!user) {
+    return (
+      <div className="saved-search-body">
+        <div className="position-relative">
+          <div className="bg-white border-20 p-4 text-center">
+            <p>Please log in to view your saved searches.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="saved-search-body">
+      <div className="position-relative">
+        <div className="container-fluid">
+          <div className="row">
+            <div className="col-lg-12">
+              <div className="bg-white border-20 p-4">
+                <h3 className="mb-4">Saved Searches</h3>
+
+                {loading ? (
+                  <div className="text-center">
+                    <div className="spinner-border" role="status">
+                      <span className="visually-hidden">Loading...</span>
+                    </div>
+                  </div>
+                ) : savedSearches.length === 0 ? (
+                  <div className="text-center">
+                    <p className="text-muted">No saved searches found.</p>
+                  </div>
+                ) : (
+                  <div className="row">
+                    {savedSearches.map((search) => (
+                      <div key={search.id} className="col-md-6 col-lg-4 mb-3">
+                        <div className="card border-0 shadow-sm h-100">
+                          <div className="card-body">
+                            <h6 className="card-title">{search.search_name}</h6>
+                            <p className="card-text text-muted mb-2">
+                              <i className="fas fa-map-marker-alt me-2"></i>
+                              {search.location}
+                            </p>
+                            <p className="card-text text-muted mb-2">
+                              <i className="fas fa-home me-2"></i>
+                              {search.property_type}
+                            </p>
+                            <p className="card-text text-muted mb-2">
+                              <i className="fas fa-dollar-sign me-2"></i>
+                              {search.price_range}
+                            </p>
+                            <p className="card-text text-muted small">
+                              <i className="fas fa-calendar me-2"></i>
+                              Saved on {search.created_date}
+                            </p>
+                          </div>
+                          <div className="card-footer bg-transparent">
+                            <button className="btn btn-sm btn-outline-primary me-2">
+                              <i className="fas fa-search me-1"></i>
+                              Search
+                            </button>
+                            <button className="btn btn-sm btn-outline-danger">
+                              <i className="fas fa-trash me-1"></i>
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default SavedSearchBody;

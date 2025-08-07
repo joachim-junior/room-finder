@@ -135,7 +135,8 @@ const footer_data: DataType[] = [
       { link: "/", link_title: "Home" },
       { link: "/about_us_01", link_title: "About Company" },
       { link: "/blog_01", link_title: "Blog" },
-      { link: "/dashboard/dashboard-index", link_title: "Dashboard" },
+      { link: "/contact", link_title: "Contact" },
+      { link: "/faq", link_title: "Faq's" },
     ],
   },
   {
@@ -147,7 +148,6 @@ const footer_data: DataType[] = [
       { link: "/terms", link_title: "Terms & conditions" },
       { link: "/cookies", link_title: "Cookie" },
       { link: "/privacy", link_title: "Privacy policy" },
-      { link: "/faq", link_title: "Faq's" },
     ],
   },
   {

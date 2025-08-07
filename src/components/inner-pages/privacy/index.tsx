@@ -1,5 +1,4 @@
 import BreadcrumbOne from "@/components/common/breadcrumb/BreadcrumbOne";
-import FancyBanner from "@/components/common/FancyBanner";
 
 const PrivacyPolicy = () => {
   return (
@@ -12,7 +11,6 @@ const PrivacyPolicy = () => {
         style={false}
       />
       <PrivacyPolicyContent />
-      <FancyBanner style={false} />
     </>
   );
 };

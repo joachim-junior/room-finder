@@ -13,7 +13,6 @@ const Faq = () => {
         style={false}
       />
       <FaqArea />
-      <FancyBanner style={false} />
     </>
   );
 };

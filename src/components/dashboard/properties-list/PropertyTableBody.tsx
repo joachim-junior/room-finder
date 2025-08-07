@@ -132,7 +132,7 @@ const PropertyTableBody = ({
                 </Link>
                 <div className="address">{property.location}</div>
                 <strong className="price color-dark">
-                  {property.price.toLocaleString()} XAF
+                  {Number(property.price).toLocaleString()} XAF
                 </strong>
               </div>
             </div>

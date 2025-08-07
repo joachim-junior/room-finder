@@ -1,11 +1,16 @@
 import DashboardReferral from "@/components/dashboard/referral";
+import Wrapper from "@/layouts/Wrapper";
 
 export const metadata = {
-  title: "Referral Program - Room Finder",
+  title: "Dashboard Referral - Roomfinder",
 };
 
-const index = () => {
-  return <DashboardReferral />;
+const ReferralPage = () => {
+  return (
+    <Wrapper>
+      <DashboardReferral />
+    </Wrapper>
+  );
 };
 
-export default index;
+export default ReferralPage;
