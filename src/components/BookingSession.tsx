@@ -7,16 +7,12 @@ import { apiClient } from "@/lib/api";
 import { Property, Booking } from "@/types";
 import { Button, Modal, Input, Select, Textarea } from "@/components/ui";
 import {
-  Calendar,
-  Users,
   CreditCard,
   CheckCircle,
   AlertCircle,
   Loader2,
   ArrowRight,
   X,
-  Phone,
-  Calculator,
 } from "lucide-react";
 
 interface BookingSessionProps {

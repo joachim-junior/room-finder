@@ -37,11 +37,11 @@ export default function TermsPage() {
               1. Acceptance of Terms
             </h2>
             <p className="text-gray-700 leading-relaxed mb-6">
-              By accessing and using Room Finder ("the Platform"), you accept
-              and agree to be bound by the terms and provision of this
-              agreement. Additionally, when using this Platform's particular
-              services, you shall be subject to any posted guidelines or rules
-              applicable to such services.
+              By accessing and using Room Finder (&ldquo;the Platform&rdquo;),
+              you accept and agree to be bound by the terms and provision of
+              this agreement. Additionally, when using this Platform&apos;s
+              particular services, you shall be subject to any posted guidelines
+              or rules applicable to such services.
             </p>
 
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">
@@ -114,9 +114,9 @@ export default function TermsPage() {
             </h2>
             <p className="text-gray-700 leading-relaxed mb-6">
               Cancellation policies vary by property and are clearly stated in
-              each listing. Guests may cancel according to the host's policy,
-              and hosts may cancel under certain circumstances with appropriate
-              notice.
+              each listing. Guests may cancel according to the host&apos;s
+              policy, and hosts may cancel under certain circumstances with
+              appropriate notice.
             </p>
 
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">
@@ -131,7 +131,7 @@ export default function TermsPage() {
               <li>Infringe on the rights of others</li>
               <li>Submit false or misleading information</li>
               <li>Attempt to gain unauthorized access to the Platform</li>
-              <li>Interfere with the Platform's operation</li>
+              <li>Interfere with the Platform&apos;s operation</li>
             </ul>
 
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">

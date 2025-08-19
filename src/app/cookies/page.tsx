@@ -243,7 +243,7 @@ export default function CookiesPage() {
               5.2 Cookie Consent
             </h3>
             <p className="text-gray-700 leading-relaxed mb-4">
-              When you first visit our website, you'll see a cookie consent
+              When you first visit our website, you&apos;ll see a cookie consent
               banner. You can:
             </p>
             <ul className="list-disc list-inside text-gray-700 leading-relaxed mb-6 space-y-2">
@@ -272,8 +272,8 @@ export default function CookiesPage() {
             </h2>
             <p className="text-gray-700 leading-relaxed mb-6">
               We may update this Cookies Policy from time to time. We will
-              notify you of any material changes by updating the "Last updated"
-              date at the top of this page.
+              notify you of any material changes by updating the &ldquo;Last
+              updated&rdquo; date at the top of this page.
             </p>
 
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">

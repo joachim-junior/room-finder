@@ -34,7 +34,15 @@ export default function HostApplicationPage() {
     notes: "",
   });
   const [loading, setLoading] = useState(false);
-  const [existingApplication, setExistingApplication] = useState<any>(null);
+  const [existingApplication, setExistingApplication] = useState<{
+    id: string;
+    userId: string;
+    status: string;
+    notes?: string;
+    applicationDate: string;
+    createdAt: string;
+    updatedAt: string;
+  } | null>(null);
   const [checkingStatus, setCheckingStatus] = useState(true);
 
   // Check if user already has an application
@@ -254,7 +262,7 @@ export default function HostApplicationPage() {
               </div>
               <p className="text-gray-600">
                 Turn your unused space into a profitable business. Set your own
-                rates and earn money while you're away.
+                rates and earn money while you&apos;re away.
               </p>
             </div>
 

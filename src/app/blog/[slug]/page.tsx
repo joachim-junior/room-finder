@@ -99,7 +99,7 @@ export default function BlogPostPage() {
 
       if (response.success && response.data?.blogs) {
         const blogPost = response.data.blogs.find(
-          (post: any) => post.slug === slug
+          (post: { slug: string }) => post.slug === slug
         );
 
         if (blogPost) {

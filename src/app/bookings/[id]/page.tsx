@@ -64,7 +64,7 @@ export default function BookingOverviewPage() {
       } else {
         setError("Failed to load booking details");
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error fetching booking details:", err);
       setError("Failed to load booking details. Please try again.");
     } finally {
@@ -148,8 +148,8 @@ export default function BookingOverviewPage() {
               {error || "Booking not found"}
             </h1>
             <p className="text-gray-600">
-              The booking you're looking for doesn't exist or you don't have
-              permission to view it.
+              The booking you&apos;re looking for doesn&apos;t exist or you
+              don&apos;t have permission to view it.
             </p>
           </div>
         </div>

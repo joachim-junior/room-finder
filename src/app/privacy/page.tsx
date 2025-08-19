@@ -37,10 +37,10 @@ export default function PrivacyPage() {
               1. Introduction
             </h2>
             <p className="text-gray-700 leading-relaxed mb-6">
-              Room Finder ("we," "our," or "us") is committed to protecting your
-              privacy. This Privacy Policy explains how we collect, use,
-              disclose, and safeguard your information when you use our platform
-              and services.
+              Room Finder (&ldquo;we,&rdquo; &ldquo;our,&rdquo; or
+              &ldquo;us&rdquo;) is committed to protecting your privacy. This
+              Privacy Policy explains how we collect, use, disclose, and
+              safeguard your information when you use our platform and services.
             </p>
 
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">
@@ -190,7 +190,7 @@ export default function PrivacyPage() {
             </p>
 
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">
-              10. Children's Privacy
+              10. Children&apos;s Privacy
             </h2>
             <p className="text-gray-700 leading-relaxed mb-6">
               Our services are not intended for children under 18. We do not

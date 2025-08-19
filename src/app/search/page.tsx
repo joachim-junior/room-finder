@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Property, SearchFilters } from "@/types";
 import { apiClient } from "@/lib/api";
@@ -30,7 +30,7 @@ import {
 } from "@/components/ui";
 import { ImageWithPlaceholder } from "@/components/ui/ImageWithPlaceholder";
 
-export default function SearchPage() {
+function SearchContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [properties, setProperties] = useState<Property[]>([]);
@@ -807,5 +807,13 @@ function PropertyCard({ property }: { property: Property }) {
         </div>
       </div>
     </Link>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SearchContent />
+    </Suspense>
   );
 }

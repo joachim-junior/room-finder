@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { apiClient } from "@/lib/api";
@@ -77,7 +77,7 @@ const HELP_CATEGORIES = [
   },
 ];
 
-export default function HelpCenterPage() {
+function HelpCenterContent() {
   const [articles, setArticles] = useState<HelpArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -100,27 +100,32 @@ export default function HelpCenterPage() {
 
     setSearchQuery(search);
     setSelectedCategory(category);
-    setPagination((prev) => ({ ...prev, page: parseInt(page) }));
-
-    if (search) {
-      searchArticles(search, parseInt(page));
-    } else if (category) {
-      fetchArticlesByCategory(category, parseInt(page));
-    } else {
-      fetchArticles(parseInt(page));
-    }
+    fetchArticles(parseInt(page), search, category);
   }, [searchParams]);
 
-  const fetchArticles = async (page: number = 1) => {
+  const fetchArticles = async (
+    page: number = 1,
+    search: string = "",
+    category: string = ""
+  ) => {
     try {
       setLoading(true);
       setError("");
 
-      const response = await apiClient.getHelpArticles({
+      const params: {
+        page: number;
+        limit: number;
+        search?: string;
+        category?: string;
+      } = {
         page,
         limit: 10,
-        isPublished: true,
-      });
+      };
+
+      if (search) params.search = search;
+      if (category) params.category = category;
+
+      const response = await apiClient.getHelpArticles(params);
 
       if (response.success && response.data) {
         setArticles(response.data.articles || []);
@@ -134,68 +139,8 @@ export default function HelpCenterPage() {
         setError(response.message || "Failed to load help articles");
       }
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to load help articles"
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const searchArticles = async (query: string, page: number = 1) => {
-    try {
-      setLoading(true);
-      setError("");
-
-      const response = await apiClient.searchHelpArticles(query, page, 10);
-
-      if (response.success && response.data) {
-        setArticles(response.data.articles || []);
-        setPagination({
-          page: response.data.pagination?.page || 1,
-          limit: response.data.pagination?.limit || 10,
-          total: response.data.pagination?.total || 0,
-          pages: response.data.pagination?.pages || 1,
-        });
-      } else {
-        setError(response.message || "Failed to search articles");
-      }
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to search articles"
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchArticlesByCategory = async (
-    category: string,
-    page: number = 1
-  ) => {
-    try {
-      setLoading(true);
-      setError("");
-
-      const response = await apiClient.getHelpArticlesByCategory(
-        category,
-        page,
-        10
-      );
-
-      if (response.success && response.data) {
-        setArticles(response.data.articles || []);
-        setPagination({
-          page: response.data.pagination?.page || 1,
-          limit: response.data.pagination?.limit || 10,
-          total: response.data.pagination?.total || 0,
-          pages: response.data.pagination?.pages || 1,
-        });
-      } else {
-        setError(response.message || "Failed to load articles");
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load articles");
+      console.error("Error fetching help articles:", err);
+      setError("Failed to load help articles");
     } finally {
       setLoading(false);
     }
@@ -218,7 +163,7 @@ export default function HelpCenterPage() {
     if (searchQuery) params.set("search", searchQuery);
     if (newCategory) params.set("category", newCategory);
     params.set("page", "1");
-    router.push(`/help-center?${params.toString()}`);
+    router.push(`/help-center?${newCategory}`);
   };
 
   const handlePageChange = (page: number) => {
@@ -229,18 +174,10 @@ export default function HelpCenterPage() {
     router.push(`/help-center?${params.toString()}`);
   };
 
-  const clearFilters = () => {
-    setSearchQuery("");
-    setSelectedCategory("");
-    router.push("/help-center");
-  };
-
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case "CRITICAL":
-        return "bg-red-100 text-red-800";
       case "HIGH":
-        return "bg-orange-100 text-orange-800";
+        return "bg-red-100 text-red-800";
       case "MEDIUM":
         return "bg-yellow-100 text-yellow-800";
       case "LOW":
@@ -250,38 +187,45 @@ export default function HelpCenterPage() {
     }
   };
 
+  const clearFilters = () => {
+    setSearchQuery("");
+    setSelectedCategory("");
+    router.push("/help-center");
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center">
             <h1 className="text-4xl font-bold text-gray-900 mb-4">
               Help Center
             </h1>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Find answers to your questions and learn how to make the most of
-              Room Finder.
+              Find answers to common questions and get support for using Room
+              Finder
             </p>
           </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Search */}
+        {/* Search Bar */}
         <div className="mb-8">
           <form onSubmit={handleSearch} className="max-w-2xl mx-auto">
-            <div className="flex gap-4">
-              <div className="flex-1">
+            <div className="flex gap-2">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <Input
                   type="text"
-                  placeholder="Search for help articles..."
+                  placeholder="Search help articles..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  icon={<Search className="h-4 w-4" />}
+                  className="pl-10"
                 />
               </div>
-              <Button type="submit" className="px-8">
+              <Button type="submit" className="px-6">
                 Search
               </Button>
             </div>
@@ -290,24 +234,22 @@ export default function HelpCenterPage() {
 
         {/* Categories */}
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">
-            Browse by Category
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Categories</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {HELP_CATEGORIES.map((category) => (
               <button
                 key={category.id}
                 onClick={() => handleCategoryFilter(category.id)}
-                className={`p-6 rounded-lg transition-all text-left ${
+                className={`p-4 rounded-lg border-2 transition-all ${
                   selectedCategory === category.id
-                    ? "bg-blue-50 shadow-md"
-                    : "bg-white hover:bg-gray-50 hover:shadow-sm"
+                    ? "border-blue-500 bg-blue-50"
+                    : "border-gray-200 bg-white hover:border-gray-300"
                 }`}
               >
-                <div className="flex items-start gap-4">
+                <div className="flex items-center space-x-3">
                   <span className="text-2xl">{category.icon}</span>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900 mb-2">
+                  <div className="text-left">
+                    <h3 className="font-semibold text-gray-900">
                       {category.name}
                     </h3>
                     <p className="text-sm text-gray-600">
@@ -322,25 +264,27 @@ export default function HelpCenterPage() {
 
         {/* Active Filters */}
         {(searchQuery || selectedCategory) && (
-          <div className="flex items-center gap-2 mb-6">
-            <span className="text-sm text-gray-600">Active filters:</span>
-            {searchQuery && (
-              <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm">
-                Search: "{searchQuery}"
-              </span>
-            )}
-            {selectedCategory && (
-              <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm">
-                Category:{" "}
-                {HELP_CATEGORIES.find((c) => c.id === selectedCategory)?.name}
-              </span>
-            )}
-            <button
-              onClick={clearFilters}
-              className="text-sm text-blue-600 hover:text-blue-800"
-            >
-              Clear all
-            </button>
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-6">
+              <span className="text-sm text-gray-600">Active filters:</span>
+              {searchQuery && (
+                <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm">
+                  Search: &ldquo;{searchQuery}&rdquo;
+                </span>
+              )}
+              {selectedCategory && (
+                <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm">
+                  Category:{" "}
+                  {HELP_CATEGORIES.find((c) => c.id === selectedCategory)?.name}
+                </span>
+              )}
+              <button
+                onClick={clearFilters}
+                className="text-sm text-blue-600 hover:text-blue-800"
+              >
+                Clear all
+              </button>
+            </div>
           </div>
         )}
 
@@ -434,9 +378,10 @@ export default function HelpCenterPage() {
 
                     <Link
                       href={`/help-center/${article.slug}`}
-                      className="ml-4 p-2 text-gray-400 hover:text-blue-600 transition-colors"
+                      className="flex items-center text-blue-600 hover:text-blue-800 transition-colors"
                     >
-                      <ArrowRight className="h-5 w-5" />
+                      <span className="text-sm font-medium">Read more</span>
+                      <ArrowRight className="h-4 w-4 ml-1" />
                     </Link>
                   </div>
                 </div>
@@ -445,50 +390,24 @@ export default function HelpCenterPage() {
 
             {/* Pagination */}
             {pagination.pages > 1 && (
-              <div className="flex items-center justify-between">
-                <div className="text-sm text-gray-600">
-                  Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
-                  {Math.min(
-                    pagination.page * pagination.limit,
-                    pagination.total
-                  )}{" "}
-                  of {pagination.total} articles
-                </div>
-                <div className="flex items-center gap-2">
+              <div className="flex justify-center">
+                <div className="flex items-center space-x-2">
                   <Button
                     onClick={() => handlePageChange(pagination.page - 1)}
-                    disabled={pagination.page === 1}
+                    disabled={pagination.page <= 1}
                     variant="outline"
                     size="sm"
                   >
                     Previous
                   </Button>
 
-                  <div className="flex items-center gap-1">
-                    {Array.from(
-                      { length: Math.min(5, pagination.pages) },
-                      (_, i) => {
-                        const page = i + 1;
-                        return (
-                          <Button
-                            key={page}
-                            onClick={() => handlePageChange(page)}
-                            variant={
-                              pagination.page === page ? "primary" : "outline"
-                            }
-                            size="sm"
-                            className="w-10"
-                          >
-                            {page}
-                          </Button>
-                        );
-                      }
-                    )}
-                  </div>
+                  <span className="text-sm text-gray-600">
+                    Page {pagination.page} of {pagination.pages}
+                  </span>
 
                   <Button
                     onClick={() => handlePageChange(pagination.page + 1)}
-                    disabled={pagination.page === pagination.pages}
+                    disabled={pagination.page >= pagination.pages}
                     variant="outline"
                     size="sm"
                   >
@@ -501,5 +420,13 @@ export default function HelpCenterPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function HelpCenterPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <HelpCenterContent />
+    </Suspense>
   );
 }

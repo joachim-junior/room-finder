@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { apiClient } from "@/lib/api";
@@ -54,7 +54,7 @@ interface BlogTag {
   };
 }
 
-export default function BlogPage() {
+function BlogContent() {
   const [blogs, setBlogs] = useState<BlogPost[]>([]);
   const [tags, setTags] = useState<BlogTag[]>([]);
   const [loading, setLoading] = useState(true);
@@ -78,8 +78,6 @@ export default function BlogPage() {
 
     setSearchQuery(search);
     setSelectedTag(tag);
-    setPagination((prev) => ({ ...prev, page: parseInt(page) }));
-
     fetchBlogs(parseInt(page), search, tag);
     fetchTags();
   }, [searchParams]);
@@ -90,11 +88,16 @@ export default function BlogPage() {
     tag: string = ""
   ) => {
     try {
-      console.log("🔍 Fetching blogs with params:", { page, search, tag });
       setLoading(true);
       setError("");
 
-      const params: any = {
+      const params: {
+        page: number;
+        limit: number;
+        status: string;
+        search?: string;
+        tag?: string;
+      } = {
         page,
         limit: 9,
         status: "PUBLISHED",
@@ -193,67 +196,77 @@ export default function BlogPage() {
               Room Finder Blog
             </h1>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Discover travel tips, property insights, and everything you need
-              to know about finding your perfect accommodation in Cameroon.
+              Discover travel tips, property insights, and stories from our
+              community
             </p>
           </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Search and Filters */}
+        {/* Search Bar */}
         <div className="mb-8">
-          <form onSubmit={handleSearch} className="mb-6">
-            <div className="flex gap-4">
-              <div className="flex-1">
+          <form onSubmit={handleSearch} className="max-w-2xl mx-auto">
+            <div className="flex gap-2">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <Input
                   type="text"
                   placeholder="Search blog posts..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  icon={<Search className="h-4 w-4" />}
+                  className="pl-10"
                 />
               </div>
-              <Button type="submit" className="px-8">
+              <Button type="submit" className="px-6">
                 Search
               </Button>
             </div>
           </form>
+        </div>
 
-          {/* Tags Filter */}
-          {tags.length > 0 && (
-            <div className="mb-4">
-              <div className="flex items-center gap-2 mb-3">
-                <Filter className="h-4 w-4 text-gray-500" />
-                <span className="text-sm font-medium text-gray-700">
-                  Filter by tags:
-                </span>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {tags.map((tag) => (
-                  <button
-                    key={tag.id}
-                    onClick={() => handleTagFilter(tag.slug)}
-                    className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                      selectedTag === tag.slug
-                        ? "bg-blue-600 text-white"
-                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                    }`}
-                  >
-                    {tag.name} ({tag._count.blogs})
-                  </button>
-                ))}
-              </div>
+        {/* Tags */}
+        {tags.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">
+              Categories
+            </h2>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => handleTagFilter("")}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                  selectedTag === ""
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
+              >
+                All Posts
+              </button>
+              {tags.map((tag) => (
+                <button
+                  key={tag.id}
+                  onClick={() => handleTagFilter(tag.slug)}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                    selectedTag === tag.slug
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  {tag.name}
+                </button>
+              ))}
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Active Filters */}
-          {(searchQuery || selectedTag) && (
-            <div className="flex items-center gap-2 mb-4">
+        {/* Active Filters */}
+        {(searchQuery || selectedTag) && (
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-6">
               <span className="text-sm text-gray-600">Active filters:</span>
               {searchQuery && (
                 <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm">
-                  Search: "{searchQuery}"
+                  Search: &ldquo;{searchQuery}&rdquo;
                 </span>
               )}
               {selectedTag && (
@@ -268,8 +281,8 @@ export default function BlogPage() {
                 Clear all
               </button>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Blog Posts Grid */}
         {loading ? (
@@ -369,16 +382,13 @@ export default function BlogPage() {
                           <span>{formatDate(blog.publishedAt)}</span>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-1">
-                          <Eye className="h-4 w-4" />
-                          <span>{blog.viewCount}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <MessageSquare className="h-4 w-4" />
-                          <span>{blog._count.comments}</span>
-                        </div>
-                      </div>
+                      <Link
+                        href={`/blog/${blog.slug}`}
+                        className="flex items-center text-blue-600 hover:text-blue-800 transition-colors"
+                      >
+                        <span className="text-sm font-medium">Read more</span>
+                        <ArrowRight className="h-4 w-4 ml-1" />
+                      </Link>
                     </div>
                   </div>
                 </article>
@@ -387,56 +397,28 @@ export default function BlogPage() {
 
             {/* Pagination */}
             {pagination.pages > 1 && (
-              <div className="flex items-center justify-between">
-                <div className="text-sm text-gray-600">
-                  Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
-                  {Math.min(
-                    pagination.page * pagination.limit,
-                    pagination.total
-                  )}{" "}
-                  of {pagination.total} posts
-                </div>
-                <div className="flex items-center gap-2">
+              <div className="flex justify-center">
+                <div className="flex items-center space-x-2">
                   <Button
                     onClick={() => handlePageChange(pagination.page - 1)}
-                    disabled={pagination.page === 1}
+                    disabled={pagination.page <= 1}
                     variant="outline"
                     size="sm"
                   >
-                    <ArrowLeft className="h-4 w-4 mr-1" />
                     Previous
                   </Button>
 
-                  <div className="flex items-center gap-1">
-                    {Array.from(
-                      { length: Math.min(5, pagination.pages) },
-                      (_, i) => {
-                        const page = i + 1;
-                        return (
-                          <Button
-                            key={page}
-                            onClick={() => handlePageChange(page)}
-                            variant={
-                              pagination.page === page ? "primary" : "outline"
-                            }
-                            size="sm"
-                            className="w-10"
-                          >
-                            {page}
-                          </Button>
-                        );
-                      }
-                    )}
-                  </div>
+                  <span className="text-sm text-gray-600">
+                    Page {pagination.page} of {pagination.pages}
+                  </span>
 
                   <Button
                     onClick={() => handlePageChange(pagination.page + 1)}
-                    disabled={pagination.page === pagination.pages}
+                    disabled={pagination.page >= pagination.pages}
                     variant="outline"
                     size="sm"
                   >
                     Next
-                    <ArrowRight className="h-4 w-4 ml-1" />
                   </Button>
                 </div>
               </div>
@@ -445,5 +427,13 @@ export default function BlogPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function BlogPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <BlogContent />
+    </Suspense>
   );
 }
