@@ -400,16 +400,16 @@ export default function Home() {
             propertiesByTown["Limbe"].length > 0)) && (
           <section className="mb-16">
             <div className="flex items-center justify-between mb-8 w-full">
-              <h2 className="text-3xl font-bold text-gray-900">
+              <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
                 Coastal getaways in Limbe
               </h2>
               {!loading && (
                 <Link
                   href="/search?city=Limbe"
-                  className="flex items-center space-x-2 text-gray-700 hover:text-gray-900 transition-colors font-medium"
+                  className="flex items-center space-x-1 sm:space-x-2 text-gray-700 hover:text-gray-900 transition-colors font-medium whitespace-nowrap"
                 >
-                  <span>See all</span>
-                  <ChevronRight className="h-4 w-4" />
+                  <span className="text-sm sm:text-base">See all</span>
+                  <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
                 </Link>
               )}
             </div>
@@ -459,16 +459,16 @@ export default function Home() {
             propertiesByTown["Buea"].length > 0)) && (
           <section className="mb-16">
             <div className="flex items-center justify-between mb-8 w-full">
-              <h2 className="text-3xl font-bold text-gray-900">
+              <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
                 Mountain retreats in Buea
               </h2>
               {!loading && (
                 <Link
                   href="/search?city=Buea"
-                  className="flex items-center space-x-2 text-gray-700 hover:text-gray-900 transition-colors font-medium"
+                  className="flex items-center space-x-1 sm:space-x-2 text-gray-700 hover:text-gray-900 transition-colors font-medium whitespace-nowrap"
                 >
-                  <span>See all</span>
-                  <ChevronRight className="h-4 w-4" />
+                  <span className="text-sm sm:text-base">See all</span>
+                  <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
                 </Link>
               )}
             </div>
@@ -518,16 +518,16 @@ export default function Home() {
             propertiesByTown["Douala"].length > 0)) && (
           <section className="mb-16">
             <div className="flex items-center justify-between mb-8 w-full">
-              <h2 className="text-3xl font-bold text-gray-900">
+              <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
                 Urban stays in Douala
               </h2>
               {!loading && (
                 <Link
                   href="/search?city=Douala"
-                  className="flex items-center space-x-2 text-gray-700 hover:text-gray-900 transition-colors font-medium"
+                  className="flex items-center space-x-1 sm:space-x-2 text-gray-700 hover:text-gray-900 transition-colors font-medium whitespace-nowrap"
                 >
-                  <span>See all</span>
-                  <ChevronRight className="h-4 w-4" />
+                  <span className="text-sm sm:text-base">See all</span>
+                  <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
                 </Link>
               )}
             </div>
@@ -577,16 +577,16 @@ export default function Home() {
             propertiesByTown["Kribi"].length > 0)) && (
           <section className="mb-16">
             <div className="flex items-center justify-between mb-8 w-full">
-              <h2 className="text-3xl font-bold text-gray-900">
+              <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
                 Beachfront escapes in Kribi
               </h2>
               {!loading && (
                 <Link
                   href="/search?city=Kribi"
-                  className="flex items-center space-x-2 text-gray-700 hover:text-gray-900 transition-colors font-medium"
+                  className="flex items-center space-x-1 sm:space-x-2 text-gray-700 hover:text-gray-900 transition-colors font-medium whitespace-nowrap"
                 >
-                  <span>See all</span>
-                  <ChevronRight className="h-4 w-4" />
+                  <span className="text-sm sm:text-base">See all</span>
+                  <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
                 </Link>
               )}
             </div>
@@ -636,16 +636,16 @@ export default function Home() {
             propertiesByTown["Bamenda"].length > 0)) && (
           <section className="mb-16">
             <div className="flex items-center justify-between mb-8 w-full">
-              <h2 className="text-3xl font-bold text-gray-900">
+              <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
                 Highland hideaways in Bamenda
               </h2>
               {!loading && (
                 <Link
                   href="/search?city=Bamenda"
-                  className="flex items-center space-x-2 text-gray-700 hover:text-gray-900 transition-colors font-medium"
+                  className="flex items-center space-x-1 sm:space-x-2 text-gray-700 hover:text-gray-900 transition-colors font-medium whitespace-nowrap"
                 >
-                  <span>See all</span>
-                  <ChevronRight className="h-4 w-4" />
+                  <span className="text-sm sm:text-base">See all</span>
+                  <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
                 </Link>
               )}
             </div>
