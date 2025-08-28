@@ -8,6 +8,7 @@ export interface User {
   isVerified: boolean;
   avatar?: string;
   createdAt: string;
+  hostApprovalStatus?: "PENDING" | "APPROVED" | "REJECTED";
 }
 
 export interface Property {

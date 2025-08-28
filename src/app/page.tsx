@@ -8,6 +8,7 @@ import {
   Heart,
   ChevronRight,
   ChevronDown,
+  ChevronLeft,
   X,
 } from "lucide-react";
 import { Property, SearchFilters } from "@/types";
@@ -157,7 +158,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-white">
       {/* Search Bar */}
-      <div className="bg-white">
+      <div className="bg-white sticky top-0 z-50 shadow-sm">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="max-w-4xl mx-auto">
             {mounted ? (
@@ -392,93 +393,135 @@ export default function Home() {
       </div>
 
       {/* Main Content */}
-      <main className="w-full px-4 sm:px-6 lg:px-8 py-12">
+      <main className="w-full px-6 py-12">
         {/* Limbe section */}
-        {propertiesByTown["Limbe"] && propertiesByTown["Limbe"].length > 0 && (
+        {(loading ||
+          (propertiesByTown["Limbe"] &&
+            propertiesByTown["Limbe"].length > 0)) && (
           <section className="mb-16">
             <div className="flex items-center justify-between mb-8 w-full">
               <h2 className="text-3xl font-bold text-gray-900">
-                Popular homes in Limbe
+                Coastal getaways in Limbe
               </h2>
-              <Link
-                href="/search?city=Limbe"
-                className="flex items-center space-x-2 text-gray-700 hover:text-gray-900 transition-colors font-medium"
-              >
-                <span>See all</span>
-                <ChevronRight className="h-4 w-4" />
-              </Link>
+              {!loading && (
+                <Link
+                  href="/search?city=Limbe"
+                  className="flex items-center space-x-2 text-gray-700 hover:text-gray-900 transition-colors font-medium"
+                >
+                  <span>See all</span>
+                  <ChevronRight className="h-4 w-4" />
+                </Link>
+              )}
             </div>
 
-            <div className="grid-7-cols w-full">
-              {loading
-                ? [...Array(7)].map((_, i) => (
-                    <div key={i} className="animate-pulse h-full">
-                      <div className="bg-gray-200 rounded-2xl h-48 mb-3"></div>
-                      <div className="space-y-2">
-                        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                        <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                        <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-                      </div>
-                    </div>
-                  ))
-                : (propertiesByTown["Limbe"] || []).map((property) => (
-                    <PropertyCard
-                      key={property.id}
-                      property={property}
-                      mounted={mounted}
-                    />
-                  ))}
+            <div className="relative">
+              <div className="overflow-x-auto scrollbar-hide">
+                <div
+                  className="flex space-x-4 pb-4"
+                  style={{ width: "max-content" }}
+                >
+                  {loading
+                    ? [...Array(7)].map((_, i) => (
+                        <div
+                          key={i}
+                          className="animate-pulse flex-shrink-0"
+                          style={{ width: "320px" }}
+                        >
+                          <div
+                            className="bg-gray-200 h-48 mb-3"
+                            style={{ borderRadius: "20px" }}
+                          ></div>
+                          <div className="space-y-2">
+                            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                            <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+                          </div>
+                        </div>
+                      ))
+                    : (propertiesByTown["Limbe"] || []).map((property) => (
+                        <div
+                          key={property.id}
+                          className="flex-shrink-0"
+                          style={{ width: "320px" }}
+                        >
+                          <PropertyCard property={property} mounted={mounted} />
+                        </div>
+                      ))}
+                </div>
+              </div>
             </div>
           </section>
         )}
 
         {/* Buea section */}
-        {propertiesByTown["Buea"] && propertiesByTown["Buea"].length > 0 && (
+        {(loading ||
+          (propertiesByTown["Buea"] &&
+            propertiesByTown["Buea"].length > 0)) && (
           <section className="mb-16">
             <div className="flex items-center justify-between mb-8 w-full">
               <h2 className="text-3xl font-bold text-gray-900">
-                Popular homes in Buea
+                Mountain retreats in Buea
               </h2>
-              <Link
-                href="/search?city=Buea"
-                className="flex items-center space-x-2 text-gray-700 hover:text-gray-900 transition-colors font-medium"
-              >
-                <span>See all</span>
-                <ChevronRight className="h-4 w-4" />
-              </Link>
+              {!loading && (
+                <Link
+                  href="/search?city=Buea"
+                  className="flex items-center space-x-2 text-gray-700 hover:text-gray-900 transition-colors font-medium"
+                >
+                  <span>See all</span>
+                  <ChevronRight className="h-4 w-4" />
+                </Link>
+              )}
             </div>
 
-            <div className="grid-7-cols w-full">
-              {loading
-                ? [...Array(7)].map((_, i) => (
-                    <div key={i} className="animate-pulse h-full">
-                      <div className="bg-gray-200 rounded-2xl h-48 mb-3"></div>
-                      <div className="space-y-2">
-                        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                        <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                        <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-                      </div>
-                    </div>
-                  ))
-                : (propertiesByTown["Buea"] || []).map((property) => (
-                    <PropertyCard
-                      key={property.id}
-                      property={property}
-                      mounted={mounted}
-                    />
-                  ))}
+            <div className="relative">
+              <div className="overflow-x-auto scrollbar-hide">
+                <div
+                  className="flex space-x-4 pb-4"
+                  style={{ width: "max-content" }}
+                >
+                  {loading
+                    ? [...Array(7)].map((_, i) => (
+                        <div
+                          key={i}
+                          className="animate-pulse flex-shrink-0"
+                          style={{ width: "320px" }}
+                        >
+                          <div
+                            className="bg-gray-200 h-48 mb-3"
+                            style={{ borderRadius: "20px" }}
+                          ></div>
+                          <div className="space-y-2">
+                            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                            <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+                          </div>
+                        </div>
+                      ))
+                    : (propertiesByTown["Buea"] || []).map((property) => (
+                        <div
+                          key={property.id}
+                          className="flex-shrink-0"
+                          style={{ width: "320px" }}
+                        >
+                          <PropertyCard property={property} mounted={mounted} />
+                        </div>
+                      ))}
+                </div>
+              </div>
             </div>
           </section>
         )}
 
         {/* Douala section */}
-        {propertiesByTown["Douala"] &&
-          propertiesByTown["Douala"].length > 0 && (
-            <section className="mb-16">
-              <div className="flex items-center justify-between mb-8 w-full">
-                <h2 className="text-3xl font-bold text-gray-900">
-                  Popular homes in Douala
-                </h2>
+        {(loading ||
+          (propertiesByTown["Douala"] &&
+            propertiesByTown["Douala"].length > 0)) && (
+          <section className="mb-16">
+            <div className="flex items-center justify-between mb-8 w-full">
+              <h2 className="text-3xl font-bold text-gray-900">
+                Urban stays in Douala
+              </h2>
+              {!loading && (
                 <Link
                   href="/search?city=Douala"
                   className="flex items-center space-x-2 text-gray-700 hover:text-gray-900 transition-colors font-medium"
@@ -486,78 +529,117 @@ export default function Home() {
                   <span>See all</span>
                   <ChevronRight className="h-4 w-4" />
                 </Link>
-              </div>
+              )}
+            </div>
 
-              <div className="grid-7-cols w-full">
-                {loading
-                  ? [...Array(7)].map((_, i) => (
-                      <div key={i} className="animate-pulse h-full">
-                        <div className="bg-gray-200 rounded-2xl h-48 mb-3"></div>
-                        <div className="space-y-2">
-                          <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                          <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                          <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+            <div className="relative">
+              <div className="overflow-x-auto scrollbar-hide">
+                <div
+                  className="flex space-x-4 pb-4"
+                  style={{ width: "max-content" }}
+                >
+                  {loading
+                    ? [...Array(7)].map((_, i) => (
+                        <div
+                          key={i}
+                          className="animate-pulse flex-shrink-0"
+                          style={{ width: "320px" }}
+                        >
+                          <div
+                            className="bg-gray-200 h-48 mb-3"
+                            style={{ borderRadius: "20px" }}
+                          ></div>
+                          <div className="space-y-2">
+                            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                            <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+                          </div>
                         </div>
-                      </div>
-                    ))
-                  : (propertiesByTown["Douala"] || []).map((property) => (
-                      <PropertyCard
-                        key={property.id}
-                        property={property}
-                        mounted={mounted}
-                      />
-                    ))}
+                      ))
+                    : (propertiesByTown["Douala"] || []).map((property) => (
+                        <div
+                          key={property.id}
+                          className="flex-shrink-0"
+                          style={{ width: "320px" }}
+                        >
+                          <PropertyCard property={property} mounted={mounted} />
+                        </div>
+                      ))}
+                </div>
               </div>
-            </section>
-          )}
+            </div>
+          </section>
+        )}
 
         {/* Kribi section */}
-        {propertiesByTown["Kribi"] && propertiesByTown["Kribi"].length > 0 && (
+        {(loading ||
+          (propertiesByTown["Kribi"] &&
+            propertiesByTown["Kribi"].length > 0)) && (
           <section className="mb-16">
             <div className="flex items-center justify-between mb-8 w-full">
               <h2 className="text-3xl font-bold text-gray-900">
-                Popular homes in Kribi
+                Beachfront escapes in Kribi
               </h2>
-              <Link
-                href="/search?city=Kribi"
-                className="flex items-center space-x-2 text-gray-700 hover:text-gray-900 transition-colors font-medium"
-              >
-                <span>See all</span>
-                <ChevronRight className="h-4 w-4" />
-              </Link>
+              {!loading && (
+                <Link
+                  href="/search?city=Kribi"
+                  className="flex items-center space-x-2 text-gray-700 hover:text-gray-900 transition-colors font-medium"
+                >
+                  <span>See all</span>
+                  <ChevronRight className="h-4 w-4" />
+                </Link>
+              )}
             </div>
 
-            <div className="grid-7-cols w-full">
-              {loading
-                ? [...Array(7)].map((_, i) => (
-                    <div key={i} className="animate-pulse h-full">
-                      <div className="bg-gray-200 rounded-2xl h-48 mb-3"></div>
-                      <div className="space-y-2">
-                        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                        <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                        <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-                      </div>
-                    </div>
-                  ))
-                : (propertiesByTown["Kribi"] || []).map((property) => (
-                    <PropertyCard
-                      key={property.id}
-                      property={property}
-                      mounted={mounted}
-                    />
-                  ))}
+            <div className="relative">
+              <div className="overflow-x-auto scrollbar-hide">
+                <div
+                  className="flex space-x-4 pb-4"
+                  style={{ width: "max-content" }}
+                >
+                  {loading
+                    ? [...Array(7)].map((_, i) => (
+                        <div
+                          key={i}
+                          className="animate-pulse flex-shrink-0"
+                          style={{ width: "320px" }}
+                        >
+                          <div
+                            className="bg-gray-200 h-48 mb-3"
+                            style={{ borderRadius: "20px" }}
+                          ></div>
+                          <div className="space-y-2">
+                            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                            <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+                          </div>
+                        </div>
+                      ))
+                    : (propertiesByTown["Kribi"] || []).map((property) => (
+                        <div
+                          key={property.id}
+                          className="flex-shrink-0"
+                          style={{ width: "320px" }}
+                        >
+                          <PropertyCard property={property} mounted={mounted} />
+                        </div>
+                      ))}
+                </div>
+              </div>
             </div>
           </section>
         )}
 
         {/* Bamenda section */}
-        {propertiesByTown["Bamenda"] &&
-          propertiesByTown["Bamenda"].length > 0 && (
-            <section className="mb-16">
-              <div className="flex items-center justify-between mb-8 w-full">
-                <h2 className="text-3xl font-bold text-gray-900">
-                  Popular homes in Bamenda
-                </h2>
+        {(loading ||
+          (propertiesByTown["Bamenda"] &&
+            propertiesByTown["Bamenda"].length > 0)) && (
+          <section className="mb-16">
+            <div className="flex items-center justify-between mb-8 w-full">
+              <h2 className="text-3xl font-bold text-gray-900">
+                Highland hideaways in Bamenda
+              </h2>
+              {!loading && (
                 <Link
                   href="/search?city=Bamenda"
                   className="flex items-center space-x-2 text-gray-700 hover:text-gray-900 transition-colors font-medium"
@@ -565,30 +647,47 @@ export default function Home() {
                   <span>See all</span>
                   <ChevronRight className="h-4 w-4" />
                 </Link>
-              </div>
+              )}
+            </div>
 
-              <div className="grid-7-cols w-full">
-                {loading
-                  ? [...Array(7)].map((_, i) => (
-                      <div key={i} className="animate-pulse h-full">
-                        <div className="bg-gray-200 rounded-2xl h-48 mb-3"></div>
-                        <div className="space-y-2">
-                          <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                          <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                          <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+            <div className="relative">
+              <div className="overflow-x-auto scrollbar-hide">
+                <div
+                  className="flex space-x-4 pb-4"
+                  style={{ width: "max-content" }}
+                >
+                  {loading
+                    ? [...Array(7)].map((_, i) => (
+                        <div
+                          key={i}
+                          className="animate-pulse flex-shrink-0"
+                          style={{ width: "320px" }}
+                        >
+                          <div
+                            className="bg-gray-200 h-48 mb-3"
+                            style={{ borderRadius: "20px" }}
+                          ></div>
+                          <div className="space-y-2">
+                            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                            <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+                          </div>
                         </div>
-                      </div>
-                    ))
-                  : (propertiesByTown["Bamenda"] || []).map((property) => (
-                      <PropertyCard
-                        key={property.id}
-                        property={property}
-                        mounted={mounted}
-                      />
-                    ))}
+                      ))
+                    : (propertiesByTown["Bamenda"] || []).map((property) => (
+                        <div
+                          key={property.id}
+                          className="flex-shrink-0"
+                          style={{ width: "320px" }}
+                        >
+                          <PropertyCard property={property} mounted={mounted} />
+                        </div>
+                      ))}
+                </div>
               </div>
-            </section>
-          )}
+            </div>
+          </section>
+        )}
 
         {/* Fallback message when no properties are found */}
         {!loading && Object.keys(propertiesByTown).length === 0 && (
@@ -632,10 +731,11 @@ function PropertyCard({
   return (
     <Link href={`/property/${property.id}`} className="group block h-full">
       <div
-        className="bg-white rounded-2xl overflow-hidden hover:-translate-y-1 transition-all duration-300 h-full flex flex-col"
+        className="bg-white overflow-hidden hover:-translate-y-1 transition-all duration-300 h-full flex flex-col"
         style={{
           border: "1px solid #DDDDDD",
           boxShadow: "0 6px 20px 0 rgba(0,0,0,0.1)",
+          borderRadius: "20px",
         }}
       >
         <div className="relative h-48 overflow-hidden">

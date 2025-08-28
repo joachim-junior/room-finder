@@ -238,8 +238,8 @@ body {
 
 .grid-7-cols {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+    gap: 0.5rem;
     max-width: 100%;
 }
 
@@ -283,4 +283,19 @@ body {
     .grid-7-cols {
         grid-template-columns: repeat(1, 1fr);
     }
+}
+
+
+/* Hide scrollbars for sliders */
+
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    /* Internet Explorer 10+ */
+    scrollbar-width: none;
+    /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+    /* Safari and Chrome */
 }

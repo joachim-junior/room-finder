@@ -32,6 +32,7 @@ import {
   CheckCircle,
   Eye,
   TrendingUp,
+  TrendingDown,
   X,
   AlertCircle,
   Heart,
@@ -61,8 +62,15 @@ interface WalletTransaction {
   type: "PAYMENT" | "REFUND" | "WITHDRAWAL";
   status: "PENDING" | "COMPLETED" | "FAILED";
   description: string;
-  reference: string;
+  reference?: string;
   createdAt: string;
+  booking?: {
+    id: string;
+    property: {
+      title: string;
+      address: string;
+    };
+  };
 }
 
 type DashboardSection =
@@ -112,6 +120,12 @@ export default function DashboardPage() {
     totalPayments: 0,
     totalRefunds: 0,
     totalWithdrawals: 0,
+  });
+  const [transactionsPagination, setTransactionsPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalItems: 0,
+    itemsPerPage: 10,
   });
 
   // Host-specific wallet state
@@ -569,22 +583,8 @@ export default function DashboardPage() {
         console.warn("Wallet balance API not available:", balanceError);
       }
 
-      // Try to fetch recent transactions
-      try {
-        const transactionsResponse = await apiClient.getTransactionHistory(
-          "PAYMENT",
-          1,
-          5
-        );
-        if (transactionsResponse.success && transactionsResponse.data) {
-          setWalletTransactions(transactionsResponse.data.data || []);
-        }
-      } catch (transactionError) {
-        console.warn(
-          "Transaction history API not available:",
-          transactionError
-        );
-      }
+      // Fetch transactions with pagination
+      await fetchTransactions(1);
     } catch (err) {
       console.error("Error fetching wallet data:", err);
     } finally {
@@ -1142,6 +1142,58 @@ export default function DashboardPage() {
       setPropertiesError(`Failed to load properties: ${err.message}`);
     } finally {
       setPropertiesLoading(false);
+    }
+  };
+
+  // Fetch all transactions without pagination
+  // Fetch transactions with pagination
+  const fetchTransactions = async (page: number = 1) => {
+    try {
+      setWalletLoading(true);
+      const transactionsResponse = await apiClient.getTransactionHistory(
+        undefined, // type - fetch all types
+        page,
+        10 // items per page
+      );
+
+      if (transactionsResponse.success && transactionsResponse.data) {
+        // Parse the actual API response structure
+        const transactionData = transactionsResponse.data as unknown as {
+          transactions?: WalletTransaction[];
+          pagination?: {
+            page: number;
+            limit: number;
+            total: number;
+            pages: number;
+          };
+        };
+
+        const transactions = transactionData.transactions || [];
+        setWalletTransactions(transactions);
+
+        // Update pagination state
+        if (transactionData.pagination) {
+          setTransactionsPagination({
+            currentPage: transactionData.pagination.page,
+            totalPages: transactionData.pagination.pages,
+            totalItems: transactionData.pagination.total,
+            itemsPerPage: transactionData.pagination.limit,
+          });
+        }
+
+        console.log(
+          "Loaded dashboard wallet transactions:",
+          transactions.length,
+          "transactions, page:",
+          page
+        );
+      } else {
+        console.log("No dashboard transactions data:", transactionsResponse);
+      }
+    } catch (transactionError) {
+      console.warn("Transaction history API not available:", transactionError);
+    } finally {
+      setWalletLoading(false);
     }
   };
 
@@ -2262,7 +2314,7 @@ export default function DashboardPage() {
 
             {user.role === "GUEST" && (
               <button
-                onClick={() => router.push("/properties")}
+                onClick={() => router.push("/search")}
                 className="group bg-white p-4 rounded-xl hover:shadow-md transition-all duration-200 text-left"
                 style={{
                   border: "1px solid #DDDDDD",
@@ -4420,7 +4472,7 @@ export default function DashboardPage() {
               Start exploring properties and add them to your favorites!
             </p>
             <button
-              onClick={() => router.push("/properties")}
+              onClick={() => router.push("/search")}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
               Browse Properties
@@ -5913,62 +5965,211 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {walletTransactions.length > 0 && (
-              <div
-                className="bg-white rounded-xl p-6"
-                style={{
-                  border: "1px solid #DDDDDD",
-                  boxShadow: "0 6px 20px 0 rgba(0,0,0,0.1)",
-                }}
-              >
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                  Recent Transactions
+            {/* Transaction History Table - Always show for guest users */}
+            <div
+              className="bg-white rounded-xl p-6"
+              style={{
+                border: "1px solid #DDDDDD",
+                boxShadow: "0 6px 20px 0 rgba(0,0,0,0.1)",
+              }}
+            >
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Transaction History
                 </h2>
-                <div className="space-y-4">
-                  {walletTransactions.map((transaction) => (
-                    <div
-                      key={transaction.id}
-                      className="flex justify-between items-center"
-                    >
-                      <div>
-                        <p className="font-medium text-gray-900">
-                          {transaction.description}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          {formatDate(transaction.createdAt)}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p
-                          className={`font-medium ${
-                            transaction.type === "PAYMENT"
-                              ? "text-red-600"
-                              : "text-green-600"
-                          }`}
-                        >
-                          {transaction.type === "PAYMENT" ? "-" : "+"}
-                          {formatCurrency(
-                            transaction.amount,
-                            transaction.currency
-                          )}
-                        </p>
-                        <p
-                          className={`text-xs ${
-                            transaction.status === "COMPLETED"
-                              ? "text-green-600"
-                              : transaction.status === "PENDING"
-                              ? "text-yellow-600"
-                              : "text-red-600"
-                          }`}
-                        >
-                          {transaction.status}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+                <div className="text-sm text-gray-600">
+                  {transactionsPagination.totalItems} total transactions
                 </div>
               </div>
-            )}
+
+              {walletLoading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-4 border-gray-200 border-t-gray-900 mx-auto mb-4"></div>
+                  <p className="text-gray-600">Loading transactions...</p>
+                </div>
+              ) : walletTransactions.length > 0 ? (
+                <>
+                  {/* Table */}
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr
+                          style={{
+                            borderTop: "1px solid rgb(221, 221, 221)",
+                          }}
+                        >
+                          <th className="text-left py-3 px-4 font-medium text-gray-900">
+                            Type
+                          </th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-900">
+                            Description
+                          </th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-900">
+                            Date
+                          </th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-900">
+                            Reference
+                          </th>
+                          <th className="text-right py-3 px-4 font-medium text-gray-900">
+                            Amount
+                          </th>
+                          <th className="text-center py-3 px-4 font-medium text-gray-900">
+                            Status
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {walletTransactions.map((transaction) => (
+                          <tr
+                            key={transaction.id}
+                            className="hover:bg-gray-50"
+                            style={{
+                              borderTop: "1px solid rgb(221, 221, 221)",
+                            }}
+                          >
+                            <td className="py-4 px-4">
+                              <div className="flex items-center space-x-2">
+                                {transaction.type === "PAYMENT" ? (
+                                  <TrendingDown className="h-4 w-4 text-red-500" />
+                                ) : transaction.type === "REFUND" ? (
+                                  <TrendingUp className="h-4 w-4 text-green-500" />
+                                ) : transaction.type === "WITHDRAWAL" ? (
+                                  <TrendingDown className="h-4 w-4 text-orange-500" />
+                                ) : (
+                                  <Clock className="h-4 w-4 text-gray-500" />
+                                )}
+                                <span className="text-sm font-medium text-gray-900">
+                                  {transaction.type}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="py-4 px-4">
+                              <div>
+                                <p className="font-medium text-gray-900">
+                                  {(transaction as any).booking?.property
+                                    ?.title || transaction.description}
+                                </p>
+                                {(transaction as any).booking?.property
+                                  ?.address && (
+                                  <p className="text-sm text-gray-600">
+                                    {
+                                      (transaction as any).booking.property
+                                        .address
+                                    }
+                                  </p>
+                                )}
+                              </div>
+                            </td>
+                            <td className="py-4 px-4 text-sm text-gray-600">
+                              {formatDate(transaction.createdAt)}
+                            </td>
+                            <td className="py-4 px-4 text-sm text-gray-600">
+                              {(transaction as any).reference || "-"}
+                            </td>
+                            <td className="py-4 px-4 text-right">
+                              <span
+                                className={`font-semibold ${
+                                  transaction.type === "PAYMENT"
+                                    ? "text-red-600"
+                                    : transaction.type === "REFUND"
+                                    ? "text-green-600"
+                                    : "text-orange-600"
+                                }`}
+                              >
+                                {transaction.type === "PAYMENT" ||
+                                transaction.type === "WITHDRAWAL"
+                                  ? "-"
+                                  : "+"}
+                                {formatCurrency(
+                                  transaction.amount,
+                                  transaction.currency
+                                )}
+                              </span>
+                            </td>
+                            <td className="py-4 px-4 text-center">
+                              <span
+                                className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                                  transaction.status === "COMPLETED"
+                                    ? "bg-green-100 text-green-800"
+                                    : transaction.status === "PENDING"
+                                    ? "bg-yellow-100 text-yellow-800"
+                                    : "bg-red-100 text-red-800"
+                                }`}
+                              >
+                                {transaction.status}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Pagination */}
+                  {transactionsPagination.totalPages > 1 && (
+                    <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200">
+                      <div className="text-sm text-gray-600">
+                        Showing{" "}
+                        {(transactionsPagination.currentPage - 1) *
+                          transactionsPagination.itemsPerPage +
+                          1}{" "}
+                        to{" "}
+                        {Math.min(
+                          transactionsPagination.currentPage *
+                            transactionsPagination.itemsPerPage,
+                          transactionsPagination.totalItems
+                        )}{" "}
+                        of {transactionsPagination.totalItems} transactions
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() =>
+                            fetchTransactions(
+                              transactionsPagination.currentPage - 1
+                            )
+                          }
+                          disabled={transactionsPagination.currentPage === 1}
+                          className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Previous
+                        </button>
+                        <span className="text-sm text-gray-600">
+                          Page {transactionsPagination.currentPage} of{" "}
+                          {transactionsPagination.totalPages}
+                        </span>
+                        <button
+                          onClick={() =>
+                            fetchTransactions(
+                              transactionsPagination.currentPage + 1
+                            )
+                          }
+                          disabled={
+                            transactionsPagination.currentPage ===
+                            transactionsPagination.totalPages
+                          }
+                          className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Next
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="text-center py-12">
+                  <div className="h-12 w-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                    <Clock className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    No Transactions Yet
+                  </h3>
+                  <p className="text-gray-600">
+                    Your transaction history will appear here once you make your
+                    first booking or payment.
+                  </p>
+                </div>
+              )}
+            </div>
           </>
         ) : (
           <div className="text-center py-16">

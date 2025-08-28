@@ -539,7 +539,7 @@ export default function PropertyDetailPage() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-24 sm:pb-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-0 pb-24 sm:pb-16">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-12">
           {/* Left Column - Main Content */}
           <div className="col-span-1 lg:col-span-2 space-y-8 lg:space-y-12">
@@ -787,24 +787,30 @@ export default function PropertyDetailPage() {
               <h2 className="text-2xl font-bold text-gray-900 mb-6">
                 Location
               </h2>
-              {property.latitude && property.longitude ? (
-                <GoogleMap
-                  latitude={property.latitude}
-                  longitude={property.longitude}
-                  title={property.title}
-                  className="w-full h-96 rounded-2xl mb-4"
-                />
-              ) : (
-                <div className="bg-gray-100 rounded-2xl h-96 mb-4 flex items-center justify-center">
-                  <div className="text-center">
-                    <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-                    <p className="text-gray-600">Map view coming soon</p>
+              <div className="space-y-4">
+                <p className="text-gray-700 text-lg">
+                  {property.address || "Address not available"}
+                </p>
+                {property.latitude && property.longitude ? (
+                  <button
+                    onClick={() => {
+                      const googleMapsUrl = `https://www.google.com/maps?q=${property.latitude},${property.longitude}`;
+                      window.open(googleMapsUrl, "_blank");
+                    }}
+                    className="inline-flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                  >
+                    <MapPin className="h-5 w-5" />
+                    <span>Open Map on Google</span>
+                  </button>
+                ) : (
+                  <div className="bg-gray-100 rounded-lg p-6 text-center">
+                    <MapPin className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                    <p className="text-gray-600">
+                      Location coordinates not available
+                    </p>
                   </div>
-                </div>
-              )}
-              <p className="text-gray-700">
-                {property.address || "Address not available"}
-              </p>
+                )}
+              </div>
             </div>
           </div>
 

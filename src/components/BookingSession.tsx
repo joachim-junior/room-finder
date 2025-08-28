@@ -232,7 +232,7 @@ export default function BookingSession({
           setBooking(bookingData);
           setCurrentStep("processing");
 
-          // Start polling for payment status
+          // Start polling for payment status in background
           pollPaymentStatus(bookingData.id);
 
           console.log(
@@ -278,11 +278,11 @@ export default function BookingSession({
         `Polling attempt ${attempts}/${maxAttempts} for booking ${bookingId}`
       );
 
-      // Update polling progress
+      // Update polling progress (background only)
       setPollingProgress({
         attempts,
         maxAttempts,
-        status: "Checking payment status...",
+        status: "Processing...",
       });
 
       if (attempts >= maxAttempts) {
@@ -303,12 +303,12 @@ export default function BookingSession({
           const status = response.data.paymentStatus;
           console.log(`Payment status: ${status}`);
 
-          // Update status in progress
+          // Update status in progress (background only)
           setPollingProgress((prev) =>
             prev
               ? {
                   ...prev,
-                  status: `Payment status: ${status}`,
+                  status: "Processing...",
                 }
               : null
           );
@@ -345,7 +345,7 @@ export default function BookingSession({
             prev
               ? {
                   ...prev,
-                  status: "Checking payment status...",
+                  status: "Processing...",
                 }
               : null
           );
@@ -359,7 +359,7 @@ export default function BookingSession({
           prev
             ? {
                 ...prev,
-                status: "Checking payment status...",
+                status: "Processing...",
               }
             : null
         );
@@ -839,53 +839,25 @@ export default function BookingSession({
               </p>
             </div>
 
-            {/* Polling Progress */}
-            {pollingProgress && (
-              <div className="bg-blue-50 rounded-lg p-4">
-                <div className="flex items-center justify-center space-x-2 mb-2">
-                  <Loader2 className="h-4 w-4 text-blue-500 animate-spin" />
-                  <span className="text-sm font-medium text-blue-800">
-                    Checking Payment Status
-                  </span>
-                </div>
-                <div className="text-xs text-blue-600 mb-2">
-                  {pollingProgress.status}
-                </div>
-                <div className="w-full bg-blue-200 rounded-full h-2">
-                  <div
-                    className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                    style={{
-                      width: `${
-                        (pollingProgress.attempts /
-                          pollingProgress.maxAttempts) *
-                        100
-                      }%`,
-                    }}
-                  ></div>
-                </div>
-                <div className="text-xs text-blue-600 mt-1">
-                  Attempt {pollingProgress.attempts} of{" "}
-                  {pollingProgress.maxAttempts}
-                </div>
-              </div>
-            )}
-
             <div className="bg-blue-50 rounded-lg p-4">
               <p className="text-sm text-blue-800">
                 <strong>What happens next:</strong>
               </p>
               <ul className="text-sm text-blue-700 mt-2 space-y-1">
                 <li>• You&apos;ll receive a notification on your phone</li>
-                <li>• Enter your mobile money PIN to confirm</li>
+                <li>
+                  •{" "}
+                  {bookingData.paymentMethod === "MOBILE_MONEY"
+                    ? "Dial *126# to confirm the payment"
+                    : bookingData.paymentMethod === "ORANGE_MONEY"
+                    ? "Dial #150*50# to confirm the payment"
+                    : "Enter your mobile money PIN to confirm"}
+                </li>
                 <li>• Payment will be processed immediately</li>
                 <li>• Booking will be confirmed automatically</li>
               </ul>
             </div>
             <div className="text-xs text-gray-500">
-              <p>
-                We&apos;re automatically checking your payment status every 3
-                seconds.
-              </p>
               <p>You can close this window and check your dashboard later.</p>
             </div>
           </div>
@@ -968,17 +940,6 @@ export default function BookingSession({
             <div className="flex items-center space-x-2">
               <AlertCircle className="h-4 w-4 text-red-500" />
               <span className="text-sm text-red-700">{error}</span>
-            </div>
-          </div>
-        )}
-
-        {pollingProgress && (
-          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-            <div className="flex items-center space-x-2">
-              <Loader2 className="h-4 w-4 text-blue-500 animate-spin" />
-              <span className="text-sm text-blue-700">
-                {pollingProgress.status}
-              </span>
             </div>
           </div>
         )}

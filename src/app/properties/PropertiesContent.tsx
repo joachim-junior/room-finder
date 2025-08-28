@@ -287,7 +287,8 @@ export default function PropertiesContent() {
               {properties.map((property) => (
                 <div
                   key={property.id}
-                  className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow overflow-hidden"
+                  className="bg-white shadow-sm hover:shadow-md transition-shadow overflow-hidden"
+                  style={{ borderRadius: "20px" }}
                 >
                   {/* Property Image */}
                   <div className="relative h-48">

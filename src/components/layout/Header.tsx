@@ -5,7 +5,20 @@ import Link from "next/link";
 import Image from "next/image";
 import Logo from "../../../logo.png";
 import { useAuth } from "@/contexts/AuthContext";
-import { Globe, Menu, Heart, User, Bell, Settings, LogOut } from "lucide-react";
+import {
+  Globe,
+  Menu,
+  Heart,
+  User,
+  Bell,
+  Settings,
+  LogOut,
+  Home,
+  Calendar,
+  Star,
+  MessageSquare,
+  UserCheck,
+} from "lucide-react";
 import { Divider } from "@/components/ui";
 
 export function Header() {
@@ -111,25 +124,57 @@ export function Header() {
                           <span className="text-sm">Dashboard</span>
                         </Link>
                         <Link
-                          href="/bookings"
+                          href="/dashboard?section=bookings"
                           className="flex items-center space-x-3 px-2 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
                           onClick={() => setShowUserMenu(false)}
                         >
-                          <div className="h-4 w-4 rounded-full bg-gray-300 flex items-center justify-center">
-                            <span className="text-xs">✈️</span>
-                          </div>
+                          <Calendar className="h-4 w-4" />
                           <span className="text-sm">My Bookings</span>
                         </Link>
+
+                        {/* Host-only: Properties */}
+                        {user?.role === "HOST" &&
+                          user?.hostApprovalStatus === "APPROVED" && (
+                            <Link
+                              href="/dashboard?section=properties"
+                              className="flex items-center space-x-3 px-2 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                              onClick={() => setShowUserMenu(false)}
+                            >
+                              <Home className="h-4 w-4" />
+                              <span className="text-sm">My Properties</span>
+                            </Link>
+                          )}
+
+                        {/* Guest-only: Favorites */}
+                        {user?.role === "GUEST" && (
+                          <Link
+                            href="/dashboard?section=favorites"
+                            className="flex items-center space-x-3 px-2 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                            onClick={() => setShowUserMenu(false)}
+                          >
+                            <Heart className="h-4 w-4" />
+                            <span className="text-sm">Favorites</span>
+                          </Link>
+                        )}
+
                         <Link
-                          href="/profile"
+                          href="/dashboard?section=reviews"
                           className="flex items-center space-x-3 px-2 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
                           onClick={() => setShowUserMenu(false)}
                         >
-                          <User className="h-4 w-4" />
-                          <span className="text-sm">Profile</span>
+                          <Star className="h-4 w-4" />
+                          <span className="text-sm">Reviews</span>
                         </Link>
                         <Link
-                          href="/wallet"
+                          href="/dashboard?section=enquiries"
+                          className="flex items-center space-x-3 px-2 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                          onClick={() => setShowUserMenu(false)}
+                        >
+                          <MessageSquare className="h-4 w-4" />
+                          <span className="text-sm">Messages</span>
+                        </Link>
+                        <Link
+                          href="/dashboard?section=wallet"
                           className="flex items-center space-x-3 px-2 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
                           onClick={() => setShowUserMenu(false)}
                         >
@@ -138,6 +183,36 @@ export function Header() {
                           </div>
                           <span className="text-sm">Wallet</span>
                         </Link>
+                        <Link
+                          href="/dashboard?section=notifications"
+                          className="flex items-center space-x-3 px-2 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                          onClick={() => setShowUserMenu(false)}
+                        >
+                          <Bell className="h-4 w-4" />
+                          <span className="text-sm">Notifications</span>
+                        </Link>
+                        <Link
+                          href="/dashboard?section=profile"
+                          className="flex items-center space-x-3 px-2 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                          onClick={() => setShowUserMenu(false)}
+                        >
+                          <User className="h-4 w-4" />
+                          <span className="text-sm">Profile</span>
+                        </Link>
+
+                        {/* Host Application (for unapproved hosts) */}
+                        {user?.role === "HOST" && !user?.hostApprovalStatus && (
+                          <Link
+                            href="/dashboard?section=host-application"
+                            className="flex items-center space-x-3 px-2 py-2 text-orange-700 hover:bg-orange-50 rounded-lg transition-colors"
+                            onClick={() => setShowUserMenu(false)}
+                          >
+                            <UserCheck className="h-4 w-4" />
+                            <span className="text-sm">
+                              Complete Host Application
+                            </span>
+                          </Link>
+                        )}
                       </div>
 
                       <Divider />

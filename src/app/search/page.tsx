@@ -45,12 +45,12 @@ function SearchContent() {
     checkOut: searchParams.get("checkOut") || "",
     guests: Number(searchParams.get("guests")) || 1,
     page: 1,
-    limit: 12,
+    limit: 20,
   });
 
   const [filters, setFilters] = useState<SearchFilters>({
     page: 1,
-    limit: 12,
+    limit: 20,
     isAvailable: true, // Only show available properties by default
   });
 
@@ -284,7 +284,7 @@ function SearchContent() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="w-full py-8 px-6">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">
@@ -298,7 +298,7 @@ function SearchContent() {
         </div>
 
         {/* Search Bar with Filters - Using Home Page Style */}
-        <div className="bg-white mb-8">
+        <div className="bg-white mb-8 sticky top-0 z-50 shadow-sm py-4">
           <div className="max-w-6xl mx-auto">
             <div className="flex items-center space-x-4">
               <form
@@ -503,10 +503,13 @@ function SearchContent() {
 
         {/* Properties Grid */}
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {[...Array(8)].map((_, i) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+            {[...Array(10)].map((_, i) => (
               <div key={i} className="animate-pulse">
-                <div className="bg-gray-200 rounded-xl h-48 mb-4"></div>
+                <div
+                  className="bg-gray-200 h-48 mb-4"
+                  style={{ borderRadius: "20px" }}
+                ></div>
                 <div className="space-y-2">
                   <div className="h-4 bg-gray-200 rounded w-3/4"></div>
                   <div className="h-3 bg-gray-200 rounded w-1/2"></div>
@@ -516,7 +519,7 @@ function SearchContent() {
             ))}
           </div>
         ) : properties.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
             {properties.map((property) => (
               <PropertyCard key={property.id} property={property} />
             ))}
@@ -735,10 +738,11 @@ function PropertyCard({ property }: { property: Property }) {
   return (
     <Link href={`/property/${property.id}`} className="group block">
       <div
-        className="bg-white rounded-2xl overflow-hidden hover:-translate-y-1 transition-all duration-300 h-full flex flex-col"
+        className="bg-white overflow-hidden hover:-translate-y-1 transition-all duration-300 h-full flex flex-col"
         style={{
           border: "1px solid #DDDDDD",
           boxShadow: "0 6px 20px 0 rgba(0,0,0,0.1)",
+          borderRadius: "20px",
         }}
       >
         <div className="relative h-48 overflow-hidden">

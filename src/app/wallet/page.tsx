@@ -20,21 +20,40 @@ export default function WalletPage() {
       setLoading(true);
       setError(null);
       try {
+        console.log("Loading wallet data for user:", user?.email);
         const [walletResponse, transactionsResponse] = await Promise.all([
           apiClient.getWalletBalance(),
           apiClient.getTransactionHistory(),
         ]);
 
+        console.log("Wallet response:", walletResponse);
+        console.log("Transactions response:", transactionsResponse);
+
         if (walletResponse.success && walletResponse.data) {
           setWallet(walletResponse.data);
+          console.log("Set wallet data:", walletResponse.data);
         }
 
         if (transactionsResponse.success && transactionsResponse.data) {
-          // Handle both possible response structures
-          const responseData = transactionsResponse.data as any;
-          const transactions =
-            responseData.transactions || responseData.data || [];
+          // Parse the actual API response structure based on the real API
+          const responseData = transactionsResponse.data as unknown as {
+            transactions?: Transaction[];
+            pagination?: {
+              page: number;
+              limit: number;
+              total: number;
+              pages: number;
+            };
+          };
+          const transactions = responseData.transactions || [];
           setTransactions(transactions);
+          console.log(
+            "Loaded transactions for wallet page:",
+            transactions.length,
+            "transactions"
+          );
+        } else {
+          console.log("No transactions data:", transactionsResponse);
         }
       } catch (error) {
         console.error("Failed to load wallet data:", error);
@@ -239,68 +258,81 @@ export default function WalletPage() {
                   </div>
                 )}
 
-                {/* Transaction History - Only show if transactions exist */}
-                {transactions.length > 0 && (
+                {/* Transaction History - Always show if wallet exists */}
+                {wallet && (
                   <div className="bg-background rounded-lg shadow-lg p-6">
                     <h2 className="text-xl font-semibold mb-4">
                       Transaction History
                     </h2>
-                    <div className="space-y-4">
-                      {transactions.map((transaction) => (
-                        <div
-                          key={transaction.id}
-                          className="flex items-center justify-between p-4 rounded-lg"
-                          style={{
-                            border: "1px solid #DDDDDD",
-                            boxShadow: "0 6px 20px 0 rgba(0,0,0,0.1)",
-                          }}
-                        >
-                          <div className="flex items-center space-x-4">
-                            <div className="h-10 w-10 bg-muted rounded-lg flex items-center justify-center">
-                              {getTransactionIcon(transaction.type)}
-                            </div>
-                            <div>
-                              <p className="font-medium text-foreground">
-                                {transaction.booking?.property?.title ||
-                                  transaction.description}
-                              </p>
-                              <p className="text-sm text-muted-foreground">
-                                {transaction.booking?.property?.address && (
-                                  <span>
-                                    {transaction.booking.property.address} •{" "}
-                                  </span>
-                                )}
-                                {new Date(
-                                  transaction.createdAt
-                                ).toLocaleDateString()}
-                              </p>
-                              {transaction.reference && (
-                                <p className="text-xs text-muted-foreground">
-                                  Ref: {transaction.reference}
+                    {transactions.length > 0 ? (
+                      <div className="space-y-4">
+                        {transactions.map((transaction) => (
+                          <div
+                            key={transaction.id}
+                            className="flex items-center justify-between p-4 rounded-lg"
+                            style={{
+                              border: "1px solid #DDDDDD",
+                              boxShadow: "0 6px 20px 0 rgba(0,0,0,0.1)",
+                            }}
+                          >
+                            <div className="flex items-center space-x-4">
+                              <div className="h-10 w-10 bg-muted rounded-lg flex items-center justify-center">
+                                {getTransactionIcon(transaction.type)}
+                              </div>
+                              <div>
+                                <p className="font-medium text-foreground">
+                                  {transaction.booking?.property?.title ||
+                                    transaction.description}
                                 </p>
-                              )}
+                                <p className="text-sm text-muted-foreground">
+                                  {transaction.booking?.property?.address && (
+                                    <span>
+                                      {transaction.booking.property.address} •{" "}
+                                    </span>
+                                  )}
+                                  {new Date(
+                                    transaction.createdAt
+                                  ).toLocaleDateString()}
+                                </p>
+                                {transaction.reference && (
+                                  <p className="text-xs text-muted-foreground">
+                                    Ref: {transaction.reference}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <p
+                                className={`font-semibold ${getTransactionColor(
+                                  transaction.type
+                                )}`}
+                              >
+                                {transaction.type === "PAYMENT" ||
+                                transaction.type === "WITHDRAWAL"
+                                  ? "-"
+                                  : "+"}
+                                {transaction.amount.toLocaleString()}{" "}
+                                {transaction.currency}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {transaction.status}
+                              </p>
                             </div>
                           </div>
-                          <div className="text-right">
-                            <p
-                              className={`font-semibold ${getTransactionColor(
-                                transaction.type
-                              )}`}
-                            >
-                              {transaction.type === "PAYMENT" ||
-                              transaction.type === "WITHDRAWAL"
-                                ? "-"
-                                : "+"}
-                              {transaction.amount.toLocaleString()}{" "}
-                              {transaction.currency}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {transaction.status}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">
+                          No Transactions Yet
+                        </h3>
+                        <p className="text-gray-600">
+                          Your transaction history will appear here once you
+                          make your first booking or payment.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
               </>
