@@ -11,12 +11,14 @@ export default function WalletPage() {
   const [wallet, setWallet] = useState<Wallet | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadWalletData = async () => {
       if (!user) return;
 
       setLoading(true);
+      setError(null);
       try {
         const [walletResponse, transactionsResponse] = await Promise.all([
           apiClient.getWalletBalance(),
@@ -28,10 +30,15 @@ export default function WalletPage() {
         }
 
         if (transactionsResponse.success && transactionsResponse.data) {
-          setTransactions(transactionsResponse.data.data);
+          // Handle both possible response structures
+          const responseData = transactionsResponse.data as any;
+          const transactions =
+            responseData.transactions || responseData.data || [];
+          setTransactions(transactions);
         }
       } catch (error) {
         console.error("Failed to load wallet data:", error);
+        setError("Failed to load wallet data. Please try again later.");
       } finally {
         setLoading(false);
       }
@@ -111,92 +118,212 @@ export default function WalletPage() {
               ))}
             </div>
           </div>
+        ) : error ? (
+          <div className="text-center py-16">
+            <div className="h-16 w-16 bg-red-100 rounded-lg flex items-center justify-center mx-auto mb-6">
+              <CreditCard className="h-8 w-8 text-red-500" />
+            </div>
+            <h3 className="text-2xl font-semibold mb-4 text-red-600">
+              Error Loading Wallet
+            </h3>
+            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+              {error}
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
         ) : (
           <div className="space-y-6">
-            {/* Balance Card */}
-            <div className="bg-gradient-to-br from-primary to-primary/80 rounded-lg p-6 text-white">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-lg font-medium mb-2">Current Balance</h2>
-                  <p className="text-3xl font-bold">
-                    {wallet
-                      ? `${wallet.balance.toLocaleString()} ${wallet.currency}`
-                      : "0 XAF"}
-                  </p>
-                </div>
-                <div className="h-12 w-12 bg-white/20 rounded-lg flex items-center justify-center">
-                  <CreditCard className="h-6 w-6" />
-                </div>
-              </div>
-            </div>
-
-            {/* Transaction History */}
-            <div className="bg-background rounded-lg shadow-lg p-6">
-              <h2 className="text-xl font-semibold mb-4">
-                Transaction History
-              </h2>
-
-              {transactions.length > 0 ? (
-                <div className="space-y-4">
-                  {transactions.map((transaction) => (
-                    <div
-                      key={transaction.id}
-                      className="flex items-center justify-between p-4 rounded-lg"
-                      style={{
-                        border: "1px solid #DDDDDD",
-                        boxShadow: "0 6px 20px 0 rgba(0,0,0,0.1)",
-                      }}
-                    >
-                      <div className="flex items-center space-x-4">
-                        <div className="h-10 w-10 bg-muted rounded-lg flex items-center justify-center">
-                          {getTransactionIcon(transaction.type)}
-                        </div>
-                        <div>
-                          <p className="font-medium text-foreground">
-                            {transaction.description}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {new Date(
-                              transaction.createdAt
-                            ).toLocaleDateString()}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p
-                          className={`font-semibold ${getTransactionColor(
-                            transaction.type
-                          )}`}
-                        >
-                          {transaction.type === "PAYMENT" ||
-                          transaction.type === "WITHDRAWAL"
-                            ? "-"
-                            : "+"}
-                          {transaction.amount.toLocaleString()}{" "}
-                          {transaction.currency}
+            {/* Show content if wallet exists (including 0 balance) or transactions exist */}
+            {!loading && (wallet || transactions.length > 0) ? (
+              <>
+                {/* Balance Card - Show if wallet data exists (including 0 balance) */}
+                {wallet && (
+                  <div className="bg-gradient-to-br from-primary to-primary/80 rounded-lg p-6 text-white">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h2 className="text-lg font-medium mb-2">
+                          Current Balance
+                        </h2>
+                        <p className="text-3xl font-bold">
+                          {wallet.balance.toLocaleString()} {wallet.currency}
                         </p>
-                        <p className="text-xs text-muted-foreground">
-                          {transaction.status}
+                      </div>
+                      <div className="h-12 w-12 bg-white/20 rounded-lg flex items-center justify-center">
+                        <CreditCard className="h-6 w-6" />
+                      </div>
+                    </div>
+
+                    {/* Wallet Stats - Always show if wallet exists */}
+                    <div className="grid grid-cols-3 gap-4 pt-4 border-t border-white/20">
+                      <div className="text-center">
+                        <p className="text-white/80 text-xs">Transactions</p>
+                        <p className="text-sm font-semibold">
+                          {wallet.totalTransactions || 0}
+                        </p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-white/80 text-xs">Total Paid</p>
+                        <p className="text-sm font-semibold">
+                          {wallet.totalPayments?.toLocaleString() || 0}{" "}
+                          {wallet.currency}
+                        </p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-white/80 text-xs">Refunds</p>
+                        <p className="text-sm font-semibold">
+                          {wallet.totalRefunds?.toLocaleString() || 0}{" "}
+                          {wallet.currency}
                         </p>
                       </div>
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <div className="h-12 w-12 bg-muted rounded-lg flex items-center justify-center mx-auto mb-4">
-                    <CreditCard className="h-6 w-6 text-muted-foreground" />
                   </div>
-                  <h3 className="text-lg font-semibold mb-2">
-                    No transactions yet
-                  </h3>
-                  <p className="text-muted-foreground">
-                    Your transaction history will appear here once you make
-                    bookings or payments.
-                  </p>
+                )}
+
+                {/* Additional Stats Cards */}
+                {wallet && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-background rounded-lg shadow-lg p-6">
+                      <div className="flex items-center space-x-3">
+                        <div className="h-10 w-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                          <TrendingUp className="h-5 w-5 text-blue-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-600">
+                            Transactions
+                          </p>
+                          <p className="text-xl font-bold text-gray-900">
+                            {wallet.totalTransactions || 0}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-background rounded-lg shadow-lg p-6">
+                      <div className="flex items-center space-x-3">
+                        <div className="h-10 w-10 bg-green-50 rounded-lg flex items-center justify-center">
+                          <TrendingDown className="h-5 w-5 text-green-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-600">
+                            Payments
+                          </p>
+                          <p className="text-xl font-bold text-gray-900">
+                            {wallet.totalPayments?.toLocaleString() || 0}{" "}
+                            {wallet.currency}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-background rounded-lg shadow-lg p-6">
+                      <div className="flex items-center space-x-3">
+                        <div className="h-10 w-10 bg-orange-50 rounded-lg flex items-center justify-center">
+                          <Clock className="h-5 w-5 text-orange-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-600">
+                            Refunds
+                          </p>
+                          <p className="text-xl font-bold text-gray-900">
+                            {wallet.totalRefunds?.toLocaleString() || 0}{" "}
+                            {wallet.currency}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Transaction History - Only show if transactions exist */}
+                {transactions.length > 0 && (
+                  <div className="bg-background rounded-lg shadow-lg p-6">
+                    <h2 className="text-xl font-semibold mb-4">
+                      Transaction History
+                    </h2>
+                    <div className="space-y-4">
+                      {transactions.map((transaction) => (
+                        <div
+                          key={transaction.id}
+                          className="flex items-center justify-between p-4 rounded-lg"
+                          style={{
+                            border: "1px solid #DDDDDD",
+                            boxShadow: "0 6px 20px 0 rgba(0,0,0,0.1)",
+                          }}
+                        >
+                          <div className="flex items-center space-x-4">
+                            <div className="h-10 w-10 bg-muted rounded-lg flex items-center justify-center">
+                              {getTransactionIcon(transaction.type)}
+                            </div>
+                            <div>
+                              <p className="font-medium text-foreground">
+                                {transaction.booking?.property?.title ||
+                                  transaction.description}
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                {transaction.booking?.property?.address && (
+                                  <span>
+                                    {transaction.booking.property.address} •{" "}
+                                  </span>
+                                )}
+                                {new Date(
+                                  transaction.createdAt
+                                ).toLocaleDateString()}
+                              </p>
+                              {transaction.reference && (
+                                <p className="text-xs text-muted-foreground">
+                                  Ref: {transaction.reference}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p
+                              className={`font-semibold ${getTransactionColor(
+                                transaction.type
+                              )}`}
+                            >
+                              {transaction.type === "PAYMENT" ||
+                              transaction.type === "WITHDRAWAL"
+                                ? "-"
+                                : "+"}
+                              {transaction.amount.toLocaleString()}{" "}
+                              {transaction.currency}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {transaction.status}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              /* Empty State - No wallet or transactions */
+              <div className="text-center py-16">
+                <div className="h-16 w-16 bg-muted rounded-lg flex items-center justify-center mx-auto mb-6">
+                  <CreditCard className="h-8 w-8 text-muted-foreground" />
                 </div>
-              )}
-            </div>
+                <h3 className="text-2xl font-semibold mb-4">
+                  No Wallet Data Available
+                </h3>
+                <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                  Your wallet information will appear here once you make your
+                  first booking or when wallet data becomes available.
+                </p>
+                <div className="text-sm text-muted-foreground">
+                  <p>• Make a booking to activate your wallet</p>
+                  <p>• Receive refunds and manage payments</p>
+                  <p>• View transaction history</p>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

@@ -9,6 +9,7 @@ import {
   Wallet,
   Transaction,
   Notification,
+  Enquiry,
   SearchFilters,
   PaymentMethod,
   PaymentInitialization,
@@ -2049,6 +2050,18 @@ class ApiClient {
   }
 
   // Enquiries
+  async createEnquiry(enquiryData: {
+    propertyId: string;
+    subject: string;
+    message: string;
+    priority?: "LOW" | "NORMAL" | "HIGH" | "URGENT";
+  }): Promise<ApiResponse<{ enquiry: Enquiry }>> {
+    return this.request<{ enquiry: Enquiry }>("/enquiries", {
+      method: "POST",
+      body: JSON.stringify(enquiryData),
+    });
+  }
+
   async getEnquiries(
     status?: string,
     priority?: string,

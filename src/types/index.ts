@@ -117,7 +117,11 @@ export interface Review {
 export interface Wallet {
   balance: number;
   currency: string;
-  isActive: boolean;
+  isActive?: boolean;
+  totalTransactions?: number;
+  totalPayments?: number;
+  totalRefunds?: number;
+  totalWithdrawals?: number;
 }
 
 export interface Transaction {
@@ -128,18 +132,35 @@ export interface Transaction {
   status: "PENDING" | "COMPLETED" | "FAILED";
   description: string;
   reference: string;
-  metadata?: {
-    bookingId?: string;
-    propertyId?: string;
-    paymentMethod?: string;
-    customerInfo?: {
-      name: string;
-      phone: string;
-      email: string;
-    };
-    transactionId?: string;
-  };
+  metadata?:
+    | string
+    | {
+        bookingId?: string;
+        propertyId?: string;
+        paymentMethod?: string;
+        customerInfo?: {
+          name: string;
+          phone: string;
+          email: string;
+        };
+        transactionId?: string;
+      };
   createdAt: string;
+  updatedAt?: string;
+  hostServiceFee?: number | null;
+  guestServiceFee?: number | null;
+  platformRevenue?: number | null;
+  netAmount?: number | null;
+  walletId?: string;
+  userId?: string;
+  bookingId?: string;
+  booking?: {
+    id: string;
+    property: {
+      title: string;
+      address: string;
+    };
+  };
 }
 
 export interface PaymentMethod {
@@ -165,6 +186,39 @@ export interface PaymentVerification {
     amount: number;
     medium: string;
     dateConfirmed: string;
+  };
+}
+
+export interface Enquiry {
+  id: string;
+  subject: string;
+  message: string;
+  status: "PENDING" | "RESPONDED" | "CLOSED" | "SPAM";
+  priority: "LOW" | "NORMAL" | "HIGH" | "URGENT";
+  isRead: boolean;
+  response?: string;
+  respondedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  property: {
+    id: string;
+    title: string;
+    city: string;
+    images: string[];
+  };
+  guest: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    avatar?: string;
+  };
+  host: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    avatar?: string;
   };
 }
 

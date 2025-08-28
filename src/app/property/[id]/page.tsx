@@ -14,6 +14,7 @@ import {
   Modal,
   Divider,
   GoogleMap,
+  Label,
 } from "@/components/ui";
 import { ImageWithPlaceholder } from "@/components/ui/ImageWithPlaceholder";
 import BookingSession from "@/components/BookingSession";
@@ -75,6 +76,16 @@ export default function PropertyDetailPage() {
     guests: 1,
     specialRequests: "",
   });
+  const [showMessageModal, setShowMessageModal] = useState(false);
+  const [messageForm, setMessageForm] = useState({
+    subject: "",
+    message: "",
+    priority: "NORMAL" as "LOW" | "NORMAL" | "HIGH" | "URGENT",
+  });
+  const [sendingMessage, setSendingMessage] = useState(false);
+  const [messageError, setMessageError] = useState<string | null>(null);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
   // Set mounted to true after hydration
   useEffect(() => {
@@ -134,6 +145,71 @@ export default function PropertyDetailPage() {
     loadProperty();
   }, [params.id]);
 
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!property || !user) return;
+
+    // Clear previous errors
+    setMessageError(null);
+
+    // Frontend validation
+    if (messageForm.message.length < 10) {
+      setMessageError("Message must be at least 10 characters long");
+      return;
+    }
+    if (messageForm.message.length > 1000) {
+      setMessageError("Message must be no more than 1000 characters long");
+      return;
+    }
+    if (messageForm.subject.trim().length === 0) {
+      setMessageError("Subject is required");
+      return;
+    }
+
+    setSendingMessage(true);
+    try {
+      await apiClient.createEnquiry({
+        propertyId: property.id,
+        subject: messageForm.subject.trim(),
+        message: messageForm.message.trim(),
+        priority: messageForm.priority,
+      });
+
+      // Reset form and close modal
+      setMessageForm({
+        subject: "",
+        message: "",
+        priority: "NORMAL",
+      });
+      setMessageError(null);
+      setShowMessageModal(false);
+
+      // Show success message (you can implement a toast notification here)
+      alert("Message sent successfully! The host will respond soon.");
+    } catch (error: any) {
+      console.error("Failed to send message:", error);
+
+      // Handle specific API validation errors
+      if (error?.response?.data?.errors) {
+        const validationErrors = error.response.data.errors;
+        const messageError = validationErrors.find(
+          (err: any) => err.path === "message"
+        );
+        if (messageError) {
+          setMessageError(messageError.msg);
+        } else {
+          setMessageError(validationErrors[0]?.msg || "Validation failed");
+        }
+      } else if (error?.message) {
+        setMessageError(error.message);
+      } else {
+        setMessageError("Failed to send message. Please try again.");
+      }
+    } finally {
+      setSendingMessage(false);
+    }
+  };
+
   // Don't render anything until mounted to prevent hydration issues
   if (!mounted) {
     return (
@@ -161,6 +237,51 @@ export default function PropertyDetailPage() {
       return;
     }
     setShowBookingSession(true);
+  };
+
+  // Touch handlers for mobile slider
+  const minSwipeDistance = 50;
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    const totalImages = property?.images?.length || 0;
+
+    if (isLeftSwipe && selectedImage < totalImages - 1) {
+      setSelectedImage(selectedImage + 1);
+    }
+    if (isRightSwipe && selectedImage > 0) {
+      setSelectedImage(selectedImage - 1);
+    }
+  };
+
+  const goToSlide = (index: number) => {
+    setSelectedImage(index);
+  };
+
+  const nextSlide = () => {
+    const totalImages = property?.images?.length || 0;
+    if (selectedImage < totalImages - 1) {
+      setSelectedImage(selectedImage + 1);
+    }
+  };
+
+  const prevSlide = () => {
+    if (selectedImage > 0) {
+      setSelectedImage(selectedImage - 1);
+    }
   };
 
   const getAmenityIcon = (amenity: string) => {
@@ -255,9 +376,85 @@ export default function PropertyDetailPage() {
     <div className="min-h-screen bg-white">
       {/* Hero Section with Image Gallery */}
       <div className="relative">
-        {/* Main Image Grid */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="grid grid-cols-4 gap-2 h-96">
+        {/* Mobile Slider */}
+        <div className="sm:hidden">
+          <div className="relative h-64 bg-gray-100">
+            {/* Slider Container */}
+            <div
+              className="relative w-full h-full overflow-hidden"
+              onTouchStart={onTouchStart}
+              onTouchMove={onTouchMove}
+              onTouchEnd={onTouchEnd}
+            >
+              <div
+                className="flex transition-transform duration-300 ease-out h-full"
+                style={{ transform: `translateX(-${selectedImage * 100}%)` }}
+              >
+                {(property.images || []).map((image, index) => (
+                  <div key={index} className="min-w-full h-full relative">
+                    <ImageWithPlaceholder
+                      src={image}
+                      alt={`${property.title || "Property"} ${index + 1}`}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Navigation Arrows */}
+            {selectedImage > 0 && (
+              <button
+                onClick={prevSlide}
+                className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/80 backdrop-blur-sm rounded-full p-2 shadow-lg"
+              >
+                <ChevronLeft className="h-5 w-5 text-gray-700" />
+              </button>
+            )}
+
+            {selectedImage < (property.images || []).length - 1 && (
+              <button
+                onClick={nextSlide}
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/80 backdrop-blur-sm rounded-full p-2 shadow-lg"
+              >
+                <ChevronRight className="h-5 w-5 text-gray-700" />
+              </button>
+            )}
+
+            {/* Dots Indicator */}
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+              {(property.images || []).map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => goToSlide(index)}
+                  className={`w-2 h-2 rounded-full transition-colors ${
+                    selectedImage === index ? "bg-white" : "bg-white/50"
+                  }`}
+                />
+              ))}
+            </div>
+
+            {/* Show all photos button */}
+            <button
+              onClick={() => setShowAllPhotos(true)}
+              className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-full p-2 hover:bg-white transition-colors shadow-lg"
+            >
+              <Camera className="h-4 w-4 text-gray-700" />
+            </button>
+
+            {/* Image counter */}
+            <div className="absolute top-4 left-4 bg-black/50 backdrop-blur-sm rounded-full px-3 py-1">
+              <span className="text-white text-sm font-medium">
+                {selectedImage + 1} / {(property.images || []).length}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Desktop/Tablet Grid */}
+        <div className="hidden sm:block max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 h-80 lg:h-96">
             {/* Large main image */}
             <div className="col-span-2 row-span-2 relative rounded-2xl overflow-hidden">
               {(property.images || [])[0] ? (
@@ -293,7 +490,12 @@ export default function PropertyDetailPage() {
 
             {/* Smaller images */}
             {[1, 2, 3, 4].map((index) => (
-              <div key={index} className="relative rounded-xl overflow-hidden">
+              <div
+                key={index}
+                className={`relative rounded-xl overflow-hidden ${
+                  index > 2 ? "hidden lg:block" : ""
+                }`}
+              >
                 {(property.images || [])[index] ? (
                   <ImageWithPlaceholder
                     src={(property.images || [])[index]}
@@ -313,37 +515,39 @@ export default function PropertyDetailPage() {
         </div>
 
         {/* Floating Action Bar */}
-        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-40">
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-40 hidden sm:block">
           <div
-            className="bg-white/95 backdrop-blur-md rounded-full px-6 py-3 flex items-center space-x-4 shadow-lg"
+            className="bg-white/95 backdrop-blur-md rounded-full px-4 sm:px-6 py-2 sm:py-3 flex items-center space-x-2 sm:space-x-4 shadow-lg"
             style={{
               border: "1px solid #DDDDDD",
               boxShadow: "0 6px 20px 0 rgba(0,0,0,0.1)",
             }}
           >
-            <button className="flex items-center space-x-2 text-gray-700 hover:text-gray-900 transition-colors">
+            <button className="flex items-center space-x-1 sm:space-x-2 text-gray-700 hover:text-gray-900 transition-colors">
               <Share2 className="h-4 w-4" />
-              <span className="text-sm font-medium">Share</span>
+              <span className="text-sm font-medium hidden sm:inline">
+                Share
+              </span>
             </button>
-            <Divider orientation="vertical" className="h-6" />
-            <button className="flex items-center space-x-2 text-gray-700 hover:text-gray-900 transition-colors">
+            <Divider orientation="vertical" className="h-4 sm:h-6" />
+            <button className="flex items-center space-x-1 sm:space-x-2 text-gray-700 hover:text-gray-900 transition-colors">
               <Heart className="h-4 w-4" />
-              <span className="text-sm font-medium">Save</span>
+              <span className="text-sm font-medium hidden sm:inline">Save</span>
             </button>
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-24 sm:pb-16">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-12">
           {/* Left Column - Main Content */}
-          <div className="lg:col-span-2 space-y-12">
+          <div className="col-span-1 lg:col-span-2 space-y-8 lg:space-y-12">
             {/* Header Section */}
             <div>
-              <div className="flex items-start justify-between mb-6">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-6 space-y-4 sm:space-y-0">
                 <div className="flex-1">
-                  <h1 className="text-4xl font-bold text-gray-900 mb-3">
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-3">
                     {property.title || "Property Title"}
                   </h1>
                   <div className="flex items-center text-gray-600 mb-4">
@@ -355,7 +559,7 @@ export default function PropertyDetailPage() {
                   </div>
 
                   {/* Property Stats */}
-                  <div className="flex items-center space-x-6 text-gray-600">
+                  <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-gray-600">
                     <div className="flex items-center space-x-2">
                       <Users className="h-4 w-4" />
                       <span>
@@ -381,7 +585,7 @@ export default function PropertyDetailPage() {
                 </div>
               </div>
 
-              {/* Guest Favorite Badge */}
+              {/* Property Type Badge */}
               <div
                 className="inline-flex items-center space-x-2 px-4 py-2 rounded-full mb-6"
                 style={{
@@ -389,9 +593,11 @@ export default function PropertyDetailPage() {
                   boxShadow: "0 6px 20px 0 rgba(0,0,0,0.1)",
                 }}
               >
-                <Leaf className="h-4 w-4 text-green-600" />
-                <span className="text-sm font-medium text-green-700">
-                  Guest favorite
+                <Sparkles className="h-4 w-4 text-blue-600" />
+                <span className="text-sm font-medium text-blue-700">
+                  {property?.type
+                    ?.toLowerCase()
+                    .replace(/^\w/, (c) => c.toUpperCase()) || "Property"}
                 </span>
               </div>
 
@@ -455,7 +661,18 @@ export default function PropertyDetailPage() {
                     </span>
                   </div>
                 </div>
-                <Button variant="outline" className="mt-4">
+                <Button
+                  variant="outline"
+                  className="mt-4"
+                  onClick={() => {
+                    if (!user) {
+                      router.push("/login");
+                      return;
+                    }
+                    setShowMessageModal(true);
+                    setMessageError(null);
+                  }}
+                >
                   Message host
                 </Button>
               </div>
@@ -592,11 +809,11 @@ export default function PropertyDetailPage() {
           </div>
 
           {/* Right Column - Booking Widget */}
-          <div className="lg:col-span-1">
-            <div className="sticky top-8">
+          <div className="lg:col-span-1 order-first lg:order-last hidden sm:block">
+            <div className="lg:sticky lg:top-8">
               {/* Booking Card */}
               <div
-                className="bg-white rounded-3xl p-8 shadow-xl"
+                className="bg-white rounded-2xl lg:rounded-3xl p-4 sm:p-6 lg:p-8 shadow-xl"
                 style={{
                   border: "1px solid #DDDDDD",
                   boxShadow: "0 6px 20px 0 rgba(0,0,0,0.1)",
@@ -624,8 +841,8 @@ export default function PropertyDetailPage() {
                 </div>
 
                 {user ? (
-                  <div className="space-y-6">
-                    <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-4 lg:space-y-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-xs font-medium text-gray-700 mb-2">
                           CHECK-IN
@@ -804,6 +1021,151 @@ export default function PropertyDetailPage() {
         onClose={() => setShowBookingSession(false)}
         initialBookingData={bookingData}
       />
+
+      {/* Message Host Modal */}
+      <Modal
+        isOpen={showMessageModal}
+        onClose={() => {
+          setShowMessageModal(false);
+          setMessageError(null);
+        }}
+        title="Message Host"
+        className="max-w-2xl"
+      >
+        <form onSubmit={handleSendMessage} className="space-y-6">
+          {messageError && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+              <p className="text-red-800 text-sm">{messageError}</p>
+            </div>
+          )}
+
+          <div>
+            <Label htmlFor="subject">Subject</Label>
+            <Input
+              id="subject"
+              type="text"
+              value={messageForm.subject}
+              onChange={(e) => {
+                setMessageForm({ ...messageForm, subject: e.target.value });
+                if (messageError) setMessageError(null);
+              }}
+              placeholder="What would you like to ask about?"
+              required
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="priority">Priority</Label>
+            <Select
+              id="priority"
+              value={messageForm.priority}
+              onChange={(e) =>
+                setMessageForm({
+                  ...messageForm,
+                  priority: e.target.value as
+                    | "LOW"
+                    | "NORMAL"
+                    | "HIGH"
+                    | "URGENT",
+                })
+              }
+              options={[
+                { value: "LOW", label: "Low" },
+                { value: "NORMAL", label: "Normal" },
+                { value: "HIGH", label: "High" },
+                { value: "URGENT", label: "Urgent" },
+              ]}
+            />
+          </div>
+
+          <div>
+            <div className="flex justify-between items-center mb-1">
+              <Label htmlFor="message">Message</Label>
+              <span
+                className={`text-xs ${
+                  messageForm.message.length < 10
+                    ? "text-red-500"
+                    : messageForm.message.length > 1000
+                    ? "text-red-500"
+                    : "text-gray-500"
+                }`}
+              >
+                {messageForm.message.length}/1000 characters (minimum 10)
+              </span>
+            </div>
+            <textarea
+              id="message"
+              value={messageForm.message}
+              onChange={(e) => {
+                setMessageForm({ ...messageForm, message: e.target.value });
+                if (messageError) setMessageError(null);
+              }}
+              placeholder="Type your message here... (minimum 10 characters)"
+              rows={5}
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-black focus:border-transparent resize-none ${
+                messageForm.message.length < 10 &&
+                messageForm.message.length > 0
+                  ? "border-red-300"
+                  : messageForm.message.length > 1000
+                  ? "border-red-300"
+                  : "border-gray-300"
+              }`}
+              required
+              minLength={10}
+              maxLength={1000}
+            />
+          </div>
+
+          <div className="flex justify-end space-x-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setShowMessageModal(false);
+                setMessageError(null);
+              }}
+              disabled={sendingMessage}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={sendingMessage}>
+              {sendingMessage ? "Sending..." : "Send Message"}
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Mobile Action Bar */}
+      <div
+        className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-50 p-4 sm:hidden z-50"
+        style={{ boxShadow: "0 -4px 12px 0 rgba(0,0,0,0.05)" }}
+      >
+        <div className="flex items-center justify-between space-x-4">
+          <div className="flex items-center space-x-3">
+            <button className="p-2 rounded-full border border-gray-50 hover:bg-gray-50 transition-colors">
+              <Share2 className="h-5 w-5 text-gray-600" />
+            </button>
+            <button className="p-2 rounded-full border border-gray-50 hover:bg-gray-50 transition-colors">
+              <Heart className="h-5 w-5 text-gray-600" />
+            </button>
+          </div>
+          <div className="flex-1 text-right px-4">
+            <div className="text-lg font-bold text-gray-900">
+              {mounted
+                ? (property?.price || 0).toLocaleString()
+                : (property?.price || 0).toString()}{" "}
+              {property?.currency || "XAF"}
+            </div>
+            <div className="text-sm text-gray-500">per night</div>
+          </div>
+          <Button
+            onClick={handleBookingClick}
+            className="px-6 py-3 font-semibold"
+          >
+            Reserve
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

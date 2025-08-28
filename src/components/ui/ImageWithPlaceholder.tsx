@@ -17,24 +17,15 @@ export const ImageWithPlaceholder: React.FC<ImageWithPlaceholderProps> = ({
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Debug logging
-  console.log("ImageWithPlaceholder:", {
-    src,
-    alt,
-    hasError,
-    isLoading,
-    className,
-    imageProps,
-  });
+  // Check if using fill prop
+  const usingFill = "fill" in imageProps;
 
   const handleError = () => {
-    console.error("Image failed to load:", src);
     setHasError(true);
     setIsLoading(false);
   };
 
   const handleLoad = () => {
-    console.log("Image loaded successfully:", src);
     setIsLoading(false);
   };
 
@@ -67,11 +58,6 @@ export const ImageWithPlaceholder: React.FC<ImageWithPlaceholderProps> = ({
 
   // If there's an error, no fallback, or invalid URL, show a simple placeholder
   if (hasError || !src || !isValidUrl(src)) {
-    console.log("Showing placeholder because:", {
-      hasError,
-      src,
-      isValidUrl: src ? isValidUrl(src) : false,
-    });
     return (
       <div
         className={`${className} bg-gray-200 flex items-center justify-center w-full h-full`}
@@ -91,15 +77,47 @@ export const ImageWithPlaceholder: React.FC<ImageWithPlaceholderProps> = ({
     );
   }
 
+  // If using fill prop, don't wrap in container div
+  if (usingFill) {
+    return (
+      <>
+        {isLoading && (
+          <div className="absolute inset-0 bg-gray-200 flex items-center justify-center z-10">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600"></div>
+          </div>
+        )}
+        <Image
+          src={src}
+          alt={alt}
+          className={`${className} ${
+            isLoading ? "opacity-0" : "opacity-100"
+          } transition-opacity duration-300`}
+          onError={handleError}
+          onLoad={handleLoad}
+          {...imageProps}
+        />
+      </>
+    );
+  }
+
+  // For non-fill images, use container div
   return (
-    <Image
-      src={src}
-      alt={alt}
-      className={className}
-      onError={handleError}
-      onLoad={handleLoad}
-      style={{ display: isLoading ? "none" : "block" }}
-      {...imageProps}
-    />
+    <div className="relative w-full h-full">
+      {isLoading && (
+        <div className="absolute inset-0 bg-gray-200 flex items-center justify-center z-10">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600"></div>
+        </div>
+      )}
+      <Image
+        src={src}
+        alt={alt}
+        className={`${className} ${
+          isLoading ? "opacity-0" : "opacity-100"
+        } transition-opacity duration-300`}
+        onError={handleError}
+        onLoad={handleLoad}
+        {...imageProps}
+      />
+    </div>
   );
 };

@@ -646,10 +646,12 @@ function PropertyCard({
             className="object-cover group-hover:scale-105 transition-transform duration-300"
           />
 
-          {/* Guest favorite tag */}
+          {/* Property type tag */}
           <div className="absolute top-3 left-3">
             <span className="bg-white/95 text-gray-700 text-xs px-3 py-1.5 rounded-full font-medium shadow-sm">
-              Guest favorite
+              {property?.type
+                ?.toLowerCase()
+                .replace(/^\w/, (c) => c.toUpperCase()) || "Property"}
             </span>
           </div>
 

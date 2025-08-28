@@ -107,6 +107,12 @@ export default function DashboardPage() {
     WalletTransaction[]
   >([]);
   const [walletLoading, setWalletLoading] = useState(false);
+  const [walletStats, setWalletStats] = useState({
+    totalTransactions: 0,
+    totalPayments: 0,
+    totalRefunds: 0,
+    totalWithdrawals: 0,
+  });
 
   // Host-specific wallet state
   const [hostEarnings, setHostEarnings] = useState<any[]>([]);
@@ -360,7 +366,7 @@ export default function DashboardPage() {
               currency: data.financial?.currency || "XAF",
 
               // Booking stats
-              activeBookings: data.bookings?.confirmed || 0,
+              activeBookings: data.overview?.activeBookings || 0,
               completedBookings: data.bookings?.completed || 0,
               cancelledBookings: data.bookings?.cancelled || 0,
 
@@ -374,10 +380,17 @@ export default function DashboardPage() {
               unreadNotifications: 0, // Will be updated by notification stats
             }));
 
-            // Update wallet balance from financial data
-            if (data.financial?.walletBalance !== undefined) {
-              setWalletBalance(data.financial.walletBalance);
+            // Update wallet data from dashboard financial data
+            if (data.financial) {
+              setWalletBalance(data.financial.walletBalance || 0);
               setWalletCurrency(data.financial.currency || "XAF");
+              // Use dashboard stats financial data for consistency
+              setWalletStats({
+                totalTransactions: data.financial.totalTransactions || 0,
+                totalPayments: data.financial.totalSpent || 0, // Use totalSpent as totalPayments
+                totalRefunds: data.financial.totalRefunds || 0,
+                totalWithdrawals: 0,
+              });
             }
 
             // Fetch host-specific wallet data
@@ -412,7 +425,7 @@ export default function DashboardPage() {
             setStats((prev) => ({
               ...prev,
               totalBookings: data.overview?.totalBookings || 0,
-              activeBookings: data.bookings?.confirmed || 0,
+              activeBookings: data.overview?.activeBookings || 0,
               completedBookings: data.bookings?.completed || 0,
               cancelledBookings: data.bookings?.cancelled || 0,
               totalSpent: data.overview?.totalSpent || 0,
@@ -420,10 +433,17 @@ export default function DashboardPage() {
               currency: data.financial?.currency || "XAF",
             }));
 
-            // Update wallet balance
-            if (data.financial?.walletBalance !== undefined) {
-              setWalletBalance(data.financial.walletBalance);
+            // Update wallet data from dashboard financial data
+            if (data.financial) {
+              setWalletBalance(data.financial.walletBalance || 0);
               setWalletCurrency(data.financial.currency || "XAF");
+              // Use dashboard stats financial data for consistency
+              setWalletStats({
+                totalTransactions: data.financial.totalTransactions || 0,
+                totalPayments: data.financial.totalSpent || 0, // Use totalSpent as totalPayments
+                totalRefunds: data.financial.totalRefunds || 0,
+                totalWithdrawals: 0,
+              });
             }
           }
         } catch (guestDashboardError) {
@@ -536,8 +556,14 @@ export default function DashboardPage() {
       try {
         const balanceResponse = await apiClient.getWalletBalance();
         if (balanceResponse.success && balanceResponse.data) {
-          setWalletBalance(balanceResponse.data.balance || 0);
-          setWalletCurrency(balanceResponse.data.currency || "XAF");
+          // Only update balance and currency, don't override dashboard stats data
+          if (walletBalance === 0) {
+            setWalletBalance(balanceResponse.data.balance || 0);
+          }
+          if (walletCurrency === "XAF") {
+            setWalletCurrency(balanceResponse.data.currency || "XAF");
+          }
+          // Don't override walletStats - let dashboard stats data take priority
         }
       } catch (balanceError) {
         console.warn("Wallet balance API not available:", balanceError);
@@ -2054,7 +2080,7 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs font-medium text-gray-600 mb-1">
-                      Total Bookings
+                      Bookings
                     </p>
                     <p className="text-xl font-bold text-gray-900">
                       {stats?.totalBookings || 0}
@@ -2076,7 +2102,7 @@ export default function DashboardPage() {
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0 pr-3">
                     <p className="text-xs font-medium text-gray-600 mb-1">
-                      Total Spent
+                      Spent
                     </p>
                     <p className="text-sm sm:text-base lg:text-lg xl:text-xl font-bold text-gray-900 break-words leading-tight">
                       {formatCurrency(
@@ -5789,132 +5815,180 @@ export default function DashboardPage() {
           <p className="text-gray-600">Manage your wallet and transactions</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div
-            className="bg-white p-6 rounded-xl"
-            style={{
-              border: "1px solid #DDDDDD",
-              boxShadow: "0 6px 20px 0 rgba(0,0,0,0.1)",
-            }}
-          >
-            <div className="flex items-center space-x-3">
-              <div className="h-10 w-10 bg-green-50 rounded-lg flex items-center justify-center">
-                <Wallet className="h-5 w-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-600">Balance</p>
-                <p className="text-xl font-bold text-gray-900">
-                  {formatCurrency(walletBalance, walletCurrency)}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div
-            className="bg-white p-6 rounded-xl"
-            style={{
-              border: "1px solid #DDDDDD",
-              boxShadow: "0 6px 20px 0 rgba(0,0,0,0.1)",
-            }}
-          >
-            <div className="flex items-center space-x-3">
-              <div className="h-10 w-10 bg-blue-50 rounded-lg flex items-center justify-center">
-                <DollarSign className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-600">
-                  Total Transactions
-                </p>
-                <p className="text-xl font-bold text-gray-900">
-                  {walletTransactions.length}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div
-            className="bg-white p-6 rounded-xl"
-            style={{
-              border: "1px solid #DDDDDD",
-              boxShadow: "0 6px 20px 0 rgba(0,0,0,0.1)",
-            }}
-          >
-            <div className="flex items-center space-x-3">
-              <div className="h-10 w-10 bg-orange-50 rounded-lg flex items-center justify-center">
-                <Calendar className="h-5 w-5 text-orange-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-600">
-                  Recent Activity
-                </p>
-                <p className="text-xl font-bold text-gray-900">
-                  {
-                    walletTransactions.filter((t) => t.status === "COMPLETED")
-                      .length
-                  }
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div
-          className="bg-white rounded-xl p-6"
-          style={{
-            border: "1px solid #DDDDDD",
-            boxShadow: "0 6px 20px 0 rgba(0,0,0,0.1)",
-          }}
-        >
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
-            Recent Transactions
-          </h2>
-          <div className="space-y-4">
-            {walletTransactions.length > 0 ? (
-              walletTransactions.map((transaction) => (
-                <div
-                  key={transaction.id}
-                  className="flex justify-between items-center"
-                >
-                  <div>
-                    <p className="font-medium text-gray-900">
-                      {transaction.description}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      {formatDate(transaction.createdAt)}
-                    </p>
+        {!walletLoading &&
+        (walletBalance >= 0 ||
+          walletTransactions.length > 0 ||
+          walletStats.totalTransactions > 0) ? (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {/* Balance Card */}
+              <div
+                className="bg-white p-6 rounded-xl"
+                style={{
+                  border: "1px solid #DDDDDD",
+                  boxShadow: "0 6px 20px 0 rgba(0,0,0,0.1)",
+                }}
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="h-10 w-10 bg-green-50 rounded-lg flex items-center justify-center">
+                    <Wallet className="h-5 w-5 text-green-600" />
                   </div>
-                  <div className="text-right">
-                    <p
-                      className={`font-medium ${
-                        transaction.type === "PAYMENT"
-                          ? "text-red-600"
-                          : "text-green-600"
-                      }`}
-                    >
-                      {transaction.type === "PAYMENT" ? "-" : "+"}
-                      {formatCurrency(transaction.amount, transaction.currency)}
-                    </p>
-                    <p
-                      className={`text-xs ${
-                        transaction.status === "COMPLETED"
-                          ? "text-green-600"
-                          : transaction.status === "PENDING"
-                          ? "text-yellow-600"
-                          : "text-red-600"
-                      }`}
-                    >
-                      {transaction.status}
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Balance</p>
+                    <p className="text-xl font-bold text-gray-900">
+                      {formatCurrency(walletBalance, walletCurrency)}
                     </p>
                   </div>
                 </div>
-              ))
-            ) : (
-              <div className="text-center py-8">
-                <p className="text-gray-500">No transactions found</p>
+              </div>
+
+              {/* Total Transactions Card */}
+              <div
+                className="bg-white p-6 rounded-xl"
+                style={{
+                  border: "1px solid #DDDDDD",
+                  boxShadow: "0 6px 20px 0 rgba(0,0,0,0.1)",
+                }}
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="h-10 w-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                    <DollarSign className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">
+                      Transactions
+                    </p>
+                    <p className="text-xl font-bold text-gray-900">
+                      {walletStats.totalTransactions}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Total Payments Card */}
+              <div
+                className="bg-white p-6 rounded-xl"
+                style={{
+                  border: "1px solid #DDDDDD",
+                  boxShadow: "0 6px 20px 0 rgba(0,0,0,0.1)",
+                }}
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="h-10 w-10 bg-orange-50 rounded-lg flex items-center justify-center">
+                    <Calendar className="h-5 w-5 text-orange-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">
+                      Total Spent
+                    </p>
+                    <p className="text-xl font-bold text-gray-900">
+                      {formatCurrency(
+                        walletStats.totalPayments,
+                        walletCurrency
+                      )}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Total Refunds Card */}
+              <div
+                className="bg-white p-6 rounded-xl"
+                style={{
+                  border: "1px solid #DDDDDD",
+                  boxShadow: "0 6px 20px 0 rgba(0,0,0,0.1)",
+                }}
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="h-10 w-10 bg-purple-50 rounded-lg flex items-center justify-center">
+                    <TrendingUp className="h-5 w-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Refunds</p>
+                    <p className="text-xl font-bold text-gray-900">
+                      {formatCurrency(walletStats.totalRefunds, walletCurrency)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {walletTransactions.length > 0 && (
+              <div
+                className="bg-white rounded-xl p-6"
+                style={{
+                  border: "1px solid #DDDDDD",
+                  boxShadow: "0 6px 20px 0 rgba(0,0,0,0.1)",
+                }}
+              >
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                  Recent Transactions
+                </h2>
+                <div className="space-y-4">
+                  {walletTransactions.map((transaction) => (
+                    <div
+                      key={transaction.id}
+                      className="flex justify-between items-center"
+                    >
+                      <div>
+                        <p className="font-medium text-gray-900">
+                          {transaction.description}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          {formatDate(transaction.createdAt)}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p
+                          className={`font-medium ${
+                            transaction.type === "PAYMENT"
+                              ? "text-red-600"
+                              : "text-green-600"
+                          }`}
+                        >
+                          {transaction.type === "PAYMENT" ? "-" : "+"}
+                          {formatCurrency(
+                            transaction.amount,
+                            transaction.currency
+                          )}
+                        </p>
+                        <p
+                          className={`text-xs ${
+                            transaction.status === "COMPLETED"
+                              ? "text-green-600"
+                              : transaction.status === "PENDING"
+                              ? "text-yellow-600"
+                              : "text-red-600"
+                          }`}
+                        >
+                          {transaction.status}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
+          </>
+        ) : (
+          <div className="text-center py-16">
+            <div className="h-16 w-16 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-6">
+              <Wallet className="h-8 w-8 text-gray-400" />
+            </div>
+            <h3 className="text-2xl font-semibold mb-4 text-gray-900">
+              No Wallet Data Available
+            </h3>
+            <p className="text-gray-600 mb-6 max-w-md mx-auto">
+              Your wallet information will appear here once you make your first
+              booking or when wallet data becomes available.
+            </p>
+            <div className="text-sm text-gray-500 space-y-1">
+              <p>• Make a booking to activate your wallet</p>
+              <p>• View transaction history and balance</p>
+              <p>• Manage your payments and refunds</p>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     );
   };
