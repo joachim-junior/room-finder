@@ -86,6 +86,8 @@ export default function PropertyDetailPage() {
   const [messageError, setMessageError] = useState<string | null>(null);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [favoritingProperty, setFavoritingProperty] = useState(false);
 
   // Set mounted to true after hydration
   useEffect(() => {
@@ -135,6 +137,24 @@ export default function PropertyDetailPage() {
           // Set empty reviews if the endpoint doesn't exist yet
           setReviews([]);
         }
+
+        // Check if property is favorited (only if user is logged in)
+        if (user) {
+          try {
+            const favoriteResponse = await apiClient.checkIfFavorited(
+              params.id as string
+            );
+            if (favoriteResponse.success && favoriteResponse.data) {
+              setIsFavorited(favoriteResponse.data.isFavorited);
+              console.log(
+                "Property favorite status:",
+                favoriteResponse.data.isFavorited
+              );
+            }
+          } catch (error) {
+            console.log("Error checking favorite status:", error);
+          }
+        }
       } catch (error) {
         console.error("Failed to load property:", error);
       } finally {
@@ -143,7 +163,7 @@ export default function PropertyDetailPage() {
     };
 
     loadProperty();
-  }, [params.id]);
+  }, [params.id, user]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -358,10 +378,42 @@ export default function PropertyDetailPage() {
     }
   };
 
-  const handleFavorite = () => {
-    // TODO: Implement favorite functionality with API
-    console.log("Favorite clicked for property:", property?.id);
-    alert("Favorite functionality coming soon!");
+  const handleFavorite = async () => {
+    if (!property || !user) {
+      alert("Please login to add properties to favorites");
+      return;
+    }
+
+    if (favoritingProperty) return; // Prevent multiple clicks
+
+    setFavoritingProperty(true);
+
+    try {
+      if (isFavorited) {
+        // Remove from favorites
+        const response = await apiClient.removeFromFavorites(property.id);
+        if (response.success) {
+          setIsFavorited(false);
+          console.log("Property removed from favorites");
+        } else {
+          alert("Failed to remove from favorites. Please try again.");
+        }
+      } else {
+        // Add to favorites
+        const response = await apiClient.addToFavorites(property.id);
+        if (response.success) {
+          setIsFavorited(true);
+          console.log("Property added to favorites");
+        } else {
+          alert("Failed to add to favorites. Please try again.");
+        }
+      }
+    } catch (error) {
+      console.error("Error updating favorite status:", error);
+      alert("Something went wrong. Please try again.");
+    } finally {
+      setFavoritingProperty(false);
+    }
   };
 
   if (loading) {
@@ -562,10 +614,19 @@ export default function PropertyDetailPage() {
             <Divider orientation="vertical" className="h-4 sm:h-6" />
             <button
               onClick={handleFavorite}
-              className="flex items-center space-x-1 sm:space-x-2 text-gray-700 hover:text-gray-900 transition-colors"
+              disabled={favoritingProperty}
+              className={`flex items-center space-x-1 sm:space-x-2 text-gray-700 hover:text-gray-900 transition-colors ${
+                favoritingProperty ? "opacity-50 cursor-not-allowed" : ""
+              }`}
             >
-              <Heart className="h-4 w-4" />
-              <span className="text-sm font-medium hidden sm:inline">Save</span>
+              <Heart
+                className={`h-4 w-4 ${
+                  isFavorited ? "fill-red-500 text-red-500" : ""
+                }`}
+              />
+              <span className="text-sm font-medium hidden sm:inline">
+                {isFavorited ? "Saved" : "Save"}
+              </span>
             </button>
           </div>
         </div>
@@ -1199,10 +1260,17 @@ export default function PropertyDetailPage() {
             </button>
             <button
               onClick={handleFavorite}
-              className="p-2 rounded-full hover:bg-gray-50 transition-colors"
+              disabled={favoritingProperty}
+              className={`p-2 rounded-full hover:bg-gray-50 transition-colors ${
+                favoritingProperty ? "opacity-50 cursor-not-allowed" : ""
+              }`}
               style={{ border: "1px solid rgb(221, 221, 221)" }}
             >
-              <Heart className="h-5 w-5 text-gray-600" />
+              <Heart
+                className={`h-5 w-5 ${
+                  isFavorited ? "fill-red-500 text-red-500" : "text-gray-600"
+                }`}
+              />
             </button>
           </div>
           <div className="flex-1 text-right px-4">
