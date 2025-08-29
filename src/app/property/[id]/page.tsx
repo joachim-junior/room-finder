@@ -337,6 +337,33 @@ export default function PropertyDetailPage() {
     });
   };
 
+  const handleShare = () => {
+    if (navigator.share && property) {
+      navigator
+        .share({
+          title: property.title,
+          text: `Check out this amazing property: ${property.title}`,
+          url: window.location.href,
+        })
+        .catch((error: unknown) => {
+          console.log("Error sharing:", error);
+          // Fallback to copying URL to clipboard
+          navigator.clipboard.writeText(window.location.href);
+          alert("Link copied to clipboard!");
+        });
+    } else {
+      // Fallback for browsers that don't support Web Share API
+      navigator.clipboard.writeText(window.location.href);
+      alert("Link copied to clipboard!");
+    }
+  };
+
+  const handleFavorite = () => {
+    // TODO: Implement favorite functionality with API
+    console.log("Favorite clicked for property:", property?.id);
+    alert("Favorite functionality coming soon!");
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-white">
@@ -519,18 +546,24 @@ export default function PropertyDetailPage() {
           <div
             className="bg-white/95 backdrop-blur-md rounded-full px-4 sm:px-6 py-2 sm:py-3 flex items-center space-x-2 sm:space-x-4 shadow-lg"
             style={{
-              border: "1px solid #DDDDDD",
+              border: "1px solid rgb(221, 221, 221)",
               boxShadow: "0 6px 20px 0 rgba(0,0,0,0.1)",
             }}
           >
-            <button className="flex items-center space-x-1 sm:space-x-2 text-gray-700 hover:text-gray-900 transition-colors">
+            <button
+              onClick={handleShare}
+              className="flex items-center space-x-1 sm:space-x-2 text-gray-700 hover:text-gray-900 transition-colors"
+            >
               <Share2 className="h-4 w-4" />
               <span className="text-sm font-medium hidden sm:inline">
                 Share
               </span>
             </button>
             <Divider orientation="vertical" className="h-4 sm:h-6" />
-            <button className="flex items-center space-x-1 sm:space-x-2 text-gray-700 hover:text-gray-900 transition-colors">
+            <button
+              onClick={handleFavorite}
+              className="flex items-center space-x-1 sm:space-x-2 text-gray-700 hover:text-gray-900 transition-colors"
+            >
               <Heart className="h-4 w-4" />
               <span className="text-sm font-medium hidden sm:inline">Save</span>
             </button>
@@ -750,6 +783,7 @@ export default function PropertyDetailPage() {
                     <div
                       key={review.id}
                       className="border-b border-gray-100 pb-6"
+                      style={{ border: "1px solid rgb(221, 221, 221)" }}
                     >
                       <div className="flex items-center space-x-3 mb-3">
                         <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
@@ -1040,7 +1074,10 @@ export default function PropertyDetailPage() {
       >
         <form onSubmit={handleSendMessage} className="space-y-6">
           {messageError && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+            <div
+              className="bg-red-50 border border-red-200 rounded-lg p-3"
+              style={{ border: "1px solid rgb(221, 221, 221)" }}
+            >
               <p className="text-red-800 text-sm">{messageError}</p>
             </div>
           )}
@@ -1108,14 +1145,16 @@ export default function PropertyDetailPage() {
               }}
               placeholder="Type your message here... (minimum 10 characters)"
               rows={5}
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-black focus:border-transparent resize-none ${
-                messageForm.message.length < 10 &&
-                messageForm.message.length > 0
-                  ? "border-red-300"
-                  : messageForm.message.length > 1000
-                  ? "border-red-300"
-                  : "border-gray-300"
-              }`}
+              className="w-full px-3 py-2 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent resize-none"
+              style={{
+                border:
+                  messageForm.message.length < 10 &&
+                  messageForm.message.length > 0
+                    ? "1px solid rgb(252, 165, 165)"
+                    : messageForm.message.length > 1000
+                    ? "1px solid rgb(252, 165, 165)"
+                    : "1px solid rgb(221, 221, 221)",
+              }}
               required
               minLength={10}
               maxLength={1000}
@@ -1143,15 +1182,26 @@ export default function PropertyDetailPage() {
 
       {/* Mobile Action Bar */}
       <div
-        className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-50 p-4 sm:hidden z-50"
-        style={{ boxShadow: "0 -4px 12px 0 rgba(0,0,0,0.05)" }}
+        className="fixed bottom-0 left-0 right-0 bg-white p-4 sm:hidden z-50"
+        style={{
+          borderTop: "1px solid rgb(221, 221, 221)",
+          boxShadow: "0 -4px 12px 0 rgba(0,0,0,0.05)",
+        }}
       >
         <div className="flex items-center justify-between space-x-4">
           <div className="flex items-center space-x-3">
-            <button className="p-2 rounded-full border border-gray-50 hover:bg-gray-50 transition-colors">
+            <button
+              onClick={handleShare}
+              className="p-2 rounded-full hover:bg-gray-50 transition-colors"
+              style={{ border: "1px solid rgb(221, 221, 221)" }}
+            >
               <Share2 className="h-5 w-5 text-gray-600" />
             </button>
-            <button className="p-2 rounded-full border border-gray-50 hover:bg-gray-50 transition-colors">
+            <button
+              onClick={handleFavorite}
+              className="p-2 rounded-full hover:bg-gray-50 transition-colors"
+              style={{ border: "1px solid rgb(221, 221, 221)" }}
+            >
               <Heart className="h-5 w-5 text-gray-600" />
             </button>
           </div>

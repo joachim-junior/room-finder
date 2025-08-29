@@ -4091,7 +4091,7 @@ export default function DashboardPage() {
                 value={enquiryResponse}
                 onChange={(e) => setEnquiryResponse(e.target.value)}
                 placeholder="Enter your response..."
-                className="w-full p-3 border border-gray-300 rounded-lg resize-none h-32 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full p-3 border border rounded-lg resize-none h-32 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 style={{
                   border: "1px solid #DDDDDD",
                   boxShadow: "0 6px 20px 0 rgba(0,0,0,0.1)",
@@ -5252,7 +5252,7 @@ export default function DashboardPage() {
                 onChange={(e) =>
                   handleFormChange("propertyAddress", e.target.value)
                 }
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 rounded-lg border border focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Enter the full address of your property"
               />
             </div>
@@ -5267,7 +5267,7 @@ export default function DashboardPage() {
                 onChange={(e) =>
                   handleFormChange("propertyType", e.target.value)
                 }
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 rounded-lg border border focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="APARTMENT">Apartment</option>
                 <option value="HOUSE">House</option>
@@ -5288,7 +5288,7 @@ export default function DashboardPage() {
                   handleFormChange("propertyDescription", e.target.value)
                 }
                 rows={4}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 rounded-lg border border focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Describe your property, amenities, and what makes it special"
               />
             </div>
@@ -5302,7 +5302,7 @@ export default function DashboardPage() {
                 value={applicationForm.experience}
                 onChange={(e) => handleFormChange("experience", e.target.value)}
                 rows={3}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 rounded-lg border border focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Tell us about your experience with hosting, customer service, or property management"
               />
             </div>
@@ -5316,7 +5316,7 @@ export default function DashboardPage() {
                 value={applicationForm.reason}
                 onChange={(e) => handleFormChange("reason", e.target.value)}
                 rows={3}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 rounded-lg border border focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Share your motivation for becoming a host"
               />
             </div>
@@ -5331,7 +5331,7 @@ export default function DashboardPage() {
                   handleFormChange("additionalNotes", e.target.value)
                 }
                 rows={3}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 rounded-lg border border focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Any additional information you'd like to share"
               />
             </div>
@@ -5744,7 +5744,7 @@ export default function DashboardPage() {
                           amount: e.target.value,
                         }))
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       placeholder="Enter amount"
                       max={hostWalletBalance}
                     />
@@ -5764,7 +5764,7 @@ export default function DashboardPage() {
                             | "BANK_TRANSFER",
                         }))
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
                       <option value="MOBILE_MONEY">Mobile Money</option>
                       <option value="BANK_TRANSFER">Bank Transfer</option>
@@ -5785,7 +5785,7 @@ export default function DashboardPage() {
                             phone: e.target.value,
                           }))
                         }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         placeholder="+237612345678"
                       />
                     </div>
@@ -5809,7 +5809,7 @@ export default function DashboardPage() {
                               },
                             }))
                           }
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full px-3 py-2 border border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           placeholder="Enter account number"
                         />
                       </div>
@@ -5829,7 +5829,7 @@ export default function DashboardPage() {
                               },
                             }))
                           }
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full px-3 py-2 border border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           placeholder="Enter bank name"
                         />
                       </div>
@@ -5840,7 +5840,7 @@ export default function DashboardPage() {
                 <div className="flex space-x-3 mt-6">
                   <button
                     onClick={() => setShowWithdrawalModal(false)}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                    className="flex-1 px-4 py-2 border border rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
                   >
                     Cancel
                   </button>
@@ -6129,7 +6129,7 @@ export default function DashboardPage() {
                             )
                           }
                           disabled={transactionsPagination.currentPage === 1}
-                          className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="px-3 py-1 text-sm border border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           Previous
                         </button>
@@ -6147,7 +6147,7 @@ export default function DashboardPage() {
                             transactionsPagination.currentPage ===
                             transactionsPagination.totalPages
                           }
-                          className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="px-3 py-1 text-sm border border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           Next
                         </button>
@@ -6456,7 +6456,7 @@ export default function DashboardPage() {
                 )
               }
               disabled={notificationsPagination.currentPage <= 1}
-              className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Previous
             </button>
@@ -6472,7 +6472,7 @@ export default function DashboardPage() {
                     className={`px-3 py-2 text-sm font-medium rounded-md ${
                       page === notificationsPagination.currentPage
                         ? "bg-blue-600 text-white"
-                        : "text-gray-500 bg-white border border-gray-300 hover:bg-gray-50"
+                        : "text-gray-500 bg-white border border hover:bg-gray-50"
                     }`}
                   >
                     {page}
@@ -6492,7 +6492,7 @@ export default function DashboardPage() {
                 notificationsPagination.currentPage >=
                 notificationsPagination.totalPages
               }
-              className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Next
             </button>
@@ -6532,7 +6532,7 @@ export default function DashboardPage() {
                         emailNotifications: e.target.checked,
                       }))
                     }
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border rounded"
                   />
                 </div>
 
@@ -6554,7 +6554,7 @@ export default function DashboardPage() {
                         pushNotifications: e.target.checked,
                       }))
                     }
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border rounded"
                   />
                 </div>
 
@@ -6576,7 +6576,7 @@ export default function DashboardPage() {
                         bookingNotifications: e.target.checked,
                       }))
                     }
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border rounded"
                   />
                 </div>
 
@@ -6598,7 +6598,7 @@ export default function DashboardPage() {
                         reviewNotifications: e.target.checked,
                       }))
                     }
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border rounded"
                   />
                 </div>
 
@@ -6620,7 +6620,7 @@ export default function DashboardPage() {
                         paymentNotifications: e.target.checked,
                       }))
                     }
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border rounded"
                   />
                 </div>
               </div>
@@ -6628,7 +6628,7 @@ export default function DashboardPage() {
               <div className="flex space-x-3 mt-6">
                 <button
                   onClick={() => setShowPreferencesModal(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                  className="flex-1 px-4 py-2 border border rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
                 >
                   Cancel
                 </button>
@@ -6944,7 +6944,7 @@ export default function DashboardPage() {
                   <button
                     type="button"
                     onClick={() => setShowPasswordModal(false)}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                    className="flex-1 px-4 py-2 border border rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
                   >
                     Cancel
                   </button>
