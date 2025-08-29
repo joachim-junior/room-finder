@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiClient } from "@/lib/api";
-import { Property, Review } from "@/types";
+import { Property, Review, FeeCalculation } from "@/types";
 import {
   Button,
   Input,
@@ -38,6 +38,7 @@ import {
   AlertTriangle,
   MessageCircle,
   Globe,
+  Loader2,
   Shield,
   Sparkles,
   ArrowLeft,
@@ -88,6 +89,10 @@ export default function PropertyDetailPage() {
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const [isFavorited, setIsFavorited] = useState(false);
   const [favoritingProperty, setFavoritingProperty] = useState(false);
+  const [feeCalculation, setFeeCalculation] = useState<FeeCalculation | null>(
+    null
+  );
+  const [calculatingFees, setCalculatingFees] = useState(false);
 
   // Set mounted to true after hydration
   useEffect(() => {
@@ -164,6 +169,19 @@ export default function PropertyDetailPage() {
 
     loadProperty();
   }, [params.id, user]);
+
+  // Calculate fees when booking data changes
+  useEffect(() => {
+    if (bookingData.checkIn && bookingData.checkOut && property && user) {
+      calculateBookingFees();
+    }
+  }, [
+    bookingData.checkIn,
+    bookingData.checkOut,
+    bookingData.guests,
+    property?.id,
+    user,
+  ]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -375,6 +393,60 @@ export default function PropertyDetailPage() {
       // Fallback for browsers that don't support Web Share API
       navigator.clipboard.writeText(window.location.href);
       alert("Link copied to clipboard!");
+    }
+  };
+
+  const calculateBookingFees = async () => {
+    if (
+      !property ||
+      !bookingData.checkIn ||
+      !bookingData.checkOut ||
+      !user ||
+      bookingData.guests < 1
+    ) {
+      setFeeCalculation(null);
+      return;
+    }
+
+    // Validate date format
+    const checkInDate = new Date(bookingData.checkIn);
+    const checkOutDate = new Date(bookingData.checkOut);
+    if (checkInDate >= checkOutDate) {
+      console.log("Invalid dates: check-out must be after check-in");
+      setFeeCalculation(null);
+      return;
+    }
+
+    console.log("Calculating fees with data:", {
+      propertyId: property.id,
+      checkIn: bookingData.checkIn,
+      checkOut: bookingData.checkOut,
+      guests: bookingData.guests,
+    });
+
+    setCalculatingFees(true);
+    try {
+      const response = await apiClient.calculateFees(
+        property.id,
+        bookingData.checkIn,
+        bookingData.checkOut,
+        bookingData.guests
+      );
+
+      console.log("Full fee calculation response:", response);
+
+      if (response.data) {
+        setFeeCalculation(response.data);
+        console.log("Fee calculation data:", response.data);
+      } else {
+        console.error("Failed to calculate fees. Response:", response);
+        setFeeCalculation(null);
+      }
+    } catch (error) {
+      console.error("Error calculating fees:", error);
+      setFeeCalculation(null);
+    } finally {
+      setCalculatingFees(false);
     }
   };
 
@@ -683,7 +755,7 @@ export default function PropertyDetailPage() {
               <div
                 className="inline-flex items-center space-x-2 px-4 py-2 rounded-full mb-6"
                 style={{
-                  border: "1px solid #DDDDDD",
+                  border: "1px solid rgb(221, 221, 221)",
                   boxShadow: "0 6px 20px 0 rgba(0,0,0,0.1)",
                 }}
               >
@@ -916,7 +988,7 @@ export default function PropertyDetailPage() {
               <div
                 className="bg-white rounded-2xl lg:rounded-3xl p-4 sm:p-6 lg:p-8 shadow-xl"
                 style={{
-                  border: "1px solid #DDDDDD",
+                  border: "1px solid rgb(221, 221, 221)",
                   boxShadow: "0 6px 20px 0 rgba(0,0,0,0.1)",
                 }}
               >
@@ -930,15 +1002,57 @@ export default function PropertyDetailPage() {
                     </span>
                     <span className="text-gray-600">per night</span>
                   </div>
-                  {calculateNights() > 0 && (
-                    <div className="text-sm text-gray-600">
-                      {mounted
-                        ? calculateTotalPrice().toLocaleString()
-                        : calculateTotalPrice().toString()}{" "}
-                      {property.currency || "XAF"} for {calculateNights()} night
-                      {calculateNights() !== 1 ? "s" : ""}
+                  {feeCalculation &&
+                  bookingData.checkIn &&
+                  bookingData.checkOut ? (
+                    <div className="space-y-2">
+                      <div className="text-sm text-gray-600">
+                        {mounted
+                          ? feeCalculation.totals.baseAmount.toLocaleString()
+                          : feeCalculation.totals.baseAmount.toString()}{" "}
+                        {feeCalculation.currency} for{" "}
+                        {feeCalculation.booking.nights} night
+                        {feeCalculation.booking.nights !== 1 ? "s" : ""}
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        Service fee:{" "}
+                        {mounted
+                          ? feeCalculation.totals.guestServiceFee.toLocaleString()
+                          : feeCalculation.totals.guestServiceFee.toString()}{" "}
+                        {feeCalculation.currency} (
+                        {feeCalculation.fees.guestServiceFeePercent}%)
+                      </div>
+                      <div
+                        className="text-lg font-semibold text-gray-900 pt-2"
+                        style={{ borderTop: "1px solid rgb(221, 221, 221)" }}
+                      >
+                        Total:{" "}
+                        {mounted
+                          ? feeCalculation.totals.totalGuestPays.toLocaleString()
+                          : feeCalculation.totals.totalGuestPays.toString()}{" "}
+                        {feeCalculation.currency}
+                      </div>
                     </div>
+                  ) : (
+                    calculateNights() > 0 && (
+                      <div className="text-sm text-gray-600">
+                        {mounted
+                          ? calculateTotalPrice().toLocaleString()
+                          : calculateTotalPrice().toString()}{" "}
+                        {property.currency || "XAF"} for {calculateNights()}{" "}
+                        night
+                        {calculateNights() !== 1 ? "s" : ""}
+                      </div>
+                    )
                   )}
+                  {calculatingFees &&
+                    bookingData.checkIn &&
+                    bookingData.checkOut && (
+                      <div className="flex items-center space-x-2 text-sm text-gray-500">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>Calculating fees...</span>
+                      </div>
+                    )}
                 </div>
 
                 {user ? (
@@ -1121,6 +1235,8 @@ export default function PropertyDetailPage() {
         isOpen={showBookingSession}
         onClose={() => setShowBookingSession(false)}
         initialBookingData={bookingData}
+        feeCalculation={feeCalculation}
+        calculatingFees={calculatingFees}
       />
 
       {/* Message Host Modal */}
@@ -1274,13 +1390,30 @@ export default function PropertyDetailPage() {
             </button>
           </div>
           <div className="flex-1 text-right px-4">
-            <div className="text-lg font-bold text-gray-900">
-              {mounted
-                ? (property?.price || 0).toLocaleString()
-                : (property?.price || 0).toString()}{" "}
-              {property?.currency || "XAF"}
-            </div>
-            <div className="text-sm text-gray-500">per night</div>
+            {feeCalculation && bookingData.checkIn && bookingData.checkOut ? (
+              <div>
+                <div className="text-lg font-bold text-gray-900">
+                  {mounted
+                    ? feeCalculation.totals.totalGuestPays.toLocaleString()
+                    : feeCalculation.totals.totalGuestPays.toString()}{" "}
+                  {feeCalculation.currency}
+                </div>
+                <div className="text-xs text-gray-500">
+                  {feeCalculation.booking.nights} night
+                  {feeCalculation.booking.nights !== 1 ? "s" : ""} total
+                </div>
+              </div>
+            ) : (
+              <div>
+                <div className="text-lg font-bold text-gray-900">
+                  {mounted
+                    ? (property?.price || 0).toLocaleString()
+                    : (property?.price || 0).toString()}{" "}
+                  {property?.currency || "XAF"}
+                </div>
+                <div className="text-sm text-gray-500">per night</div>
+              </div>
+            )}
           </div>
           <Button
             onClick={handleBookingClick}

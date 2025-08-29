@@ -49,7 +49,7 @@ const Modal = forwardRef<HTMLDivElement, ModalProps>(
             className
           )}
           style={{
-            border: "1px solid #DDDDDD",
+            border: "1px solid rgb(221, 221, 221)",
             boxShadow: "0 6px 20px 0 rgba(0,0,0,0.1)",
           }}
           onClick={(e) => e.stopPropagation()}

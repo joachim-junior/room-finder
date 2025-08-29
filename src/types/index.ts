@@ -301,3 +301,34 @@ export interface SearchFilters {
   page?: number;
   limit?: number;
 }
+
+export interface FeeCalculation {
+  property: {
+    id: string;
+    title: string;
+    price: number;
+    currency: string;
+  };
+  booking: {
+    checkIn: string;
+    checkOut: string;
+    nights: number;
+    guests: number;
+    baseAmount: number;
+  };
+  fees: {
+    hostServiceFee: number;
+    hostServiceFeePercent: number;
+    guestServiceFee: number;
+    guestServiceFeePercent: number;
+  };
+  totals: {
+    baseAmount: number;
+    guestServiceFee: number;
+    totalGuestPays: number;
+    hostServiceFee: number;
+    netAmountForHost: number;
+    platformRevenue: number;
+  };
+  currency: string;
+}

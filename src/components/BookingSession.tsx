@@ -25,6 +25,8 @@ interface BookingSessionProps {
     guests: number;
     specialRequests?: string;
   };
+  feeCalculation?: FeeCalculation | null;
+  calculatingFees?: boolean;
 }
 
 type BookingStep =
@@ -66,6 +68,8 @@ export default function BookingSession({
   isOpen,
   onClose,
   initialBookingData,
+  feeCalculation,
+  calculatingFees = false,
 }: BookingSessionProps) {
   const router = useRouter();
   const { user } = useAuth();
@@ -91,9 +95,7 @@ export default function BookingSession({
     paymentMethod: "MOBILE_MONEY",
     phone: user?.phone || "",
   });
-  const [feeCalculation, setFeeCalculation] = useState<FeeCalculation | null>(
-    null
-  );
+
   const [booking, setBooking] = useState<Booking | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
@@ -112,22 +114,7 @@ export default function BookingSession({
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   };
 
-  // Calculate fees when booking data changes
-  useEffect(() => {
-    if (
-      bookingData.checkIn &&
-      bookingData.checkOut &&
-      bookingData.guests &&
-      property?.id
-    ) {
-      calculateFees();
-    }
-  }, [
-    bookingData.checkIn,
-    bookingData.checkOut,
-    bookingData.guests,
-    property?.id,
-  ]);
+  // Fee calculation is now handled by parent component
 
   // Reset step when modal opens with new data
   useEffect(() => {
@@ -148,24 +135,6 @@ export default function BookingSession({
       }
     }
   }, [isOpen, initialBookingData]);
-
-  const calculateFees = async () => {
-    try {
-      const response = await apiClient.calculateFees(
-        property.id,
-        bookingData.checkIn,
-        bookingData.checkOut,
-        bookingData.guests
-      );
-
-      if (response.success && response.data) {
-        setFeeCalculation(response.data);
-      }
-    } catch (error) {
-      console.error("Failed to calculate fees:", error);
-      // Don't show error for fee calculation, just continue
-    }
-  };
 
   // Create booking with direct payment
   const handleCreateBooking = async () => {
@@ -394,7 +363,6 @@ export default function BookingSession({
     setCurrentStep("details");
     setError("");
     setBooking(null);
-    setFeeCalculation(null);
     setPollingProgress(null);
   };
 
@@ -483,47 +451,60 @@ export default function BookingSession({
               </div>
             </div>
 
-            {feeCalculation && (
+            {calculatingFees ? (
               <div className="bg-gray-50 rounded-lg p-4">
-                <h4 className="font-medium mb-3">Booking Summary</h4>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span>Property:</span>
-                    <span className="font-medium">{property.title}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Nights:</span>
-                    <span>
-                      {feeCalculation.booking.nights} night
-                      {feeCalculation.booking.nights !== 1 ? "s" : ""}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Base amount:</span>
-                    <span>
-                      {feeCalculation.totals.baseAmount.toLocaleString()}{" "}
-                      {feeCalculation.currency}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>
-                      Service fee ({feeCalculation.fees.guestServiceFeePercent}
-                      %):
-                    </span>
-                    <span>
-                      {feeCalculation.totals.guestServiceFee.toLocaleString()}{" "}
-                      {feeCalculation.currency}
-                    </span>
-                  </div>
-                  <div className="flex justify-between font-medium text-lg pt-2 border-t">
-                    <span>Total:</span>
-                    <span>
-                      {feeCalculation.totals.totalGuestPays.toLocaleString()}{" "}
-                      {feeCalculation.currency}
-                    </span>
-                  </div>
+                <h4 className="font-medium mb-3">Calculating Fees...</h4>
+                <div className="flex items-center justify-center py-4">
+                  <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
                 </div>
               </div>
+            ) : (
+              feeCalculation && (
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h4 className="font-medium mb-3">Booking Summary</h4>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span>Property:</span>
+                      <span className="font-medium">{property.title}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Nights:</span>
+                      <span>
+                        {feeCalculation.booking.nights} night
+                        {feeCalculation.booking.nights !== 1 ? "s" : ""}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Base amount:</span>
+                      <span>
+                        {feeCalculation.totals.baseAmount.toLocaleString()}{" "}
+                        {feeCalculation.currency}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>
+                        Service fee (
+                        {feeCalculation.fees.guestServiceFeePercent}
+                        %):
+                      </span>
+                      <span>
+                        {feeCalculation.totals.guestServiceFee.toLocaleString()}{" "}
+                        {feeCalculation.currency}
+                      </span>
+                    </div>
+                    <div
+                      className="flex justify-between font-medium text-lg pt-2 border-t"
+                      style={{ borderTop: "1px solid rgb(221, 221, 221)" }}
+                    >
+                      <span>Total:</span>
+                      <span>
+                        {feeCalculation.totals.totalGuestPays.toLocaleString()}{" "}
+                        {feeCalculation.currency}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )
             )}
 
             <Button
@@ -670,7 +651,10 @@ export default function BookingSession({
                       {feeCalculation.currency}
                     </span>
                   </div>
-                  <div className="flex justify-between font-medium text-lg pt-2 border-t">
+                  <div
+                    className="flex justify-between font-medium text-lg pt-2"
+                    style={{ borderTop: "1px solid rgb(221, 221, 221)" }}
+                  >
                     <span>Total:</span>
                     <span>
                       {feeCalculation.totals.totalGuestPays.toLocaleString()}{" "}
@@ -924,8 +908,8 @@ export default function BookingSession({
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose} className="max-w-md">
-      <div className="relative">
-        <div className="flex items-center justify-between mb-6">
+      <div className="relative flex flex-col max-h-[90vh]">
+        <div className="flex items-center justify-between mb-6 flex-shrink-0">
           <h2 className="text-xl font-bold">Book {property.title}</h2>
           <button
             onClick={handleClose}
@@ -936,7 +920,7 @@ export default function BookingSession({
         </div>
 
         {error && currentStep !== "error" && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex-shrink-0">
             <div className="flex items-center space-x-2">
               <AlertCircle className="h-4 w-4 text-red-500" />
               <span className="text-sm text-red-700">{error}</span>
@@ -944,7 +928,7 @@ export default function BookingSession({
           </div>
         )}
 
-        {renderStep()}
+        <div className="overflow-y-auto flex-1 min-h-0">{renderStep()}</div>
       </div>
     </Modal>
   );
