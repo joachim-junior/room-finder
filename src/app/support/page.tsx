@@ -417,7 +417,7 @@ export default function SupportPage() {
                   <Phone className="h-5 w-5 text-gray-400" />
                   <div>
                     <p className="font-medium text-gray-900">Phone Support</p>
-                    <p className="text-sm text-gray-600">+237 6XX XXX XXX</p>
+                    <p className="text-sm text-gray-600">+237 681 101 063</p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-3">
