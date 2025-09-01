@@ -44,6 +44,7 @@ interface DashboardStats {
   totalProperties: number;
   totalBookings: number;
   totalReviews: number;
+  averageRating: number;
   totalSpent: number;
   currency: string;
   activeBookings: number;
@@ -97,6 +98,7 @@ export default function DashboardPage() {
     totalProperties: 0,
     totalBookings: 0,
     totalReviews: 0,
+    averageRating: 0,
     totalSpent: 0,
     currency: "XAF",
     activeBookings: 0,
@@ -444,6 +446,7 @@ export default function DashboardPage() {
               cancelledBookings: data.bookings?.cancelled || 0,
               totalSpent: data.overview?.totalSpent || 0,
               totalReviews: data.overview?.totalReviews || 0,
+              averageRating: data.overview?.averageRating || 0,
               currency: data.financial?.currency || "XAF",
             }));
 
@@ -4624,7 +4627,9 @@ export default function DashboardPage() {
                   Average Rating
                 </p>
                 <p className="text-xl font-bold text-gray-900">
-                  {stats?.totalReviews ? "4.5" : "N/A"}
+                  {stats?.totalReviews
+                    ? (stats?.averageRating || 0).toFixed(1)
+                    : "N/A"}
                 </p>
               </div>
             </div>

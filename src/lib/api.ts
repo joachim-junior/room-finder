@@ -6,6 +6,7 @@ import {
   Booking,
   User,
   Review,
+  ReviewsApiResponse,
   Wallet,
   Transaction,
   Notification,
@@ -14,6 +15,10 @@ import {
   PaymentMethod,
   PaymentInitialization,
   PaymentVerification,
+  SupportTicket,
+  SupportMessage,
+  SupportOptions,
+  SupportRequest,
 } from "@/types";
 
 const API_BASE_URL =
@@ -780,12 +785,12 @@ class ApiClient {
     propertyId: string,
     page?: number,
     limit?: number
-  ): Promise<ApiResponse<PaginatedResponse<Review>>> {
+  ): Promise<ApiResponse<ReviewsApiResponse>> {
     const params = new URLSearchParams();
     if (page) params.append("page", String(page));
     if (limit) params.append("limit", String(limit));
 
-    return this.request<PaginatedResponse<Review>>(
+    return this.request<ReviewsApiResponse>(
       `/reviews/property/${propertyId}?${params.toString()}`
     );
   }
@@ -2655,6 +2660,72 @@ class ApiClient {
         },
       },
     };
+  }
+
+  // Support
+  async getSupportOptions(): Promise<ApiResponse<SupportOptions>> {
+    return this.request("/support/options");
+  }
+
+  async createSupportRequest(supportData: SupportRequest): Promise<
+    ApiResponse<{
+      ticket: SupportTicket;
+    }>
+  > {
+    return this.request("/support/tickets", {
+      method: "POST",
+      body: JSON.stringify(supportData),
+    });
+  }
+
+  async getUserSupportTickets(
+    page?: number,
+    limit?: number,
+    status?: string,
+    category?: string
+  ): Promise<
+    ApiResponse<{
+      tickets: SupportTicket[];
+      pagination: {
+        page: number;
+        limit: number;
+        total: number;
+        pages: number;
+      };
+    }>
+  > {
+    const params = new URLSearchParams();
+    if (page) params.append("page", String(page));
+    if (limit) params.append("limit", String(limit));
+    if (status) params.append("status", status);
+    if (category) params.append("category", category);
+
+    return this.request(`/support/tickets?${params.toString()}`);
+  }
+
+  async getSupportTicket(ticketId: string): Promise<
+    ApiResponse<{
+      ticket: SupportTicket;
+    }>
+  > {
+    return this.request(`/support/tickets/${ticketId}`);
+  }
+
+  async addMessageToSupportTicket(
+    ticketId: string,
+    messageData: {
+      message: string;
+      attachments?: string[];
+    }
+  ): Promise<
+    ApiResponse<{
+      message: SupportMessage;
+    }>
+  > {
+    return this.request(`/support/tickets/${ticketId}/messages`, {
+      method: "POST",
+      body: JSON.stringify(messageData),
+    });
   }
 }
 

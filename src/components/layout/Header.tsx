@@ -230,6 +230,14 @@ export function Header() {
                           <span className="text-sm">Help Center</span>
                         </Link>
                         <Link
+                          href="/support"
+                          className="flex items-center space-x-3 px-2 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                          onClick={() => setShowUserMenu(false)}
+                        >
+                          <MessageSquare className="h-4 w-4 text-gray-500" />
+                          <span className="text-sm">Contact Support</span>
+                        </Link>
+                        <Link
                           href="/blog"
                           className="flex items-center space-x-3 px-2 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
                           onClick={() => setShowUserMenu(false)}
@@ -325,6 +333,14 @@ export function Header() {
                             <span className="text-xs">❓</span>
                           </div>
                           <span className="text-sm">Help Center</span>
+                        </Link>
+                        <Link
+                          href="/support"
+                          className="flex items-center space-x-3 px-2 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                          onClick={() => setShowUserMenu(false)}
+                        >
+                          <MessageSquare className="h-4 w-4 text-gray-500" />
+                          <span className="text-sm">Contact Support</span>
                         </Link>
                         <Link
                           href="/blog"

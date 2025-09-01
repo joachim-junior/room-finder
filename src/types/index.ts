@@ -115,6 +115,115 @@ export interface Review {
   };
 }
 
+export interface ReviewsApiResponse {
+  message: string;
+  reviews: Review[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+  ratingDistribution: {
+    "1": number;
+    "2": number;
+    "3": number;
+    "4": number;
+    "5": number;
+  };
+  averageRating: {
+    average: number;
+    count: number;
+  };
+}
+
+export interface SupportTicket {
+  id: string;
+  ticketId: string;
+  subject: string;
+  description: string;
+  category:
+    | "BOOKING_ISSUES"
+    | "PAYMENTS_BILLING"
+    | "ACCOUNT_MANAGEMENT"
+    | "TECHNICAL_SUPPORT"
+    | "SAFETY_SECURITY";
+  priority: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
+  status:
+    | "OPEN"
+    | "IN_PROGRESS"
+    | "WAITING_FOR_USER"
+    | "RESOLVED"
+    | "CLOSED"
+    | "ESCALATED";
+  userId: string;
+  userEmail: string;
+  userPhone?: string;
+  attachments: string[];
+  resolution?: string;
+  resolvedAt?: string;
+  resolvedBy?: string;
+  createdAt: string;
+  updatedAt: string;
+  user: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone?: string;
+    avatar?: string;
+    role: string;
+  };
+  assignedTo?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    role: string;
+  };
+  messages: SupportMessage[];
+}
+
+export interface SupportMessage {
+  id: string;
+  message: string;
+  isInternal: boolean;
+  attachments: string[];
+  createdAt: string;
+  updatedAt: string;
+  sender: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    role: string;
+    avatar?: string;
+  };
+}
+
+export interface SupportOptions {
+  categories: Array<{
+    value: string;
+    label: string;
+  }>;
+  priorities: Array<{
+    value: string;
+    label: string;
+  }>;
+  statuses: Array<{
+    value: string;
+    label: string;
+  }>;
+}
+
+export interface SupportRequest {
+  subject: string;
+  description: string;
+  category: string;
+  priority: string;
+  attachments?: string[];
+}
+
 export interface Wallet {
   balance: number;
   currency: string;

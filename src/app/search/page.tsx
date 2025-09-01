@@ -793,13 +793,22 @@ function PropertyCard({ property }: { property: Property }) {
 
           <div className="flex items-center justify-between mt-auto">
             <div className="flex items-center space-x-1">
-              <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-              <span className="text-sm font-medium text-gray-900">
-                {property.reviews?.averageRating || 4.5}
-              </span>
-              <span className="text-sm text-gray-500">
-                ({property.reviews?.totalReviews || 0})
-              </span>
+              {(property.reviews?.totalReviews || 0) > 0 ? (
+                <>
+                  <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                  <span className="text-sm font-medium text-gray-900">
+                    {property.reviews?.averageRating || 0}
+                  </span>
+                  <span className="text-sm text-gray-500">
+                    ({property.reviews?.totalReviews || 0})
+                  </span>
+                </>
+              ) : (
+                <>
+                  <Star className="h-3 w-3 text-gray-300" />
+                  <span className="text-sm text-gray-500">No rating</span>
+                </>
+              )}
             </div>
             <div className="text-right">
               <div className="font-semibold text-gray-900">
