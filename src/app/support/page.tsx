@@ -258,8 +258,8 @@ export default function SupportPage() {
                     Request Submitted Successfully!
                   </h3>
                   <p className="text-gray-600 mb-6">
-                    We've received your support request and will get back to you
-                    within 24 hours.
+                    We&apos;ve received your support request and will get back
+                    to you within 24 hours.
                   </p>
                   <Button
                     onClick={() => setIsSubmitted(false)}
@@ -476,7 +476,7 @@ export default function SupportPage() {
               <div className="flex items-center space-x-2">
                 <Phone className="h-4 w-4 text-red-600" />
                 <span className="font-semibold text-red-900">
-                  +237 6XX XXX XXX
+                  +237 681 101 063
                 </span>
               </div>
               <p className="text-xs text-red-600 mt-2">
@@ -574,8 +574,8 @@ export default function SupportPage() {
                   No FAQs found
                 </h3>
                 <p className="text-gray-600">
-                  No questions match the selected category. Try selecting "All
-                  Questions" or contact support directly.
+                  No questions match the selected category. Try selecting
+                  &quot;All Questions&quot; or contact support directly.
                 </p>
               </div>
             )}
@@ -595,8 +595,8 @@ export default function SupportPage() {
               Still need help?
             </h2>
             <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
-              Can't find what you're looking for? Our support team is available
-              to help you with any questions or concerns.
+              Can&apos;t find what you&apos;re looking for? Our support team is
+              available to help you with any questions or concerns.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button
@@ -610,7 +610,7 @@ export default function SupportPage() {
                 Email Support
               </Button>
               <Button
-                onClick={() => (window.location.href = "tel:+2376XXXXXXX")}
+                onClick={() => (window.location.href = "tel:+237681101063")}
                 variant="outline"
                 className="flex items-center"
               >
