@@ -96,8 +96,8 @@ export function Header() {
                   >
                     <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center">
                       <span className="text-gray-700 font-medium text-sm">
-                        {user.firstName.charAt(0)}
-                        {user.lastName.charAt(0)}
+                        {user.firstName?.charAt(0) || "U"}
+                        {user.lastName?.charAt(0) || "U"}
                       </span>
                     </div>
                   </button>

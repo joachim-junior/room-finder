@@ -71,16 +71,14 @@ class ApiClient {
         data = {};
       }
       if (!response.ok) {
-        if (!response.ok || !data || Object.keys(data).length === 0) {
-          throw new Error(data.message || "Empty response from server");
-        }
-
-        if (!data || Object.keys(data).length === 0) {
-          console.warn("Empty response data, returning empty object");
-          return {};
-        }
-        return data;
+        throw new Error(data.message || "Empty response from server");
       }
+
+      if (!data || Object.keys(data).length === 0) {
+        console.warn("Empty response data, returning empty object");
+        return { success: true, data: {} as T };
+      }
+      return { success: true, data };
     } catch (error) {
       console.error("API request failed:", error);
       throw error;
@@ -131,9 +129,9 @@ class ApiClient {
       console.log("✅ API request successful");
       if (!data || Object.keys(data).length === 0) {
         console.warn("Empty response data, returning empty object");
-        return {};
+        return { success: true, data: {} as T };
       }
-      return data;
+      return { success: true, data };
     } catch (error) {
       console.error("❌ Public API request failed:", error);
       throw error;
@@ -602,9 +600,9 @@ class ApiClient {
         console.log("✅ Property found with direct structure:", data);
         if (!data || Object.keys(data).length === 0) {
           console.warn("Empty response data, returning empty object");
-          return {};
+          return { success: true, data: {} as T };
         }
-        return data;
+        return { success: true, data };
       } else {
         console.error("❌ Unexpected response structure:", data);
         throw new Error("Unexpected response structure");

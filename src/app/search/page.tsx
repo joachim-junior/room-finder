@@ -117,14 +117,14 @@ function SearchContent() {
         const searchTerm = searchQuery.trim() || filterParams.city || "";
         console.log("Searching with:", { searchTerm, filterParams });
         response = await apiClient.searchProperties(searchTerm, filterParams);
-        console.log("Response:", response.properties);
+        console.log("Response:", response?.data.properties);
 
         // Handle ApiResponse structure
         if (response) {
-          setProperties(response.properties || []);
-          setTotalPages(response.pagination?.totalPages || 1);
-          setCurrentPage(response.pagination?.page || 1);
-          setTotalItems(response.pagination?.total || 0);
+          setProperties(response?.data?.properties || []);
+          setTotalPages(response?.data?.pagination?.totalPages || 1);
+          setCurrentPage(response?.data?.pagination?.page || 1);
+          setTotalItems(response?.data?.pagination?.total || 0);
         } else {
           // No structured data present; default to empty list without logging an error
           setProperties([]);
