@@ -63,13 +63,24 @@ class ApiClient {
         },
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "An error occurred");
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        console.error("Failed to parse JSON response:", parseError);
+        data = {};
       }
+      if (!response.ok) {
+        if (!response.ok || !data || Object.keys(data).length === 0) {
+          throw new Error(data.message || "Empty response from server");
+        }
 
-      return data;
+        if (!data || Object.keys(data).length === 0) {
+          console.warn("Empty response data, returning empty object");
+          return {};
+        }
+        return data;
+      }
     } catch (error) {
       console.error("API request failed:", error);
       throw error;
@@ -103,15 +114,25 @@ class ApiClient {
         Object.fromEntries(response.headers.entries())
       );
 
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        console.error("Failed to parse JSON response:", parseError);
+        data = {};
+      }
       console.log("📦 Response data:", data);
 
-      if (!response.ok) {
+      if (!response.ok || !data || Object.keys(data).length === 0) {
         console.error("❌ API request failed:", data);
-        throw new Error(data.message || "An error occurred");
+        throw new Error(data.message || "Empty response from server");
       }
 
       console.log("✅ API request successful");
+      if (!data || Object.keys(data).length === 0) {
+        console.warn("Empty response data, returning empty object");
+        return {};
+      }
       return data;
     } catch (error) {
       console.error("❌ Public API request failed:", error);
@@ -431,13 +452,14 @@ class ApiClient {
 
     const url = `${this.baseUrl}/properties?${params.toString()}`;
     console.log("🔍 Making API request to:", url);
+    console.log("🔍 API Base URL:", this.baseUrl);
 
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
     };
 
     // Don't add auth header for guest properties endpoint
-    // if (this.token) {
+    console.log("🔍 Request headers:", headers); // if (this.token) {
     //   headers.Authorization = `Bearer ${this.token}`;
     // }
 
@@ -446,7 +468,13 @@ class ApiClient {
         headers,
       });
 
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        console.error("Failed to parse JSON response:", parseError);
+        data = {};
+      }
 
       console.log("API Response:", {
         url,
@@ -455,21 +483,26 @@ class ApiClient {
         data,
       });
 
-      if (!response.ok) {
+      if (!response.ok || !data || Object.keys(data).length === 0) {
         console.error("API Error Response:", {
           status: response.status,
           statusText: response.statusText,
           data,
         });
         throw new Error(
-          data.message || `HTTP ${response.status}: ${response.statusText}`
+          data.message ||
+            "Empty response from server" ||
+            `HTTP ${response.status}: ${response.statusText}`
         );
       }
 
       // Ensure the response has the expected structure
       if (data.properties && Array.isArray(data.properties)) {
         return {
-          message: data.message || "Properties retrieved successfully",
+          message:
+            data.message ||
+            "Empty response from server" ||
+            "Properties retrieved successfully",
           properties: data.properties,
           pagination: data.pagination || {
             page: 1,
@@ -537,16 +570,22 @@ class ApiClient {
       console.log("🔍 Response status:", response.status);
       console.log("🔍 Response statusText:", response.statusText);
 
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        console.error("Failed to parse JSON response:", parseError);
+        data = {};
+      }
       console.log("🔍 Raw API response:", data);
 
-      if (!response.ok) {
+      if (!response.ok || !data || Object.keys(data).length === 0) {
         console.error("Property API Error Response:", {
           status: response.status,
           statusText: response.statusText,
           data,
         });
-        throw new Error(data.message || "An error occurred");
+        throw new Error(data.message || "Empty response from server");
       }
 
       // Check if the response has the expected structure
@@ -561,6 +600,10 @@ class ApiClient {
         return data.property;
       } else if (data.id) {
         console.log("✅ Property found with direct structure:", data);
+        if (!data || Object.keys(data).length === 0) {
+          console.warn("Empty response data, returning empty object");
+          return {};
+        }
         return data;
       } else {
         console.error("❌ Unexpected response structure:", data);
@@ -603,7 +646,7 @@ class ApiClient {
   async searchProperties(
     query: string,
     filters?: SearchFilters
-  ): Promise<ApiResponse<PaginatedResponse<Property>>> {
+  ): Promise<ApiResponse<PropertiesResponse>> {
     const params = new URLSearchParams({ q: query });
 
     if (filters) {
@@ -732,6 +775,54 @@ class ApiClient {
     );
   }
 
+  // Check if user has booked a specific property
+  async hasUserBookedProperty(
+    propertyId: string,
+    status?: string
+  ): Promise<{
+    hasBooked: boolean;
+    property: { id: string; title: string };
+    latestBooking: any | null;
+  }> {
+    try {
+      const params = new URLSearchParams();
+      if (status) params.append("status", status);
+
+      const response = await this.request<{
+        hasBooked: boolean;
+        property: { id: string; title: string };
+        latestBooking: any | null;
+      }>(`/bookings/has-booked/${propertyId}?${params.toString()}`);
+
+      return (
+        response.data || {
+          hasBooked: false,
+          property: { id: propertyId, title: "" },
+          latestBooking: null,
+        }
+      );
+    } catch (error) {
+      console.error("Error checking user booking status:", error);
+      return {
+        hasBooked: false,
+        property: { id: propertyId, title: "" },
+        latestBooking: null,
+      };
+    }
+  }
+
+  // Add createReview method
+  async createReview(reviewData: {
+    propertyId: string;
+    bookingId: string;
+    rating: number;
+    comment: string;
+  }): Promise<ApiResponse<{ review: any }>> {
+    return this.request<{ review: any }>("/reviews", {
+      method: "POST",
+      body: JSON.stringify(reviewData),
+    });
+  }
   // Payment Methods
   async getPaymentMethods(): Promise<ApiResponse<PaymentMethod[]>> {
     return this.request<PaymentMethod[]>("/payments/methods");
@@ -937,7 +1028,7 @@ class ApiClient {
   async getFavorites(
     page?: number,
     limit?: number
-  ): Promise<ApiResponse<PaginatedResponse<Property>>> {
+  ): Promise<ApiResponse<PropertiesResponse>> {
     const params = new URLSearchParams();
     if (page) params.append("page", String(page));
     if (limit) params.append("limit", String(limit));
@@ -984,7 +1075,13 @@ class ApiClient {
         },
       });
 
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        console.error("Failed to parse JSON response:", parseError);
+        data = {};
+      }
       console.log("Raw user stats response:", data);
 
       // The backend returns { message: string, stats: object } format
@@ -1003,7 +1100,10 @@ class ApiClient {
 
       return {
         success: false,
-        message: data.message || "Failed to fetch user stats",
+        message:
+          data.message ||
+          "Empty response from server" ||
+          "Failed to fetch user stats",
       };
     } catch (error) {
       console.error("Error fetching user stats:", error);
@@ -1234,7 +1334,7 @@ class ApiClient {
   async getHostProperties(
     page?: number,
     limit?: number
-  ): Promise<ApiResponse<PaginatedResponse<Property>>> {
+  ): Promise<ApiResponse<PropertiesResponse>> {
     try {
       const params = new URLSearchParams();
       if (page) params.append("page", String(page));
@@ -1244,6 +1344,7 @@ class ApiClient {
         this.baseUrl
       }/properties/host/my-properties?${params.toString()}`;
       console.log("🔍 Making API request to:", url);
+      console.log("🔍 API Base URL:", this.baseUrl);
       console.log("🔍 Request headers:", {
         "Content-Type": "application/json",
         Authorization: `Bearer ${this.getToken()}`,
@@ -1265,7 +1366,7 @@ class ApiClient {
       );
 
       // Handle different HTTP status codes
-      if (!response.ok) {
+      if (!response.ok || !data || Object.keys(data).length === 0) {
         console.error("🔍 HTTP Error:", response.status, response.statusText);
 
         let errorMessage = "Server error";
@@ -1288,10 +1389,27 @@ class ApiClient {
         };
       }
 
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        console.error("Failed to parse JSON response:", parseError);
+        data = {};
+      }
       console.log("🔍 Raw host properties API response:", data);
 
-      // Check if the response has the expected structure
+      // Check if the response has the actual API structure (message, properties, pagination)
+      if (data.message && data.properties && data.pagination) {
+        return {
+          success: true,
+          data: {
+            properties: data.properties,
+            pagination: data.pagination,
+          },
+        };
+      }
+
+      // Check if the response has the expected structure (for backward compatibility)
       if (
         data.success &&
         data.data &&
@@ -1301,16 +1419,17 @@ class ApiClient {
         return {
           success: true,
           data: {
-            data: data.data.properties,
+            properties: data.data.properties,
             pagination: data.data.pagination,
           },
         };
       }
-
-      // If the response doesn't have the expected structure, return error
       return {
         success: false,
-        message: data.message || "Failed to fetch host properties",
+        message:
+          data.message ||
+          "Empty response from server" ||
+          "Failed to fetch host properties",
         error: data.error || "Invalid response structure",
       };
     } catch (error) {
@@ -1318,6 +1437,49 @@ class ApiClient {
       return {
         success: false,
         message: "Failed to fetch host properties",
+        error: error instanceof Error ? error.message : "Network error",
+      };
+    }
+  }
+
+  // Delete Property
+  async deleteProperty(
+    propertyId: string
+  ): Promise<ApiResponse<{ message: string }>> {
+    try {
+      const response = await fetch(`${this.baseUrl}/properties/${propertyId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.getToken()}`,
+        },
+      });
+
+      if (!response.ok || !data || Object.keys(data).length === 0) {
+        const errorData = await response.json().catch(() => ({}));
+        return {
+          success: false,
+          message: errorData.message || `HTTP ${response.status}`,
+          error: `HTTP ${response.status}`,
+        };
+      }
+
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        console.error("Failed to parse JSON response:", parseError);
+        data = {};
+      }
+      return {
+        success: true,
+        data: data,
+      };
+    } catch (error) {
+      console.error("Error deleting property:", error);
+      return {
+        success: false,
+        message: "Failed to delete property",
         error: error instanceof Error ? error.message : "Network error",
       };
     }
@@ -1342,7 +1504,13 @@ class ApiClient {
         },
       });
 
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        console.error("Failed to parse JSON response:", parseError);
+        data = {};
+      }
       console.log("Raw property stats response:", data);
 
       // The backend returns { message: string, stats: object } format
@@ -1363,7 +1531,10 @@ class ApiClient {
       // If no stats property, return error
       return {
         success: false,
-        message: data.message || "Failed to fetch property stats",
+        message:
+          data.message ||
+          "Empty response from server" ||
+          "Failed to fetch property stats",
       };
     } catch (error) {
       console.error("Error fetching property stats:", error);
@@ -1397,7 +1568,13 @@ class ApiClient {
         }
       );
 
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        console.error("Failed to parse JSON response:", parseError);
+        data = {};
+      }
       console.log("Raw host bookings response:", data);
 
       // The backend returns { message: string, bookings: array, pagination: object } format
@@ -1413,7 +1590,10 @@ class ApiClient {
 
       return {
         success: false,
-        message: data.message || "Failed to fetch host bookings",
+        message:
+          data.message ||
+          "Empty response from server" ||
+          "Failed to fetch host bookings",
       };
     } catch (error) {
       console.error("Error fetching host bookings:", error);
@@ -1446,7 +1626,13 @@ class ApiClient {
         }
       );
 
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        console.error("Failed to parse JSON response:", parseError);
+        data = {};
+      }
       console.log("Raw guest bookings response:", data);
 
       // The backend returns { message: string, bookings: array, pagination: object } format
@@ -1462,7 +1648,10 @@ class ApiClient {
 
       return {
         success: false,
-        message: data.message || "Failed to fetch guest bookings",
+        message:
+          data.message ||
+          "Empty response from server" ||
+          "Failed to fetch guest bookings",
       };
     } catch (error) {
       console.error("Error fetching guest bookings:", error);
@@ -2605,7 +2794,7 @@ class ApiClient {
           };
         }
       | PaginatedResponse<Record<string, unknown>>
-    >(`/enquiries/host/enquiries?${params.toString()}`);
+    >(`/enquiries/?${params.toString()}`);
 
     if (resp.data) {
       const dUnknown = resp.data as unknown;

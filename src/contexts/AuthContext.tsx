@@ -18,6 +18,7 @@ interface AuthContextType {
   }) => Promise<void>;
   logout: () => void;
   updateProfile: (profileData: Partial<User>) => Promise<void>;
+  refreshHostStatus: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -26,6 +27,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [initializing, setInitializing] = useState(false);
+
+  const refreshHostStatus = async () => {
+    try {
+      if (!user || user.role !== "HOST") return;
+      const resp = await apiClient.getHostApplicationStatus();
+      if (resp.success && resp.data) {
+        const raw: any = resp.data;
+        const status = String(
+          raw.status || raw.hostApprovalStatus || user.hostApprovalStatus || ""
+        ).toUpperCase();
+        if (status && status !== user.hostApprovalStatus) {
+          setUser((prev) =>
+            prev ? { ...prev, hostApprovalStatus: status as any } : prev
+          );
+        }
+      }
+    } catch (err) {
+      // Silently ignore; lack of permission or network shouldn't break auth
+      console.warn("refreshHostStatus failed", err);
+    }
+  };
 
   useEffect(() => {
     const initializeAuth = async () => {
@@ -69,7 +91,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               response.data
             );
             setUser(response.data);
-          } else if ("user" in response && response.user) {
+          } else if ("user" in response && (response as any).user) {
             // Backend returns { message, user } structure
             const backendResponse = response as { message: string; user: User };
             console.log(
@@ -99,6 +121,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     initializeAuth();
   }, []); // Remove initializing from dependencies to prevent infinite loop
 
+  // After user is set/changed, if HOST, refresh status once in background
+  useEffect(() => {
+    if (user?.role === "HOST") {
+      refreshHostStatus();
+    }
+  }, [user?.id, user?.role]);
+
   const login = async (email: string, password: string) => {
     console.log("=== LOGIN START ===");
     console.log("Attempting login for:", email);
@@ -119,6 +148,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         setUser(response.data.user);
         console.log("User state updated");
+
+        // Immediately refresh host status if applicable
+        if (response.data.user?.role === "HOST") {
+          await refreshHostStatus();
+        }
       } else {
         console.log("Login failed:", response.message);
         throw new Error(response.message || "Login failed");
@@ -169,6 +203,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     register,
     logout,
     updateProfile,
+    refreshHostStatus,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

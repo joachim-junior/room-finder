@@ -119,7 +119,7 @@ export default function Home() {
     e.preventDefault();
     const params = new URLSearchParams();
 
-    // Add search filters to URL - matching API documentation
+    // Add search filters to URL - matching search page expectations
     if (searchFilters.city) params.append("city", searchFilters.city);
     if (searchFilters.checkIn) params.append("checkIn", searchFilters.checkIn);
     if (searchFilters.checkOut)
@@ -127,13 +127,8 @@ export default function Home() {
     if (searchFilters.guests)
       params.append("guests", searchFilters.guests.toString());
 
-    // Use the search endpoint if we have a city query, otherwise use properties endpoint
-    const searchUrl = searchFilters.city
-      ? `/search?q=${encodeURIComponent(
-          searchFilters.city
-        )}&${params.toString()}`
-      : `/search?${params.toString()}`;
-
+    // Navigate to search page with filters
+    const searchUrl = `/search?${params.toString()}`;
     window.location.href = searchUrl;
   };
 
@@ -158,7 +153,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-white">
       {/* Search Bar */}
-      <div className="bg-white sticky top-0 z-50 shadow-sm">
+      <div className="bg-white sticky top-0 z-40 shadow-sm">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="max-w-4xl mx-auto">
             {mounted ? (
@@ -401,7 +396,7 @@ export default function Home() {
           <section className="mb-16">
             <div className="flex items-center justify-between mb-8 w-full">
               <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
-                Coastal getaways in Limbe
+                Popular homes in Limbe
               </h2>
               {!loading && (
                 <Link
@@ -460,7 +455,7 @@ export default function Home() {
           <section className="mb-16">
             <div className="flex items-center justify-between mb-8 w-full">
               <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
-                Mountain retreats in Buea
+                Places to stay in Buea
               </h2>
               {!loading && (
                 <Link
@@ -637,7 +632,7 @@ export default function Home() {
           <section className="mb-16">
             <div className="flex items-center justify-between mb-8 w-full">
               <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
-                Highland hideaways in Bamenda
+                Ready to book homes in Bamenda
               </h2>
               {!loading && (
                 <Link

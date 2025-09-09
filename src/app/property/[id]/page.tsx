@@ -14,6 +14,11 @@ import {
   Modal,
   Divider,
   GoogleMap,
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerClose,
   Label,
 } from "@/components/ui";
 import { ImageWithPlaceholder } from "@/components/ui/ImageWithPlaceholder";
@@ -103,6 +108,20 @@ export default function PropertyDetailPage() {
     "all" | "5" | "4" | "3" | "2" | "1"
   >("all");
 
+  // Address visibility state
+  const [hasBookedThisProperty, setHasBookedThisProperty] = useState(false);
+  const [showAddress, setShowAddress] = useState(false);
+  const [loadingBookingStatus, setLoadingBookingStatus] = useState(false);
+  const [userBooking, setUserBooking] = useState<any>(null);
+
+  // Review form state
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [reviewForm, setReviewForm] = useState({
+    rating: 5,
+    comment: "",
+  });
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
   // Helper functions for review sorting and filtering
   const getSortedAndFilteredReviews = () => {
     let filteredReviews = reviews;
@@ -175,10 +194,10 @@ export default function PropertyDetailPage() {
             1,
             20
           );
-          console.log("Reviews response:", reviewsResponse);
-          if (reviewsResponse && reviewsResponse.data) {
-            setReviews(reviewsResponse.data.reviews);
-            setReviewsData(reviewsResponse.data);
+          console.log("Reviews response:", reviewsResponse.reviews);
+          if (reviewsResponse) {
+            setReviews(reviewsResponse.reviews);
+            setReviewsData(reviewsResponse);
           }
         } catch (reviewsError) {
           console.log("Reviews not available:", reviewsError);
@@ -225,6 +244,111 @@ export default function PropertyDetailPage() {
     property?.id,
     user,
   ]);
+
+  // Check if user has booked this property to show address
+  useEffect(() => {
+    const checkBookingStatus = async () => {
+      if (!user || !property?.id) {
+        setShowAddress(false);
+        setHasBookedThisProperty(false);
+        setUserBooking(null);
+        return;
+      }
+
+      setLoadingBookingStatus(true);
+      try {
+        const bookingStatus = await apiClient.hasUserBookedProperty(
+          property.id,
+          "CONFIRMED"
+        );
+        setHasBookedThisProperty(bookingStatus.hasBooked);
+        setShowAddress(bookingStatus.hasBooked);
+
+        // Store the latest booking for review submission
+        if (bookingStatus.hasBooked && bookingStatus.latestBooking) {
+          setUserBooking(bookingStatus.latestBooking);
+        }
+      } catch (error) {
+        console.error("Error checking booking status:", error);
+        setShowAddress(false);
+        setHasBookedThisProperty(false);
+        setUserBooking(null);
+      } finally {
+        setLoadingBookingStatus(false);
+      }
+    };
+
+    checkBookingStatus();
+  }, [user, property?.id]);
+
+  // Handle successful booking
+  const handleBookingSuccess = (booking: any) => {
+    setHasBookedThisProperty(true);
+    setShowAddress(true);
+    setUserBooking(booking);
+    console.log("Booking successful! Address is now visible.");
+  };
+
+  // Handle review submission
+  const handleReviewSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !property || !userBooking) return;
+
+    // Clear previous errors
+    setReviewError(null);
+
+    // Frontend validation
+    if (reviewForm.comment.length < 10) {
+      setReviewError("Review must be at least 10 characters long");
+      return;
+    }
+    if (reviewForm.comment.length > 1000) {
+      setReviewError("Review must be no more than 1000 characters long");
+      return;
+    }
+
+    setSubmittingReview(true);
+    try {
+      const response = await apiClient.createReview({
+        propertyId: property.id,
+        bookingId: userBooking.id,
+        rating: reviewForm.rating,
+        comment: reviewForm.comment.trim(),
+      });
+
+      if (response.success) {
+        // Reset form and close
+        setReviewForm({ rating: 5, comment: "" });
+        setReviewError(null);
+        setShowReviewForm(false);
+
+        // Reload reviews to show the new one
+        try {
+          const reviewsResponse = await apiClient.getPropertyReviews(
+            property.id,
+            1,
+            20
+          );
+          if (reviewsResponse && reviewsResponse.reviews) {
+            setReviews(reviewsResponse.reviews);
+            setReviewsData(reviewsResponse);
+          }
+        } catch (reloadError) {
+          console.error("Error reloading reviews:", reloadError);
+        }
+
+        // Show success message
+        alert("Review submitted successfully!");
+      }
+    } catch (error: any) {
+      console.error("Failed to submit review:", error);
+      setReviewError(
+        error.message || "Failed to submit review. Please try again."
+      );
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1328,31 +1452,181 @@ export default function PropertyDetailPage() {
 
             <Divider />
 
+            {/* Add Review Section */}
+            {user && userBooking && (
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    Share Your Experience
+                  </h2>
+                  {!showReviewForm && (
+                    <Button
+                      onClick={() => setShowReviewForm(true)}
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      Write a Review
+                    </Button>
+                  )}
+                </div>
+
+                {showReviewForm && (
+                  <div className="bg-white p-6 rounded-xl border border-gray-200">
+                    <form onSubmit={handleReviewSubmit} className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Rating
+                        </label>
+                        <div className="flex items-center space-x-1">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <button
+                              key={star}
+                              type="button"
+                              onClick={() =>
+                                setReviewForm((prev) => ({
+                                  ...prev,
+                                  rating: star,
+                                }))
+                              }
+                              className={`h-8 w-8 ${
+                                star <= reviewForm.rating
+                                  ? "text-yellow-400"
+                                  : "text-gray-300"
+                              } hover:text-yellow-400 transition-colors`}
+                            >
+                              <Star className="h-full w-full fill-current" />
+                            </button>
+                          ))}
+                          <span className="ml-2 text-sm text-gray-600">
+                            {reviewForm.rating} star
+                            {reviewForm.rating !== 1 ? "s" : ""}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Your Review
+                        </label>
+                        <textarea
+                          value={reviewForm.comment}
+                          onChange={(e) =>
+                            setReviewForm((prev) => ({
+                              ...prev,
+                              comment: e.target.value,
+                            }))
+                          }
+                          placeholder="Share your experience with this property..."
+                          rows={4}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                          required
+                          minLength={10}
+                          maxLength={1000}
+                        />
+                        <div className="flex justify-between items-center mt-1">
+                          <span className="text-xs text-gray-500">
+                            {reviewForm.comment.length}/1000 characters
+                          </span>
+                          {reviewForm.comment.length < 10 &&
+                            reviewForm.comment.length > 0 && (
+                              <span className="text-xs text-red-500">
+                                Minimum 10 characters required
+                              </span>
+                            )}
+                        </div>
+                      </div>
+
+                      {reviewError && (
+                        <div className="text-red-600 text-sm bg-red-50 p-3 rounded-lg">
+                          {reviewError}
+                        </div>
+                      )}
+
+                      <div className="flex justify-end space-x-3">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => {
+                            setShowReviewForm(false);
+                            setReviewError(null);
+                            setReviewForm({ rating: 5, comment: "" });
+                          }}
+                          disabled={submittingReview}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          type="submit"
+                          disabled={
+                            submittingReview || reviewForm.comment.length < 10
+                          }
+                          className="bg-blue-600 hover:bg-blue-700 text-white"
+                        >
+                          {submittingReview ? "Submitting..." : "Submit Review"}
+                        </Button>
+                      </div>
+                    </form>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Show message for users who haven't booked */}
+            {user && !userBooking && !loadingBookingStatus && (
+              <div className="bg-blue-50 p-6 rounded-xl border border-blue-200 text-center">
+                <h3 className="text-lg font-semibold text-blue-900 mb-2">
+                  Book to Leave a Review
+                </h3>
+                <p className="text-blue-700 mb-4">
+                  You need to book and stay at this property before you can
+                  leave a review.
+                </p>
+                <Button
+                  onClick={() => setShowBookingSession(true)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  Book Now
+                </Button>
+              </div>
+            )}
+
+            <Divider />
+
             {/* Location */}
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-6">
                 Location
               </h2>
               <div className="space-y-4">
-                <p className="text-gray-700 text-lg">
-                  {property.address || "Address not available"}
-                </p>
-                {property.latitude && property.longitude ? (
-                  <button
-                    onClick={() => {
-                      const googleMapsUrl = `https://www.google.com/maps?q=${property.latitude},${property.longitude}`;
-                      window.open(googleMapsUrl, "_blank");
-                    }}
-                    className="inline-flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-                  >
-                    <MapPin className="h-5 w-5" />
-                    <span>Open Map on Google</span>
-                  </button>
+                {showAddress ? (
+                  <>
+                    <p className="text-gray-700 text-lg">
+                      {property.address || "Address not available"}
+                    </p>
+                    {property.latitude && property.longitude ? (
+                      <button
+                        onClick={() => {
+                          const googleMapsUrl = `https://www.google.com/maps?q=${property.latitude},${property.longitude}`;
+                          window.open(googleMapsUrl, "_blank");
+                        }}
+                        className="inline-flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                      >
+                        <MapPin className="h-5 w-5" />
+                        <span>Open Map on Google</span>
+                      </button>
+                    ) : (
+                      <div className="bg-gray-100 rounded-lg p-6 text-center">
+                        <MapPin className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                        <p className="text-gray-600">
+                          Location coordinates not available
+                        </p>
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <div className="bg-gray-100 rounded-lg p-6 text-center">
                     <MapPin className="h-8 w-8 text-gray-400 mx-auto mb-2" />
                     <p className="text-gray-600">
-                      Location coordinates not available
+                      Complete your booking to see the exact location and map
                     </p>
                   </div>
                 )}
@@ -1608,17 +1882,49 @@ export default function PropertyDetailPage() {
         </div>
       </Modal>
 
-      {/* Booking Session Modal */}
-      <BookingSession
-        property={property}
-        isOpen={showBookingSession}
-        onClose={() => setShowBookingSession(false)}
-        initialBookingData={bookingData}
-        feeCalculation={feeCalculation}
-        calculatingFees={calculatingFees}
-      />
-
-      {/* Message Host Modal */}
+      {/* Booking Session Drawer */}
+      <Drawer
+        open={showBookingSession}
+        onOpenChange={setShowBookingSession}
+        direction="right"
+      >
+        <DrawerContent className="!w-full !max-w-none sm:!w-5/6 sm:!max-w-2xl h-full bg-white">
+          <DrawerHeader>
+            <DrawerTitle>Book Your Stay</DrawerTitle>
+            <DrawerClose asChild>
+              <button className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M18 6L6 18" />
+                  <path d="M6 6l12 12" />
+                </svg>
+                <span className="sr-only">Close</span>
+              </button>
+            </DrawerClose>
+          </DrawerHeader>
+          <div className="flex-1 overflow-y-auto px-4 py-2 -mx-4 w-full">
+            <BookingSession
+              inDrawer={true}
+              property={property}
+              isOpen={showBookingSession}
+              onClose={() => setShowBookingSession(false)}
+              initialBookingData={bookingData}
+              feeCalculation={feeCalculation}
+              calculatingFees={calculatingFees}
+              onBookingSuccess={handleBookingSuccess}
+            />
+          </div>
+        </DrawerContent>
+      </Drawer>
       <Modal
         isOpen={showMessageModal}
         onClose={() => {

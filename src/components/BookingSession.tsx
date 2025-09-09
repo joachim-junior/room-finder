@@ -26,7 +26,9 @@ interface BookingSessionProps {
     specialRequests?: string;
   };
   feeCalculation?: FeeCalculation | null;
+  inDrawer?: boolean;
   calculatingFees?: boolean;
+  onBookingSuccess?: (booking: any) => void;
 }
 
 type BookingStep =
@@ -69,7 +71,9 @@ export default function BookingSession({
   onClose,
   initialBookingData,
   feeCalculation,
+  inDrawer = false,
   calculatingFees = false,
+  onBookingSuccess,
 }: BookingSessionProps) {
   const router = useRouter();
   const { user } = useAuth();
@@ -286,6 +290,11 @@ export default function BookingSession({
             console.log("Payment completed successfully!");
             setPollingProgress(null);
             setCurrentStep("success");
+            
+            // Call the success callback if provided
+            if (onBookingSuccess && booking) {
+              onBookingSuccess(booking);
+            }
             return;
           } else if (status === "FAILED") {
             console.log("Payment failed");
@@ -370,11 +379,11 @@ export default function BookingSession({
     switch (currentStep) {
       case "details":
         return (
-          <div className="space-y-6">
+          <div className="space-y-4">
             <div>
-              <h3 className="text-lg font-semibold mb-4">Booking Details</h3>
+              <h3 className="text-lg font-semibold mb-3">Booking Details</h3>
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Check-in
@@ -522,11 +531,11 @@ export default function BookingSession({
 
       case "summary":
         return (
-          <div className="space-y-6">
+          <div className="space-y-4">
             <div>
-              <h3 className="text-lg font-semibold mb-4">Booking Summary</h3>
+              <h3 className="text-lg font-semibold mb-3">Booking Summary</h3>
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Check-in
@@ -680,10 +689,10 @@ export default function BookingSession({
 
       case "payment":
         return (
-          <div className="space-y-6">
+          <div className="space-y-4">
             {/* Payment Method */}
             <div>
-              <h3 className="text-lg font-semibold mb-4">Payment Method</h3>
+              <h3 className="text-lg font-semibold mb-3">Payment Method</h3>
               <div className="space-y-3">
                 <label
                   className={`flex items-center p-4 border rounded-lg cursor-pointer transition-all ${
@@ -808,7 +817,7 @@ export default function BookingSession({
 
       case "processing":
         return (
-          <div className="text-center space-y-6">
+          <div className="text-center space-y-4">
             <div className="flex justify-center">
               <Loader2 className="h-12 w-12 text-blue-500 animate-spin" />
             </div>
@@ -849,7 +858,7 @@ export default function BookingSession({
 
       case "success":
         return (
-          <div className="text-center space-y-6">
+          <div className="text-center space-y-4">
             <div className="flex justify-center">
               <CheckCircle className="h-12 w-12 text-green-500" />
             </div>
@@ -873,7 +882,7 @@ export default function BookingSession({
 
       case "error":
         return (
-          <div className="text-center space-y-6">
+          <div className="text-center space-y-4">
             <div className="flex justify-center">
               <AlertCircle className="h-12 w-12 text-red-500" />
             </div>
@@ -905,10 +914,9 @@ export default function BookingSession({
         return null;
     }
   };
-
-  return (
-    <Modal isOpen={isOpen} onClose={handleClose} className="max-w-md">
-      <div className="relative flex flex-col max-h-[90vh]">
+  const content = (
+    <div className="relative flex flex-col h-full">
+      {!inDrawer && (
         <div className="flex items-center justify-between mb-6 flex-shrink-0">
           <h2 className="text-xl font-bold">Book {property.title}</h2>
           <button
@@ -918,18 +926,28 @@ export default function BookingSession({
             <X className="h-5 w-5" />
           </button>
         </div>
+      )}
 
-        {error && currentStep !== "error" && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex-shrink-0">
-            <div className="flex items-center space-x-2">
-              <AlertCircle className="h-4 w-4 text-red-500" />
-              <span className="text-sm text-red-700">{error}</span>
-            </div>
+      {error && currentStep !== "error" && (
+        <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg flex-shrink-0">
+          <div className="flex items-center space-x-2">
+            <AlertCircle className="h-4 w-4 text-red-500" />
+            <span className="text-sm text-red-700">{error}</span>
           </div>
-        )}
+        </div>
+      )}
 
-        <div className="overflow-y-auto flex-1 min-h-0">{renderStep()}</div>
-      </div>
+      <div className="overflow-y-auto flex-1 min-h-0 px-4 py-2 w-full">{renderStep()}</div>
+    </div>
+  );
+
+  if (inDrawer) {
+    return content;
+  }
+
+  return (
+    <Modal isOpen={isOpen} onClose={handleClose} className="max-w-md">
+      {content}
     </Modal>
   );
 }

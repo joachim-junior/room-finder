@@ -43,6 +43,12 @@ const nextConfig: NextConfig = {
         port: "",
         pathname: "/**",
       },
+      {
+        protocol: "http",
+        hostname: "api.roomfinder237.com",
+        port: "",
+        pathname: "/**",
+      },
     ],
   },
 };

@@ -57,12 +57,35 @@ function SearchContent() {
   const [totalPages, setTotalPages] = useState(1);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
-  const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
+  const [searchQuery, setSearchQuery] = useState(
+    searchParams.get("q") || searchParams.get("city") || ""
+  );
 
-  // Load properties when component mounts or filters change
+  // Update filters when URL parameters change and load properties
   useEffect(() => {
-    loadProperties();
-  }, [filters, searchParams]);
+    const city = searchParams.get("city");
+    const checkIn = searchParams.get("checkIn");
+    const checkOut = searchParams.get("checkOut");
+    const guests = searchParams.get("guests");
+
+    const newFilters = {
+      ...filters,
+      city: city || undefined,
+      checkIn: checkIn || undefined,
+      checkOut: checkOut || undefined,
+      guests: guests ? Number(guests) : undefined,
+    };
+
+    setFilters(newFilters);
+
+    // Load properties with the updated filters immediately
+    loadPropertiesWithFilters(newFilters);
+  }, [searchParams]);
+
+  // Load properties when component mounts
+  useEffect(() => {
+    loadPropertiesWithFilters(filters);
+  }, [filters]);
 
   // Click outside handler for guest picker
   useEffect(() => {
@@ -84,40 +107,41 @@ function SearchContent() {
     };
   }, [showGuestPicker]);
 
-  const loadProperties = async () => {
+  const loadPropertiesWithFilters = async (filterParams: SearchFilters) => {
     setLoading(true);
     try {
       let response;
 
-      // If there's a search query, use search endpoint
-      if (searchQuery.trim()) {
-        response = await apiClient.searchProperties(
-          searchQuery.trim(),
-          filters
-        );
+      // If there's a search query or city filter, use search endpoint
+      if (searchQuery.trim() || filterParams.city) {
+        const searchTerm = searchQuery.trim() || filterParams.city || "";
+        console.log("Searching with:", { searchTerm, filterParams });
+        response = await apiClient.searchProperties(searchTerm, filterParams);
+        console.log("Response:", response.properties);
 
         // Handle ApiResponse structure
-        if (response.success && response.data) {
-          setProperties(response.data.data);
-          setTotalPages(response.data.pagination.totalPages);
-          setCurrentPage(response.data.pagination.currentPage);
-          setTotalItems(response.data.pagination.totalItems);
+        if (response) {
+          setProperties(response.properties || []);
+          setTotalPages(response.pagination?.totalPages || 1);
+          setCurrentPage(response.pagination?.page || 1);
+          setTotalItems(response.pagination?.total || 0);
         } else {
-          console.error("Failed to load properties:", response.message);
+          // No structured data present; default to empty list without logging an error
           setProperties([]);
         }
       } else {
         // Otherwise use regular properties endpoint with filters
-        response = await apiClient.getProperties(filters);
+        response = await apiClient.getProperties(filterParams);
 
         // Handle PropertiesResponse structure
         if (response.properties) {
+          console.log("Properties:", response.properties);
           setProperties(response.properties);
           setTotalPages(response.pagination.totalPages);
           setCurrentPage(response.pagination.page);
           setTotalItems(response.pagination.total);
         } else {
-          console.error("Failed to load properties:", response.message);
+          // No structured data present; default to empty list without logging an error
           setProperties([]);
         }
       }
@@ -127,6 +151,10 @@ function SearchContent() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadProperties = async () => {
+    loadPropertiesWithFilters(filters);
   };
 
   const handleSearch = (e: React.FormEvent) => {
@@ -212,7 +240,7 @@ function SearchContent() {
   const clearFilters = () => {
     setFilters({
       page: 1,
-      limit: 12,
+      limit: 20,
       isAvailable: true, // Keep only available properties filter
     });
     setSearchQuery("");
@@ -298,16 +326,12 @@ function SearchContent() {
         </div>
 
         {/* Search Bar with Filters - Using Home Page Style */}
-        <div className="bg-white mb-8 sticky top-0 z-50 shadow-sm py-4">
+        <div className="bg-white mb-8 sticky top-0 z-40 py-4">
           <div className="max-w-6xl mx-auto">
             <div className="flex items-center space-x-4">
               <form
                 onSubmit={handleSearch}
                 className="flex-1 bg-white rounded-full p-2 flex items-center hover:shadow-lg transition-shadow"
-                style={{
-                  border: "1px solid #DDDDDD",
-                  boxShadow: "0 6px 20px 0 rgba(0,0,0,0.1)",
-                }}
               >
                 <div className="flex-1 flex items-center space-x-4 px-6">
                   {/* Where */}

@@ -12,6 +12,8 @@ import {
   Textarea,
   Select,
   ToastContainer,
+  Modal,
+  Loader,
 } from "@/components/ui";
 import { useToast } from "@/hooks/useToast";
 import {
@@ -37,8 +39,10 @@ import {
   AlertCircle,
   Heart,
   Search,
+  RefreshCw,
 } from "lucide-react";
 import { ImageWithPlaceholder } from "@/components/ui/ImageWithPlaceholder";
+import { buildImageUrl } from "@/lib/utils";
 
 interface DashboardStats {
   totalProperties: number;
@@ -54,6 +58,7 @@ interface DashboardStats {
   availableProperties: number;
   bookedProperties: number;
   unreadNotifications: number;
+  favorites?: number;
 }
 
 interface WalletTransaction {
@@ -249,10 +254,10 @@ export default function DashboardPage() {
   const [bookingFilter, setBookingFilter] = useState<string>("ALL");
   const [showBookingMenu, setShowBookingMenu] = useState<string | null>(null);
   const [bookingsPagination, setBookingsPagination] = useState({
-    currentPage: 1,
+    page: 1,
     totalPages: 1,
-    totalItems: 0,
-    itemsPerPage: 10,
+    total: 0,
+    limit: 10,
   });
 
   // Reviews state
@@ -301,10 +306,10 @@ export default function DashboardPage() {
   });
 
   useEffect(() => {
-    if (user) {
+    if (user && user.role && (user.role === "HOST" || user.role === "GUEST")) {
       fetchDashboardData();
       fetchWalletData();
-      if (user.role === "HOST") {
+      if (user && user.role === "HOST") {
         // Try to fetch host-specific data, but don't let failures break the dashboard
         Promise.allSettled([
           fetchHostApplicationStatus(),
@@ -362,7 +367,7 @@ export default function DashboardPage() {
       console.log("User role:", user.role);
 
       // For HOST users, fetch comprehensive dashboard stats
-      if (user.role === "HOST") {
+      if (user && user.role === "HOST") {
         console.log("User is HOST, fetching comprehensive dashboard stats...");
         try {
           const dashboardStatsResponse =
@@ -376,8 +381,9 @@ export default function DashboardPage() {
             setStats((prev) => ({
               ...prev,
               // Overview stats
-              totalBookings: data.overview?.totalBookings || 0,
-              totalReviews: data.overview?.totalReviews || 0,
+
+              totalReviews:
+                data.reviews?.total || data.overview?.totalReviews || 0,
               totalSpent: data.overview?.totalSpent || 0,
               currency: data.financial?.currency || "XAF",
 
@@ -391,7 +397,6 @@ export default function DashboardPage() {
               totalEarnings: data.hostStats?.totalNetEarnings || 0,
               availableProperties: data.hostStats?.totalProperties || 0, // Will be updated by property stats
               bookedProperties: 0, // Will be calculated
-
               // Notification stats
               unreadNotifications: 0, // Will be updated by notification stats
             }));
@@ -402,9 +407,9 @@ export default function DashboardPage() {
               setWalletCurrency(data.financial.currency || "XAF");
               // Use dashboard stats financial data for consistency
               setWalletStats({
-                totalTransactions: data.financial.totalTransactions || 0,
+                totalTransactions: 0, // Will be updated by wallet balance API
                 totalPayments: data.financial.totalSpent || 0, // Use totalSpent as totalPayments
-                totalRefunds: data.financial.totalRefunds || 0,
+                totalRefunds: 0, // Will be updated by wallet balance API
                 totalWithdrawals: 0,
               });
             }
@@ -440,12 +445,13 @@ export default function DashboardPage() {
 
             setStats((prev) => ({
               ...prev,
-              totalBookings: data.overview?.totalBookings || 0,
+
               activeBookings: data.overview?.activeBookings || 0,
               completedBookings: data.bookings?.completed || 0,
               cancelledBookings: data.bookings?.cancelled || 0,
               totalSpent: data.overview?.totalSpent || 0,
-              totalReviews: data.overview?.totalReviews || 0,
+              totalReviews:
+                data.reviews?.total || data.overview?.totalReviews || 0,
               averageRating: data.overview?.averageRating || 0,
               currency: data.financial?.currency || "XAF",
             }));
@@ -456,9 +462,9 @@ export default function DashboardPage() {
               setWalletCurrency(data.financial.currency || "XAF");
               // Use dashboard stats financial data for consistency
               setWalletStats({
-                totalTransactions: data.financial.totalTransactions || 0,
+                totalTransactions: 0, // Will be updated by wallet balance API
                 totalPayments: data.financial.totalSpent || 0, // Use totalSpent as totalPayments
-                totalRefunds: data.financial.totalRefunds || 0,
+                totalRefunds: 0, // Will be updated by wallet balance API
                 totalWithdrawals: 0,
               });
             }
@@ -580,7 +586,13 @@ export default function DashboardPage() {
           if (walletCurrency === "XAF") {
             setWalletCurrency(balanceResponse.data.currency || "XAF");
           }
-          // Don't override walletStats - let dashboard stats data take priority
+          // Update wallet stats with the comprehensive data from wallet balance API
+          setWalletStats({
+            totalTransactions: balanceResponse.data.totalTransactions || 0,
+            totalPayments: balanceResponse.data.totalPayments || 0,
+            totalRefunds: balanceResponse.data.totalRefunds || 0,
+            totalWithdrawals: balanceResponse.data.totalWithdrawals || 0,
+          });
         }
       } catch (balanceError) {
         console.warn("Wallet balance API not available:", balanceError);
@@ -604,8 +616,23 @@ export default function DashboardPage() {
       console.log("🔍 Host application status response:", response);
 
       if (response.success && response.data) {
-        console.log("🔍 Setting host application status:", response.data);
-        setHostApplicationStatus(response.data);
+        // Normalize API shapes:
+        // - New shape (user payload): { hostApprovalStatus, hostApprovalDate, hostApprovalNotes, ... }
+        // - Old shape (status payload): { status, reviewedAt, notes }
+        const raw: any = response.data;
+        const normalized = {
+          status: (raw.status || raw.hostApprovalStatus || "").toUpperCase(),
+          reviewedAt: raw.reviewedAt || raw.hostApprovalDate || undefined,
+          notes: raw.notes || raw.hostApprovalNotes || undefined,
+          submittedAt: raw.submittedAt || raw.hostApplicationDate || undefined,
+          rejectionReason:
+            raw.rejectionReason || raw.hostRejectionReason || undefined,
+        };
+        console.log(
+          "🔍 Setting host application status (normalized):",
+          normalized
+        );
+        setHostApplicationStatus(normalized as any);
       } else {
         console.log("🔍 No host application status data:", response);
       }
@@ -666,29 +693,50 @@ export default function DashboardPage() {
 
       if (response.success && response.data) {
         setHostBookings(response.data.data || []);
+        setHostBookings(response.data.data || []);
         setBookingsPagination({
-          currentPage: response.data.pagination?.currentPage || 1,
+          page: parseInt(response.data.pagination?.page) || 1,
           totalPages: response.data.pagination?.totalPages || 1,
-          totalItems: response.data.pagination?.totalItems || 0,
-          itemsPerPage: response.data.pagination?.itemsPerPage || 10,
+          total: parseInt(response.data.pagination?.total) || 0,
+          limit: parseInt(response.data.pagination?.limit) || 10,
         });
+        // Update stats with total bookings from bookings API
+        setStats((prev) => ({
+          ...prev,
+          totalBookings: parseInt(response.data?.pagination?.total) || 0,
+        }));
       }
     } catch (err) {
       console.warn("Host bookings API not available:", err);
     }
   };
 
-  const fetchGuestBookings = async (page: number = 1) => {
+  const fetchGuestBookings = async (
+    page: number = 1,
+    limit: number = 10,
+    status?: string
+  ) => {
     try {
-      const response = await apiClient.getGuestBookings(undefined, page, 10);
+      const response = await apiClient.getGuestBookings(status, page, limit);
       if (response.success && response.data) {
-        setGuestBookings(response.data.data || []);
+        // Map API shape: { bookings: Booking[], pagination: { page, limit, total, totalPages } }
+        const bookings =
+          (response.data as any).bookings || (response.data as any).data || [];
+        const p = (response.data as any).pagination || {};
+
+        setGuestBookings(bookings);
+        setHostBookings(response.data.data || []);
         setBookingsPagination({
-          currentPage: response.data.pagination?.currentPage || 1,
+          currentPage: response.data.pagination?.page || 1,
           totalPages: response.data.pagination?.totalPages || 1,
           totalItems: response.data.pagination?.totalItems || 0,
-          itemsPerPage: response.data.pagination?.itemsPerPage || 10,
+          itemsPerPage: response.data.pagination?.limit || 10,
         });
+        // Update stats with total bookings from bookings API
+        setStats((prev) => ({
+          ...prev,
+          totalBookings: response.data?.pagination?.totalItems || 0,
+        }));
       }
     } catch (err) {
       console.warn("Guest bookings API not available:", err);
@@ -716,27 +764,46 @@ export default function DashboardPage() {
         const pagination = response.data.pagination || {};
         console.log("🔍 Raw pagination from API:", pagination);
         console.log("🔍 Parsed pagination values:", {
-          currentPage: parseInt(String(pagination.currentPage || 1)),
-          totalPages: parseInt(String(pagination.totalPages || 1)),
-          totalItems: parseInt(String(pagination.totalItems || 0)),
-          itemsPerPage: parseInt(String(pagination.itemsPerPage || 10)),
+          currentPage: parseInt(
+            String(pagination.page || pagination.currentPage || 1)
+          ),
+          totalPages: parseInt(
+            String(pagination.pages || pagination.totalPages || 1)
+          ),
+          totalItems: parseInt(
+            String(pagination.total || pagination.totalItems || 0)
+          ),
+          itemsPerPage: parseInt(
+            String(pagination.limit || pagination.itemsPerPage || 10)
+          ),
         });
 
         const newPagination = {
           currentPage: Math.max(
             1,
-            parseInt(String(pagination.currentPage || 1))
+            parseInt(String(pagination.page || pagination.currentPage || 1))
           ),
-          totalPages: Math.max(1, parseInt(String(pagination.totalPages || 1))),
-          totalItems: Math.max(0, parseInt(String(pagination.totalItems || 0))),
+          totalPages: Math.max(
+            1,
+            parseInt(String(pagination.pages || pagination.totalPages || 1))
+          ),
+          totalItems: Math.max(
+            0,
+            parseInt(String(pagination.total || pagination.totalItems || 0))
+          ),
           itemsPerPage: Math.max(
             1,
-            parseInt(String(pagination.itemsPerPage || 10))
+            parseInt(String(pagination.limit || pagination.itemsPerPage || 10))
           ),
         };
 
         console.log("🔍 Setting new pagination state:", newPagination);
         setReviewsPagination(newPagination);
+        // Update overview totalReviews from reviews API total
+        setStats((prev) => ({
+          ...prev,
+          totalReviews: newPagination.totalItems,
+        }));
       } else {
         console.log(
           "❌ Setting reviews error:",
@@ -761,31 +828,45 @@ export default function DashboardPage() {
       console.log("Guest reviews response:", response);
 
       if (response.success && response.data) {
-        console.log("✅ Setting guest reviews:", response.data.reviews);
+        console.log("✅ Setting guest reviews:", response.data.data);
         console.log("✅ Setting guest pagination:", response.data.pagination);
 
-        setGuestReviews(response.data.reviews || []);
+        setGuestReviews(response.data.data || []);
 
         // Ensure pagination values are valid numbers (same as host reviews)
         const pagination = response.data.pagination || {};
         console.log("🔍 Raw guest pagination from API:", pagination);
         console.log("🔍 Parsed guest pagination values:", {
-          currentPage: parseInt(String(pagination.currentPage || 1)),
-          totalPages: parseInt(String(pagination.totalPages || 1)),
-          totalItems: parseInt(String(pagination.totalItems || 0)),
-          itemsPerPage: parseInt(String(pagination.itemsPerPage || 10)),
+          currentPage: parseInt(
+            String(pagination.page || pagination.currentPage || 1)
+          ),
+          totalPages: parseInt(
+            String(pagination.pages || pagination.totalPages || 1)
+          ),
+          totalItems: parseInt(
+            String(pagination.total || pagination.totalItems || 0)
+          ),
+          itemsPerPage: parseInt(
+            String(pagination.limit || pagination.itemsPerPage || 10)
+          ),
         });
 
         const newPagination = {
           currentPage: Math.max(
             1,
-            parseInt(String(pagination.currentPage || 1))
+            parseInt(String(pagination.page || pagination.currentPage || 1))
           ),
-          totalPages: Math.max(1, parseInt(String(pagination.totalPages || 1))),
-          totalItems: Math.max(0, parseInt(String(pagination.totalItems || 0))),
+          totalPages: Math.max(
+            1,
+            parseInt(String(pagination.pages || pagination.totalPages || 1))
+          ),
+          totalItems: Math.max(
+            0,
+            parseInt(String(pagination.total || pagination.totalItems || 0))
+          ),
           itemsPerPage: Math.max(
             1,
-            parseInt(String(pagination.itemsPerPage || 10))
+            parseInt(String(pagination.limit || pagination.itemsPerPage || 10))
           ),
         };
 
@@ -828,6 +909,7 @@ export default function DashboardPage() {
   };
 
   const fetchHostEnquiries = async (page: number = 1, status?: string) => {
+    if (!user || user.role !== "HOST") return;
     try {
       setEnquiriesLoading(true);
       setEnquiriesError(null);
@@ -848,22 +930,36 @@ export default function DashboardPage() {
         const pagination = response.data.pagination || {};
         console.log("🔍 Raw host enquiries pagination from API:", pagination);
         console.log("🔍 Parsed host enquiries pagination values:", {
-          currentPage: parseInt(String(pagination.currentPage || 1)),
-          totalPages: parseInt(String(pagination.totalPages || 1)),
-          totalItems: parseInt(String(pagination.totalItems || 0)),
-          itemsPerPage: parseInt(String(pagination.itemsPerPage || 10)),
+          currentPage: parseInt(
+            String(pagination.page || pagination.currentPage || 1)
+          ),
+          totalPages: parseInt(
+            String(pagination.pages || pagination.totalPages || 1)
+          ),
+          totalItems: parseInt(
+            String(pagination.total || pagination.totalItems || 0)
+          ),
+          itemsPerPage: parseInt(
+            String(pagination.limit || pagination.itemsPerPage || 10)
+          ),
         });
 
         const newPagination = {
           currentPage: Math.max(
             1,
-            parseInt(String(pagination.currentPage || 1))
+            parseInt(String(pagination.page || pagination.currentPage || 1))
           ),
-          totalPages: Math.max(1, parseInt(String(pagination.totalPages || 1))),
-          totalItems: Math.max(0, parseInt(String(pagination.totalItems || 0))),
+          totalPages: Math.max(
+            1,
+            parseInt(String(pagination.pages || pagination.totalPages || 1))
+          ),
+          totalItems: Math.max(
+            0,
+            parseInt(String(pagination.total || pagination.totalItems || 0))
+          ),
           itemsPerPage: Math.max(
             1,
-            parseInt(String(pagination.itemsPerPage || 10))
+            parseInt(String(pagination.limit || pagination.itemsPerPage || 10))
           ),
         };
 
@@ -915,22 +1011,36 @@ export default function DashboardPage() {
         const pagination = response.data.pagination || {};
         console.log("🔍 Raw guest enquiries pagination from API:", pagination);
         console.log("🔍 Parsed guest enquiries pagination values:", {
-          currentPage: parseInt(String(pagination.currentPage || 1)),
-          totalPages: parseInt(String(pagination.totalPages || 1)),
-          totalItems: parseInt(String(pagination.totalItems || 0)),
-          itemsPerPage: parseInt(String(pagination.itemsPerPage || 10)),
+          currentPage: parseInt(
+            String(pagination.page || pagination.currentPage || 1)
+          ),
+          totalPages: parseInt(
+            String(pagination.pages || pagination.totalPages || 1)
+          ),
+          totalItems: parseInt(
+            String(pagination.total || pagination.totalItems || 0)
+          ),
+          itemsPerPage: parseInt(
+            String(pagination.limit || pagination.itemsPerPage || 10)
+          ),
         });
 
         const newPagination = {
           currentPage: Math.max(
             1,
-            parseInt(String(pagination.currentPage || 1))
+            parseInt(String(pagination.page || pagination.currentPage || 1))
           ),
-          totalPages: Math.max(1, parseInt(String(pagination.totalPages || 1))),
-          totalItems: Math.max(0, parseInt(String(pagination.totalItems || 0))),
+          totalPages: Math.max(
+            1,
+            parseInt(String(pagination.pages || pagination.totalPages || 1))
+          ),
+          totalItems: Math.max(
+            0,
+            parseInt(String(pagination.total || pagination.totalItems || 0))
+          ),
           itemsPerPage: Math.max(
             1,
-            parseInt(String(pagination.itemsPerPage || 10))
+            parseInt(String(pagination.limit || pagination.itemsPerPage || 10))
           ),
         };
 
@@ -1013,6 +1123,12 @@ export default function DashboardPage() {
           newPagination
         );
         setFavoritesPagination(newPagination);
+
+        // Update favorites count in overview stats
+        setStats((prev) => ({
+          ...prev,
+          favorites: newPagination.totalItems,
+        }));
       } else {
         console.log(
           "❌ Setting guest favorites error:",
@@ -1078,57 +1194,17 @@ export default function DashboardPage() {
         "🔍 Response data keys:",
         response.data ? Object.keys(response.data) : "No data"
       );
-      console.log("🔍 Response message:", response.message);
-      console.log("🔍 Response error:", response.error);
+      console.log("🔍 Response message:", response.data?.message);
+      console.log("🔍 Response error:", response.data?.error);
 
       if (response.success && response.data) {
-        console.log("✅ Response is successful and has data");
-
-        // Check the actual structure of response.data
-        console.log("🔍 response.data structure:", {
-          hasProperties: !!response.data.properties,
-          hasData: !!response.data.data,
-          hasPagination: !!response.data.pagination,
-          keys: Object.keys(response.data),
+        setHostProperties(response.data.properties);
+        setPropertiesPagination({
+          currentPage: response.data.pagination.page,
+          totalPages: response.data.pagination.totalPages,
+          totalItems: response.data.pagination.total,
+          itemsPerPage: response.data.pagination.limit,
         });
-
-        // Try different possible structures
-        let properties = [];
-        let pagination = {
-          currentPage: 1,
-          totalPages: 1,
-          totalItems: 0,
-          itemsPerPage: 10,
-        };
-
-        // Structure 1: response.data.properties (from API docs)
-        if (response.data.properties) {
-          properties = response.data.properties;
-          pagination = response.data.pagination || pagination;
-          console.log("✅ Using response.data.properties structure");
-        }
-        // Structure 2: response.data.data (from PaginatedResponse type)
-        else if (response.data.data) {
-          properties = response.data.data;
-          pagination = response.data.pagination || pagination;
-          console.log("✅ Using response.data.data structure");
-        }
-        // Structure 3: response.data is directly the array
-        else if (Array.isArray(response.data)) {
-          properties = response.data;
-          console.log("✅ Using response.data as array structure");
-        } else {
-          console.log("❌ Unknown response.data structure:", response.data);
-          setPropertiesError("Invalid response structure from API");
-          return;
-        }
-
-        console.log("✅ Final processed properties:", properties);
-        console.log("✅ Properties length:", properties.length);
-        console.log("✅ Final pagination:", pagination);
-
-        setHostProperties(properties);
-        setPropertiesPagination(pagination);
       } else {
         console.log("❌ Response not successful or no data");
         console.log("❌ Response success:", response.success);
@@ -1202,7 +1278,7 @@ export default function DashboardPage() {
 
   // Host Wallet Functions
   const fetchHostWalletData = async () => {
-    if (user?.role !== "HOST") return;
+    if (!user || user.role !== "HOST") return;
 
     try {
       setHostWalletLoading(true);
@@ -1322,28 +1398,42 @@ export default function DashboardPage() {
           response.data.pagination
         );
 
-        setNotifications(response.data.data || []);
+        setNotifications(response.data.notifications || []);
 
         // Ensure pagination values are valid numbers
         const pagination = response.data.pagination || {};
         console.log("🔍 Raw notifications pagination from API:", pagination);
         console.log("🔍 Parsed notifications pagination values:", {
-          currentPage: parseInt(String(pagination.currentPage || 1)),
-          totalPages: parseInt(String(pagination.totalPages || 1)),
-          totalItems: parseInt(String(pagination.totalItems || 0)),
-          itemsPerPage: parseInt(String(pagination.itemsPerPage || 10)),
+          currentPage: parseInt(
+            String(pagination.page || pagination.currentPage || 1)
+          ),
+          totalPages: parseInt(
+            String(pagination.pages || pagination.totalPages || 1)
+          ),
+          totalItems: parseInt(
+            String(pagination.total || pagination.totalItems || 0)
+          ),
+          itemsPerPage: parseInt(
+            String(pagination.limit || pagination.itemsPerPage || 10)
+          ),
         });
 
         const newPagination = {
           currentPage: Math.max(
             1,
-            parseInt(String(pagination.currentPage || 1))
+            parseInt(String(pagination.page || pagination.currentPage || 1))
           ),
-          totalPages: Math.max(1, parseInt(String(pagination.totalPages || 1))),
-          totalItems: Math.max(0, parseInt(String(pagination.totalItems || 0))),
+          totalPages: Math.max(
+            1,
+            parseInt(String(pagination.pages || pagination.totalPages || 1))
+          ),
+          totalItems: Math.max(
+            0,
+            parseInt(String(pagination.total || pagination.totalItems || 0))
+          ),
           itemsPerPage: Math.max(
             1,
-            parseInt(String(pagination.itemsPerPage || 10))
+            parseInt(String(pagination.limit || pagination.itemsPerPage || 10))
           ),
         };
 
@@ -1635,7 +1725,7 @@ export default function DashboardPage() {
 
   // Populate profile form with user data
   const populateProfileForm = () => {
-    if (user) {
+    if (user && user.role && (user.role === "HOST" || user.role === "GUEST")) {
       setProfileForm({
         firstName: user.firstName || "",
         lastName: user.lastName || "",
@@ -1649,7 +1739,7 @@ export default function DashboardPage() {
 
   // Populate profile form when user data is available
   useEffect(() => {
-    if (user) {
+    if (user && user.role && (user.role === "HOST" || user.role === "GUEST")) {
       populateProfileForm();
     }
   }, [user]);
@@ -1919,7 +2009,7 @@ export default function DashboardPage() {
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-8 w-8 border-4 border-gray-200 border-t-gray-900"></div>
+        <Loader size="md" />
       </div>
     );
   }
@@ -1928,7 +2018,7 @@ export default function DashboardPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-4 border-gray-200 border-t-gray-900 mx-auto mb-4"></div>
+          <Loader size="md" className="mx-auto mb-4" />
           <p className="text-gray-600">Loading dashboard...</p>
         </div>
       </div>
@@ -1949,8 +2039,16 @@ export default function DashboardPage() {
           },
         ]
       : []),
-    // Only show reviews for approved hosts or all users (guests can have reviews too)
-    { id: "reviews", label: "Reviews", icon: getSectionIcon("reviews") },
+    // Only show reviews for hosts
+    ...(user?.role === "HOST"
+      ? [
+          {
+            id: "reviews",
+            label: "Reviews",
+            icon: getSectionIcon("reviews"),
+          },
+        ]
+      : []),
     // Only show enquiries for approved hosts or all users (guests can have enquiries too)
     { id: "enquiries", label: "Enquiries", icon: getSectionIcon("enquiries") },
     // Show favorites for guests
@@ -2041,10 +2139,10 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs font-medium text-gray-600 mb-1">
-                      Active Bookings
+                      Total Bookings
                     </p>
                     <p className="text-xl font-bold text-gray-900">
-                      {stats?.activeBookings || 0}
+                      {stats?.totalBookings || 0}
                     </p>
                   </div>
                   <div className="h-10 w-10 bg-green-50 rounded-lg flex items-center justify-center">
@@ -2091,7 +2189,7 @@ export default function DashboardPage() {
                       Total Reviews
                     </p>
                     <p className="text-xl font-bold text-gray-900">
-                      {stats?.totalReviews || 0}
+                      {reviewStats?.totalReviews || 0}
                     </p>
                   </div>
                   <div className="h-10 w-10 bg-yellow-50 rounded-lg flex items-center justify-center">
@@ -2113,10 +2211,10 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs font-medium text-gray-600 mb-1">
-                      Active Bookings
+                      Total Bookings
                     </p>
                     <p className="text-xl font-bold text-gray-900">
-                      {stats?.activeBookings || 0}
+                      {stats?.totalBookings || 0}
                     </p>
                   </div>
                   <div className="h-10 w-10 bg-blue-50 rounded-lg flex items-center justify-center">
@@ -3001,7 +3099,7 @@ export default function DashboardPage() {
       if (!reviewStats?.ratingBreakdown) return null;
 
       const breakdown = reviewStats.ratingBreakdown;
-      const total = reviewStats.totalReviews || 0;
+      const total = reviewStats?.totalReviews || 0;
 
       return (
         <div className="space-y-2">
@@ -3068,7 +3166,7 @@ export default function DashboardPage() {
                     Total Reviews
                   </p>
                   <p className="text-xl font-bold text-gray-900">
-                    {reviewStats.totalReviews || 0}
+                    {reviewStats?.totalReviews || 0}
                   </p>
                 </div>
               </div>
@@ -3170,8 +3268,7 @@ export default function DashboardPage() {
         >
           {reviewsLoading ? (
             <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="text-sm text-gray-600 mt-2">Loading reviews...</p>
+              <Loader size="md" label="Loading reviews..." className="py-2" />
             </div>
           ) : reviewsError ? (
             <div className="text-center py-12">
@@ -3610,7 +3707,7 @@ export default function DashboardPage() {
 
         {/* Enquiry Stats */}
         {enquiryStats && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div
               className="bg-white p-6 rounded-xl"
               style={{
@@ -3728,7 +3825,7 @@ export default function DashboardPage() {
         >
           {enquiriesLoading ? (
             <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+              <Loader size="md" label="Loading..." className="py-2" />
               <p className="text-sm text-gray-600 mt-2">Loading enquiries...</p>
             </div>
           ) : enquiriesError ? (
@@ -4142,7 +4239,7 @@ export default function DashboardPage() {
 
         {favoritesLoading ? (
           <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <Loader size="md" className="py-6" />
           </div>
         ) : favoritesError ? (
           <div className="text-center py-12">
@@ -4173,7 +4270,7 @@ export default function DashboardPage() {
                       property.images.length > 0 &&
                       property.images[0] ? (
                         <ImageWithPlaceholder
-                          src={`https://api.roomfinder237.com/${property.images[0]}`}
+                          src={buildImageUrl(property.images[0])}
                           alt={property.title}
                           fill
                           className="object-cover"
@@ -4627,8 +4724,8 @@ export default function DashboardPage() {
                   Average Rating
                 </p>
                 <p className="text-xl font-bold text-gray-900">
-                  {stats?.totalReviews
-                    ? (stats?.averageRating || 0).toFixed(1)
+                  {reviewStats.averageRating
+                    ? reviewStats.averageRating.toFixed(1)
                     : "N/A"}
                 </p>
               </div>
@@ -4944,16 +5041,16 @@ export default function DashboardPage() {
         statusType: typeof user?.hostApprovalStatus,
       });
 
-      // Use hostApplicationStatus if available, otherwise fall back to user.hostApprovalStatus
-      const statusSource =
-        hostApplicationStatus?.status || user?.hostApprovalStatus;
-      const status = statusSource?.toUpperCase();
+      // Combine sources: consider approved if either source says APPROVED
+      const statusFromApp = hostApplicationStatus?.status?.toUpperCase();
+      const statusFromUser = user?.hostApprovalStatus?.toUpperCase();
+      const status = statusFromApp || statusFromUser;
 
-      // Simplified status checking - only check for exact matches
-      const isApproved = status === "APPROVED";
-      const isPending = status === "PENDING";
-      const isRejected = status === "REJECTED";
-      const isSuspended = status === "SUSPENDED";
+      const isApproved =
+        statusFromApp === "APPROVED" || statusFromUser === "APPROVED";
+      const isPending = (statusFromApp || statusFromUser) === "PENDING";
+      const isRejected = (statusFromApp || statusFromUser) === "REJECTED";
+      const isSuspended = (statusFromApp || statusFromUser) === "SUSPENDED";
 
       console.log("🔍 Status analysis:", {
         originalStatus: user?.hostApprovalStatus,
@@ -5094,7 +5191,7 @@ export default function DashboardPage() {
 
           {hostApplicationLoading ? (
             <div className="flex justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <Loader size="md" className="py-6" />
             </div>
           ) : (
             <div
@@ -5387,7 +5484,6 @@ export default function DashboardPage() {
       walletBalance: walletBalance,
       walletCurrency: walletCurrency,
       hostWalletBalance: hostWalletBalance,
-      hostWalletCurrency: hostWalletCurrency,
       hostWalletActive: hostWalletActive,
       hostEarnings: hostEarnings,
       withdrawalHistory: withdrawalHistory,
@@ -5469,7 +5565,7 @@ export default function DashboardPage() {
             </div>
             <button
               onClick={() => setShowWithdrawalModal(true)}
-              disabled={hostWalletBalance <= 0 || !hostWalletActive}
+              disabled={walletBalance <= 0 || !hostWalletActive}
               className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               Withdraw Funds
@@ -5478,7 +5574,7 @@ export default function DashboardPage() {
 
           {hostWalletLoading ? (
             <div className="flex justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <Loader size="md" className="py-6" />
             </div>
           ) : (
             <>
@@ -5497,10 +5593,10 @@ export default function DashboardPage() {
                     </div>
                     <div>
                       <p className="text-sm font-medium text-gray-600">
-                        Available Balance
+                        Balance
                       </p>
                       <p className="text-xl font-bold text-gray-900">
-                        {formatCurrency(hostWalletBalance, hostWalletCurrency)}
+                        {formatCurrency(walletBalance, walletCurrency)}
                       </p>
                     </div>
                   </div>
@@ -5519,15 +5615,12 @@ export default function DashboardPage() {
                     </div>
                     <div>
                       <p className="text-sm font-medium text-gray-600">
-                        Total Earnings
+                        Earnings
                       </p>
                       <p className="text-xl font-bold text-gray-900">
                         {formatCurrency(
-                          hostEarnings.reduce(
-                            (sum, earning) => sum + earning.netAmount,
-                            0
-                          ),
-                          hostWalletCurrency
+                          walletStats?.totalPayments || 0,
+                          walletCurrency
                         )}
                       </p>
                     </div>
@@ -5547,21 +5640,17 @@ export default function DashboardPage() {
                     </div>
                     <div>
                       <p className="text-sm font-medium text-gray-600">
-                        Total Withdrawals
+                        Withdrawals
                       </p>
                       <p className="text-xl font-bold text-gray-900">
                         {formatCurrency(
-                          withdrawalHistory.reduce(
-                            (sum, withdrawal) => sum + withdrawal.amount,
-                            0
-                          ),
-                          hostWalletCurrency
+                          walletStats?.totalWithdrawals || 0,
+                          walletCurrency
                         )}
                       </p>
                     </div>
                   </div>
                 </div>
-
                 <div
                   className="bg-white p-6 rounded-xl"
                   style={{
@@ -5575,17 +5664,17 @@ export default function DashboardPage() {
                     </div>
                     <div>
                       <p className="text-sm font-medium text-gray-600">
-                        Recent Earnings
+                        Transactions
                       </p>
                       <p className="text-xl font-bold text-gray-900">
-                        {hostEarnings.length}
+                        {walletStats?.totalTransactions || 0}
                       </p>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Recent Earnings */}
+              {/* Transaction History */}
               <div
                 className="bg-white rounded-xl p-6"
                 style={{
@@ -5594,51 +5683,94 @@ export default function DashboardPage() {
                 }}
               >
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                  Recent Earnings
+                  Transaction History
                 </h2>
                 <div className="space-y-4">
-                  {hostEarnings.length > 0 ? (
-                    hostEarnings.slice(0, 5).map((earning) => (
+                  {walletTransactions.length > 0 ? (
+                    walletTransactions.slice(0, 10).map((transaction) => (
                       <div
-                        key={earning.id}
+                        key={transaction.id}
                         className="flex justify-between items-center p-4 bg-gray-50 rounded-lg"
                       >
-                        <div>
-                          <p className="font-medium text-gray-900">
-                            {earning.description}
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            {formatDate(earning.createdAt)}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            Booking: {earning.metadata?.bookingId?.slice(-8)} |
-                            Property: {earning.metadata?.propertyId?.slice(-8)}
-                          </p>
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-3">
+                            <div
+                              className={`h-8 w-8 rounded-full flex items-center justify-center ${
+                                transaction.type === "PAYMENT"
+                                  ? "bg-green-100"
+                                  : transaction.type === "WITHDRAWAL"
+                                  ? "bg-red-100"
+                                  : transaction.type === "REFUND"
+                                  ? "bg-blue-100"
+                                  : "bg-gray-100"
+                              }`}
+                            >
+                              {transaction.type === "PAYMENT" ? (
+                                <DollarSign className="h-4 w-4 text-green-600" />
+                              ) : transaction.type === "WITHDRAWAL" ? (
+                                <TrendingDown className="h-4 w-4 text-red-600" />
+                              ) : transaction.type === "REFUND" ? (
+                                <RefreshCw className="h-4 w-4 text-blue-600" />
+                              ) : (
+                                <Wallet className="h-4 w-4 text-gray-600" />
+                              )}
+                            </div>
+                            <div className="flex-1">
+                              <p className="font-medium text-gray-900">
+                                {transaction.description}
+                              </p>
+                              <p className="text-sm text-gray-600">
+                                {formatDate(transaction.createdAt)}
+                              </p>
+                              {transaction.reference && (
+                                <p className="text-xs text-gray-500">
+                                  Ref: {transaction.reference}
+                                </p>
+                              )}
+                            </div>
+                          </div>
                         </div>
                         <div className="text-right">
-                          <p className="font-medium text-green-600">
-                            +
+                          <p
+                            className={`font-medium ${
+                              transaction.type === "PAYMENT"
+                                ? "text-green-600"
+                                : transaction.type === "WITHDRAWAL"
+                                ? "text-red-600"
+                                : transaction.type === "REFUND"
+                                ? "text-blue-600"
+                                : "text-gray-600"
+                            }`}
+                          >
+                            {transaction.type === "PAYMENT"
+                              ? "+"
+                              : transaction.type === "WITHDRAWAL"
+                              ? "-"
+                              : ""}
                             {formatCurrency(
-                              earning.netAmount,
-                              earning.currency
+                              transaction.amount,
+                              transaction.currency
                             )}
                           </p>
-                          <p className="text-xs text-gray-500">
-                            Fee:{" "}
-                            {formatCurrency(
-                              earning.hostServiceFee,
-                              earning.currency
-                            )}
-                          </p>
-                          <p className="text-xs text-green-600">
-                            {earning.status}
+                          <p
+                            className={`text-xs px-2 py-1 rounded-full ${
+                              transaction.status === "COMPLETED"
+                                ? "bg-green-100 text-green-800"
+                                : transaction.status === "PENDING"
+                                ? "bg-yellow-100 text-yellow-800"
+                                : transaction.status === "FAILED"
+                                ? "bg-red-100 text-red-800"
+                                : "bg-gray-100 text-gray-800"
+                            }`}
+                          >
+                            {transaction.status}
                           </p>
                         </div>
                       </div>
                     ))
                   ) : (
                     <div className="text-center py-8">
-                      <p className="text-gray-500">No earnings yet</p>
+                      <p className="text-gray-500">No transactions yet</p>
                     </div>
                   )}
                 </div>
@@ -5738,7 +5870,7 @@ export default function DashboardPage() {
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Amount ({hostWalletCurrency})
+                      Amount ({walletCurrency})
                     </label>
                     <input
                       type="number"
@@ -5751,7 +5883,7 @@ export default function DashboardPage() {
                       }
                       className="w-full px-3 py-2 border border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       placeholder="Enter amount"
-                      max={hostWalletBalance}
+                      max={walletBalance}
                     />
                   </div>
 
@@ -5899,7 +6031,7 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {/* Total Transactions Card */}
+              {/* Transaction History Card */}
               <div
                 className="bg-white p-6 rounded-xl"
                 style={{
@@ -6249,7 +6381,10 @@ export default function DashboardPage() {
           </div>
           <div className="flex space-x-3">
             <button
-              onClick={() => setShowPreferencesModal(true)}
+              onClick={async () => {
+                await fetchNotificationPreferences();
+                setShowPreferencesModal(true);
+              }}
               className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
             >
               Preferences
@@ -6383,7 +6518,7 @@ export default function DashboardPage() {
         >
           {notificationsLoading ? (
             <div className="flex justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <Loader size="md" className="py-6" />
             </div>
           ) : notificationsError ? (
             <div className="p-6">
@@ -6505,149 +6640,143 @@ export default function DashboardPage() {
         )}
 
         {/* Preferences Modal */}
-        {showPreferencesModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl p-6 w-full max-w-md">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Notification Preferences
-              </h3>
+        <Modal
+          isOpen={showPreferencesModal}
+          onClose={() => setShowPreferencesModal(false)}
+          title="Notification Preferences"
+        >
+          {preferencesError && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-700">{preferencesError}</p>
+            </div>
+          )}
 
-              {preferencesError && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                  <p className="text-sm text-red-700">{preferencesError}</p>
-                </div>
-              )}
-
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      Email Notifications
-                    </p>
-                    <p className="text-xs text-gray-600">
-                      Receive notifications via email
-                    </p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={preferencesForm.emailNotifications}
-                    onChange={(e) =>
-                      setPreferencesForm((prev) => ({
-                        ...prev,
-                        emailNotifications: e.target.checked,
-                      }))
-                    }
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border rounded"
-                  />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      Push Notifications
-                    </p>
-                    <p className="text-xs text-gray-600">
-                      Receive push notifications
-                    </p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={preferencesForm.pushNotifications}
-                    onChange={(e) =>
-                      setPreferencesForm((prev) => ({
-                        ...prev,
-                        pushNotifications: e.target.checked,
-                      }))
-                    }
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border rounded"
-                  />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      Booking Notifications
-                    </p>
-                    <p className="text-xs text-gray-600">
-                      New bookings and updates
-                    </p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={preferencesForm.bookingNotifications}
-                    onChange={(e) =>
-                      setPreferencesForm((prev) => ({
-                        ...prev,
-                        bookingNotifications: e.target.checked,
-                      }))
-                    }
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border rounded"
-                  />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      Review Notifications
-                    </p>
-                    <p className="text-xs text-gray-600">
-                      New reviews and ratings
-                    </p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={preferencesForm.reviewNotifications}
-                    onChange={(e) =>
-                      setPreferencesForm((prev) => ({
-                        ...prev,
-                        reviewNotifications: e.target.checked,
-                      }))
-                    }
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border rounded"
-                  />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      Payment Notifications
-                    </p>
-                    <p className="text-xs text-gray-600">
-                      Payment confirmations and issues
-                    </p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={preferencesForm.paymentNotifications}
-                    onChange={(e) =>
-                      setPreferencesForm((prev) => ({
-                        ...prev,
-                        paymentNotifications: e.target.checked,
-                      }))
-                    }
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border rounded"
-                  />
-                </div>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-900">
+                  Email Notifications
+                </p>
+                <p className="text-xs text-gray-600">
+                  Receive notifications via email
+                </p>
               </div>
+              <input
+                type="checkbox"
+                checked={preferencesForm.emailNotifications}
+                onChange={(e) =>
+                  setPreferencesForm((prev) => ({
+                    ...prev,
+                    emailNotifications: e.target.checked,
+                  }))
+                }
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border rounded"
+              />
+            </div>
 
-              <div className="flex space-x-3 mt-6">
-                <button
-                  onClick={() => setShowPreferencesModal(false)}
-                  className="flex-1 px-4 py-2 border border rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleUpdatePreferences}
-                  disabled={preferencesLoading}
-                  className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {preferencesLoading ? "Saving..." : "Save Preferences"}
-                </button>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-900">
+                  Push Notifications
+                </p>
+                <p className="text-xs text-gray-600">
+                  Receive push notifications
+                </p>
               </div>
+              <input
+                type="checkbox"
+                checked={preferencesForm.pushNotifications}
+                onChange={(e) =>
+                  setPreferencesForm((prev) => ({
+                    ...prev,
+                    pushNotifications: e.target.checked,
+                  }))
+                }
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border rounded"
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-900">
+                  Booking Notifications
+                </p>
+                <p className="text-xs text-gray-600">
+                  New bookings and updates
+                </p>
+              </div>
+              <input
+                type="checkbox"
+                checked={preferencesForm.bookingNotifications}
+                onChange={(e) =>
+                  setPreferencesForm((prev) => ({
+                    ...prev,
+                    bookingNotifications: e.target.checked,
+                  }))
+                }
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border rounded"
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-900">
+                  Review Notifications
+                </p>
+                <p className="text-xs text-gray-600">New reviews and ratings</p>
+              </div>
+              <input
+                type="checkbox"
+                checked={preferencesForm.reviewNotifications}
+                onChange={(e) =>
+                  setPreferencesForm((prev) => ({
+                    ...prev,
+                    reviewNotifications: e.target.checked,
+                  }))
+                }
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border rounded"
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-900">
+                  Payment Notifications
+                </p>
+                <p className="text-xs text-gray-600">
+                  Payment confirmations and issues
+                </p>
+              </div>
+              <input
+                type="checkbox"
+                checked={preferencesForm.paymentNotifications}
+                onChange={(e) =>
+                  setPreferencesForm((prev) => ({
+                    ...prev,
+                    paymentNotifications: e.target.checked,
+                  }))
+                }
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border rounded"
+              />
             </div>
           </div>
-        )}
+
+          <div className="flex space-x-3 mt-6">
+            <button
+              onClick={() => setShowPreferencesModal(false)}
+              className="flex-1 px-4 py-2 border border rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleUpdatePreferences}
+              disabled={preferencesLoading}
+              className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {preferencesLoading ? "Saving..." : "Save Preferences"}
+            </button>
+          </div>
+        </Modal>
       </div>
     );
   };

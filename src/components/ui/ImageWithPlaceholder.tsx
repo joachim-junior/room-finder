@@ -111,7 +111,9 @@ export const ImageWithPlaceholder: React.FC<ImageWithPlaceholderProps> = ({
       <Image
         src={src}
         alt={alt}
-        className={`${className} ${
+        width={500}
+        height={300}
+        className={`${className} $
           isLoading ? "opacity-0" : "opacity-100"
         } transition-opacity duration-300`}
         onError={handleError}
