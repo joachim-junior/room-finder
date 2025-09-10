@@ -124,12 +124,12 @@ export default function PropertyDetailPage() {
   const [reviewError, setReviewError] = useState<string | null>(null);
   // Helper functions for review sorting and filtering
   const getSortedAndFilteredReviews = () => {
-    let filteredReviews = reviews;
+    let filteredReviews = reviews || [];
 
     // Apply filter
     if (reviewFilter !== "all") {
       const targetRating = parseInt(reviewFilter);
-      filteredReviews = reviews.filter(
+      filteredReviews = (reviews || []).filter(
         (review) => review.rating === targetRating
       );
     }
@@ -194,10 +194,10 @@ export default function PropertyDetailPage() {
             1,
             20
           );
-          console.log("Reviews response:", reviewsResponse.reviews);
+          console.log("Reviews response:", reviewsResponse.data.reviews);
           if (reviewsResponse) {
-            setReviews(reviewsResponse.reviews);
-            setReviewsData(reviewsResponse);
+            setReviews(reviewsResponse.data.reviews || []);
+            setReviewsData(reviewsResponse.data);
           }
         } catch (reviewsError) {
           console.log("Reviews not available:", reviewsError);
@@ -330,7 +330,7 @@ export default function PropertyDetailPage() {
             20
           );
           if (reviewsResponse && reviewsResponse.reviews) {
-            setReviews(reviewsResponse.reviews);
+            setReviews(reviewsResponse.reviews || []);
             setReviewsData(reviewsResponse);
           }
         } catch (reloadError) {
@@ -1175,7 +1175,7 @@ export default function PropertyDetailPage() {
                 )}
               </div>
 
-              {reviews.length > 0 ? (
+              {reviews && reviews.length > 0 ? (
                 <>
                   {/* Review Summary */}
                   <div
