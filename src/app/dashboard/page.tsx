@@ -47,6 +47,7 @@ import { buildImageUrl } from "@/lib/utils";
 interface DashboardStats {
   totalProperties: number;
   totalBookings: number;
+  totalHostBookings: number;
   totalReviews: number;
   averageRating: number;
   totalSpent: number;
@@ -127,6 +128,8 @@ export default function DashboardPage() {
     totalPayments: 0,
     totalRefunds: 0,
     totalWithdrawals: 0,
+    grossEarnings: 0,
+    netEarnings: 0,
   });
   const [transactionsPagination, setTransactionsPagination] = useState({
     currentPage: 1,
@@ -136,7 +139,6 @@ export default function DashboardPage() {
   });
 
   // Host-specific wallet state
-  const [hostEarnings, setHostEarnings] = useState<any[]>([]);
   const [hostWalletBalance, setHostWalletBalance] = useState(0);
   const [hostWalletCurrency, setHostWalletCurrency] = useState("XAF");
   const [hostWalletId, setHostWalletId] = useState<string>("");
@@ -151,7 +153,7 @@ export default function DashboardPage() {
   const [showWithdrawalModal, setShowWithdrawalModal] = useState(false);
   const [withdrawalForm, setWithdrawalForm] = useState({
     amount: "",
-    withdrawalMethod: "MOBILE_MONEY" as "MOBILE_MONEY" | "BANK_TRANSFER",
+    withdrawalMethod: "MTN_MOMO" as "MTN_MOMO" | "ORANGE_MONEY",
     phone: "",
     bankDetails: {
       accountNumber: "",
@@ -375,7 +377,8 @@ export default function DashboardPage() {
           console.log("Host dashboard stats response:", dashboardStatsResponse);
 
           if (dashboardStatsResponse.success && dashboardStatsResponse.data) {
-            const data = dashboardStatsResponse.data;
+            const data = dashboardStatsResponse.data?.data;
+            console.log("Host dashboard stats data:", data);
 
             // Update stats with comprehensive dashboard data
             setStats((prev) => ({
@@ -387,11 +390,6 @@ export default function DashboardPage() {
               totalSpent: data.overview?.totalSpent || 0,
               currency: data.financial?.currency || "XAF",
 
-              // Booking stats
-              activeBookings: data.overview?.activeBookings || 0,
-              completedBookings: data.bookings?.completed || 0,
-              cancelledBookings: data.bookings?.cancelled || 0,
-
               // Host-specific stats
               totalProperties: data.hostStats?.totalProperties || 0,
               totalEarnings: data.hostStats?.totalNetEarnings || 0,
@@ -402,16 +400,19 @@ export default function DashboardPage() {
             }));
 
             // Update wallet data from dashboard financial data
-            if (data.financial) {
+            if (data.hostStats) {
+              console.log("Host stats:", data.hostStats.totalGrossEarnings);
               setWalletBalance(data.financial.walletBalance || 0);
               setWalletCurrency(data.financial.currency || "XAF");
               // Use dashboard stats financial data for consistency
-              setWalletStats({
-                totalTransactions: 0, // Will be updated by wallet balance API
+
+              setWalletStats((prev) => ({
+                ...prev,
                 totalPayments: data.financial.totalSpent || 0, // Use totalSpent as totalPayments
                 totalRefunds: 0, // Will be updated by wallet balance API
-                totalWithdrawals: 0,
-              });
+                grossEarnings: data.hostStats.totalGrossEarnings || 0,
+                netEarnings: data.hostStats.totalNetEarnings || 0,
+              }));
             }
 
             // Fetch host-specific wallet data
@@ -441,15 +442,15 @@ export default function DashboardPage() {
           );
 
           if (dashboardStatsResponse.success && dashboardStatsResponse.data) {
-            const data = dashboardStatsResponse.data;
+            const data = dashboardStatsResponse.data.data;
 
             setStats((prev) => ({
               ...prev,
-
               activeBookings: data.overview?.activeBookings || 0,
               completedBookings: data.bookings?.completed || 0,
               cancelledBookings: data.bookings?.cancelled || 0,
               totalSpent: data.overview?.totalSpent || 0,
+              totalBookings: data.overview?.totalBookings || 0,
               totalReviews:
                 data.reviews?.total || data.overview?.totalReviews || 0,
               averageRating: data.overview?.averageRating || 0,
@@ -461,12 +462,12 @@ export default function DashboardPage() {
               setWalletBalance(data.financial.walletBalance || 0);
               setWalletCurrency(data.financial.currency || "XAF");
               // Use dashboard stats financial data for consistency
-              setWalletStats({
-                totalTransactions: 0, // Will be updated by wallet balance API
+              setWalletStats((prev) => ({
+                ...prev,
                 totalPayments: data.financial.totalSpent || 0, // Use totalSpent as totalPayments
                 totalRefunds: 0, // Will be updated by wallet balance API
                 totalWithdrawals: 0,
-              });
+              }));
             }
           }
         } catch (guestDashboardError) {
@@ -581,18 +582,20 @@ export default function DashboardPage() {
         if (balanceResponse.success && balanceResponse.data) {
           // Only update balance and currency, don't override dashboard stats data
           if (walletBalance === 0) {
-            setWalletBalance(balanceResponse.data.balance || 0);
+            setWalletBalance(balanceResponse.data.data.balance || 0);
           }
           if (walletCurrency === "XAF") {
-            setWalletCurrency(balanceResponse.data.currency || "XAF");
+            setWalletCurrency(balanceResponse.data.data.currency || "XAF");
           }
           // Update wallet stats with the comprehensive data from wallet balance API
-          setWalletStats({
-            totalTransactions: balanceResponse.data.totalTransactions || 0,
-            totalPayments: balanceResponse.data.totalPayments || 0,
-            totalRefunds: balanceResponse.data.totalRefunds || 0,
-            totalWithdrawals: balanceResponse.data.totalWithdrawals || 0,
-          });
+          setWalletStats((prev) => ({
+            ...prev,
+            totalTransactions: balanceResponse.data.data.totalTransactions || 0,
+            totalPayments: balanceResponse.data.data.totalPayments || 0,
+            totalRefunds: balanceResponse.data.data.totalRefunds || 0,
+            totalWithdrawals: balanceResponse.data.data.totalWithdrawals || 0,
+          }));
+          console.log("Wallet stats:", walletStats);
         }
       } catch (balanceError) {
         console.warn("Wallet balance API not available:", balanceError);
@@ -703,7 +706,7 @@ export default function DashboardPage() {
         // Update stats with total bookings from bookings API
         setStats((prev) => ({
           ...prev,
-          totalBookings: parseInt(response.data?.pagination?.total) || 0,
+          totalHostBookings: response.data?.pagination?.total || 0,
         }));
       }
     } catch (err) {
@@ -725,7 +728,6 @@ export default function DashboardPage() {
         const p = (response.data as any).pagination || {};
 
         setGuestBookings(bookings);
-        setHostBookings(response.data.data || []);
         setBookingsPagination({
           currentPage: response.data.pagination?.page || 1,
           totalPages: response.data.pagination?.totalPages || 1,
@@ -735,7 +737,7 @@ export default function DashboardPage() {
         // Update stats with total bookings from bookings API
         setStats((prev) => ({
           ...prev,
-          totalBookings: response.data?.pagination?.totalItems || 0,
+          totalBookings: response.data?.pagination?.total || 0,
         }));
       }
     } catch (err) {
@@ -749,34 +751,12 @@ export default function DashboardPage() {
       setReviewsError(null);
 
       const response = await apiClient.getHostReviews(page, 10);
-      console.log("🔍 Dashboard received host reviews response:", response);
-      console.log("🔍 Response success:", response.success);
-      console.log("🔍 Response data:", response.data);
-      console.log("🔍 Response message:", response.message);
 
       if (response.success && response.data) {
-        console.log("✅ Setting host reviews:", response.data.reviews);
-        console.log("✅ Setting pagination:", response.data.pagination);
-
         setHostReviews(response.data.reviews || []);
 
         // Ensure pagination values are valid numbers
         const pagination = response.data.pagination || {};
-        console.log("🔍 Raw pagination from API:", pagination);
-        console.log("🔍 Parsed pagination values:", {
-          currentPage: parseInt(
-            String(pagination.page || pagination.currentPage || 1)
-          ),
-          totalPages: parseInt(
-            String(pagination.pages || pagination.totalPages || 1)
-          ),
-          totalItems: parseInt(
-            String(pagination.total || pagination.totalItems || 0)
-          ),
-          itemsPerPage: parseInt(
-            String(pagination.limit || pagination.itemsPerPage || 10)
-          ),
-        });
 
         const newPagination = {
           currentPage: Math.max(
@@ -914,7 +894,13 @@ export default function DashboardPage() {
       setEnquiriesLoading(true);
       setEnquiriesError(null);
 
-      const response = await apiClient.getHostEnquiries(page, 10, status);
+      const response = await apiClient.getEnquiries(
+        status,
+        undefined,
+        undefined,
+        page,
+        10
+      );
       console.log("Host enquiries response:", response);
 
       if (response.success && response.data) {
@@ -1005,7 +991,7 @@ export default function DashboardPage() {
           response.data.pagination
         );
 
-        setGuestEnquiries(response.data.enquiries || []);
+        setGuestEnquiries(response.data.data.enquiries || []);
 
         // Ensure pagination values are valid numbers
         const pagination = response.data.pagination || {};
@@ -1071,7 +1057,7 @@ export default function DashboardPage() {
 
       if (response.success && response.data) {
         console.log("🔍 Setting enquiry stats:", response.data);
-        setEnquiryStats(response.data);
+        setEnquiryStats(response.data.data);
       }
     } catch (err) {
       console.warn("Enquiry stats API not available:", err);
@@ -1093,7 +1079,7 @@ export default function DashboardPage() {
           response.data.pagination
         );
 
-        setFavorites(response.data.favorites || []);
+        setFavorites(response.data.data.favorites || []);
 
         // Ensure pagination values are valid numbers
         const pagination = response.data.pagination || {};
@@ -1127,7 +1113,7 @@ export default function DashboardPage() {
         // Update favorites count in overview stats
         setStats((prev) => ({
           ...prev,
-          favorites: newPagination.totalItems,
+          favorites: response.data.data.favorites.length,
         }));
       } else {
         console.log(
@@ -1199,6 +1185,10 @@ export default function DashboardPage() {
 
       if (response.success && response.data) {
         setHostProperties(response.data.properties);
+        setStats((prev) => ({
+          ...prev,
+          totalProperties: response.data.pagination.total || 0,
+        }));
         setPropertiesPagination({
           currentPage: response.data.pagination.page,
           totalPages: response.data.pagination.totalPages,
@@ -1237,7 +1227,7 @@ export default function DashboardPage() {
 
       if (transactionsResponse.success && transactionsResponse.data) {
         // Parse the actual API response structure
-        const transactionData = transactionsResponse.data as unknown as {
+        const transactionData = transactionsResponse.data.data as unknown as {
           transactions?: WalletTransaction[];
           pagination?: {
             page: number;
@@ -1248,6 +1238,7 @@ export default function DashboardPage() {
         };
 
         const transactions = transactionData.transactions || [];
+        console.log("Transactions:", transactions);
         setWalletTransactions(transactions);
 
         // Update pagination state
@@ -1296,24 +1287,12 @@ export default function DashboardPage() {
         console.log("✅ Host wallet balance updated:", balanceResponse.data);
       }
 
-      // Fetch host earnings
-      const earningsResponse = await apiClient.getHostEarnings(1, 10);
-      console.log("🔍 Host earnings response:", earningsResponse);
-
-      if (earningsResponse.success && earningsResponse.data) {
-        setHostEarnings(earningsResponse.data.earnings);
-        console.log(
-          "✅ Host earnings updated:",
-          earningsResponse.data.earnings
-        );
-      }
-
       // Fetch withdrawal history
       const withdrawalResponse = await apiClient.getWithdrawalHistory(1, 10);
       console.log("🔍 Withdrawal history response:", withdrawalResponse);
 
       if (withdrawalResponse.success && withdrawalResponse.data) {
-        setWithdrawalHistory(withdrawalResponse.data.withdrawals);
+        setWithdrawalHistory(withdrawalResponse.data.data.withdrawals);
         console.log(
           "✅ Withdrawal history updated:",
           withdrawalResponse.data.withdrawals
@@ -1357,7 +1336,7 @@ export default function DashboardPage() {
         setShowWithdrawalModal(false);
         setWithdrawalForm({
           amount: "",
-          withdrawalMethod: "MOBILE_MONEY",
+          withdrawalMethod: "MTN_MOMO",
           phone: "",
           bankDetails: { accountNumber: "", bankName: "" },
         });
@@ -1381,8 +1360,6 @@ export default function DashboardPage() {
       setNotificationsLoading(true);
       setNotificationsError(null);
 
-      console.log("🔍 Fetching notifications:", { page, filter });
-
       const response = await apiClient.getNotifications(
         filter === "UNREAD" ? false : filter === "READ" ? true : undefined,
         page,
@@ -1392,13 +1369,7 @@ export default function DashboardPage() {
       console.log("🔍 Notifications response:", response);
 
       if (response.success && response.data) {
-        console.log("✅ Setting notifications:", response.data.data);
-        console.log(
-          "✅ Setting notifications pagination:",
-          response.data.pagination
-        );
-
-        setNotifications(response.data.notifications || []);
+        setNotifications(response.data.data.notifications || []);
 
         // Ensure pagination values are valid numbers
         const pagination = response.data.pagination || {};
@@ -2142,7 +2113,7 @@ export default function DashboardPage() {
                       Total Bookings
                     </p>
                     <p className="text-xl font-bold text-gray-900">
-                      {stats?.totalBookings || 0}
+                      {stats?.totalHostBookings}
                     </p>
                   </div>
                   <div className="h-10 w-10 bg-green-50 rounded-lg flex items-center justify-center">
@@ -2214,7 +2185,7 @@ export default function DashboardPage() {
                       Total Bookings
                     </p>
                     <p className="text-xl font-bold text-gray-900">
-                      {stats?.totalBookings || 0}
+                      {stats.totalBookings || 0}
                     </p>
                   </div>
                   <div className="h-10 w-10 bg-blue-50 rounded-lg flex items-center justify-center">
@@ -2233,10 +2204,10 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs font-medium text-gray-600 mb-1">
-                      Bookings
+                      Actve Bookings
                     </p>
                     <p className="text-xl font-bold text-gray-900">
-                      {stats?.totalBookings || 0}
+                      {stats?.activeBookings || 0}
                     </p>
                   </div>
                   <div className="h-10 w-10 bg-green-50 rounded-lg flex items-center justify-center">
@@ -2305,7 +2276,7 @@ export default function DashboardPage() {
                       Notifications
                     </p>
                     <p className="text-xl font-bold text-gray-900">
-                      {stats?.unreadNotifications || 0}
+                      {notificationsPagination.totalItems || 0}
                     </p>
                   </div>
                   <div className="h-10 w-10 bg-orange-50 rounded-lg flex items-center justify-center">
@@ -3707,7 +3678,7 @@ export default function DashboardPage() {
 
         {/* Enquiry Stats */}
         {enquiryStats && (
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div
               className="bg-white p-6 rounded-xl"
               style={{
@@ -4303,11 +4274,6 @@ export default function DashboardPage() {
                             <User className="h-4 w-4 mr-1" />
                             {property.maxGuests} guests
                           </span>
-                          <span className="flex items-center">
-                            <Star className="h-4 w-4 mr-1" />
-                            {property.reviews?.averageRating || 0} (
-                            {property.reviews?.totalReviews || 0} reviews)
-                          </span>
                         </div>
                         <div className="flex items-center justify-between">
                           <div className="text-lg font-bold text-gray-900">
@@ -4702,7 +4668,7 @@ export default function DashboardPage() {
                   Total Bookings
                 </p>
                 <p className="text-xl font-bold text-gray-900">
-                  {stats?.totalBookings || 0}
+                  {stats?.totalHostBookings || 0}
                 </p>
               </div>
             </div>
@@ -5055,7 +5021,6 @@ export default function DashboardPage() {
       console.log("🔍 Status analysis:", {
         originalStatus: user?.hostApprovalStatus,
         applicationStatus: hostApplicationStatus?.status,
-        statusSource,
         normalizedStatus: status,
         isApproved,
         isPending,
@@ -5075,7 +5040,6 @@ export default function DashboardPage() {
       // Debug the actual condition that determines the display
       console.log("🔍 Display logic:", {
         status,
-        statusSource,
         isApproved,
         isPending,
         isRejected,
@@ -5485,7 +5449,6 @@ export default function DashboardPage() {
       walletCurrency: walletCurrency,
       hostWalletBalance: hostWalletBalance,
       hostWalletActive: hostWalletActive,
-      hostEarnings: hostEarnings,
       withdrawalHistory: withdrawalHistory,
       walletLoading: walletLoading,
       hostWalletLoading: hostWalletLoading,
@@ -5565,7 +5528,7 @@ export default function DashboardPage() {
             </div>
             <button
               onClick={() => setShowWithdrawalModal(true)}
-              disabled={walletBalance <= 0 || !hostWalletActive}
+              disabled={hostWalletBalance <= 0}
               className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               Withdraw Funds
@@ -5619,7 +5582,7 @@ export default function DashboardPage() {
                       </p>
                       <p className="text-xl font-bold text-gray-900">
                         {formatCurrency(
-                          walletStats?.totalPayments || 0,
+                          walletStats?.netEarnings || 0,
                           walletCurrency
                         )}
                       </p>
@@ -5644,7 +5607,7 @@ export default function DashboardPage() {
                       </p>
                       <p className="text-xl font-bold text-gray-900">
                         {formatCurrency(
-                          walletStats?.totalWithdrawals || 0,
+                          walletStats.totalWithdrawals || 0,
                           walletCurrency
                         )}
                       </p>
@@ -5788,8 +5751,8 @@ export default function DashboardPage() {
                   Withdrawal History
                 </h2>
                 <div className="space-y-4">
-                  {withdrawalHistory.length > 0 ? (
-                    withdrawalHistory.slice(0, 5).map((withdrawal) => (
+                  {withdrawalHistory?.length > 0 ? (
+                    withdrawalHistory?.slice(0, 5).map((withdrawal) => (
                       <div
                         key={withdrawal.id}
                         className="flex justify-between items-center p-4 bg-gray-50 rounded-lg"
@@ -5897,8 +5860,8 @@ export default function DashboardPage() {
                         setWithdrawalForm((prev) => ({
                           ...prev,
                           withdrawalMethod: e.target.value as
-                            | "MOBILE_MONEY"
-                            | "BANK_TRANSFER",
+                            | "MTN_MOMO"
+                            | "ORANGE_MONEY",
                         }))
                       }
                       className="w-full px-3 py-2 border border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"

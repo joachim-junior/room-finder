@@ -32,8 +32,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       if (!user || user.role !== "HOST") return;
       const resp = await apiClient.getHostApplicationStatus();
+
       if (resp.success && resp.data) {
-        const raw: any = resp.data;
+        const raw: any = resp.data.data;
         const status = String(
           raw.status || raw.hostApprovalStatus || user.hostApprovalStatus || ""
         ).toUpperCase();
@@ -88,9 +89,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (response.success && response.data) {
             console.log(
               "Profile fetch successful, setting user:",
-              response.data
+              response?.data.user
             );
-            setUser(response.data);
+            setUser(response.data.user);
           } else if ("user" in response && (response as any).user) {
             // Backend returns { message, user } structure
             const backendResponse = response as { message: string; user: User };

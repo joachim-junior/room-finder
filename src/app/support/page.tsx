@@ -99,8 +99,9 @@ export default function SupportPage() {
     const fetchSupportOptions = async () => {
       try {
         const response = await apiClient.getSupportOptions();
+        console.log(user);
         if (response.success && response.data) {
-          setSupportOptions(response.data);
+          setSupportOptions(response.data?.data);
         }
       } catch (error) {
         console.error("Failed to fetch support options:", error);
@@ -303,7 +304,7 @@ export default function SupportPage() {
                       }
                       required
                       options={
-                        supportOptions?.categories.map((cat) => ({
+                        supportOptions?.categories?.map((cat) => ({
                           value: cat.value,
                           label: cat.label,
                         })) || []
@@ -326,7 +327,7 @@ export default function SupportPage() {
                         )
                       }
                       options={
-                        supportOptions?.priorities.map((pri) => ({
+                        supportOptions?.priorities?.map((pri) => ({
                           value: pri.value,
                           label: pri.label,
                         })) || []
@@ -442,7 +443,7 @@ export default function SupportPage() {
                 Support Categories
               </h3>
               <div className="space-y-3">
-                {supportOptions?.categories.map((category) => {
+                {supportOptions?.categories?.map((category) => {
                   const IconComponent = getCategoryIcon(category.value);
                   return (
                     <div
@@ -510,7 +511,7 @@ export default function SupportPage() {
             >
               All Questions
             </button>
-            {supportOptions?.categories.map((category) => (
+            {supportOptions?.categories?.map((category) => (
               <button
                 key={category.value}
                 onClick={() => setSelectedFaqCategory(category.value)}

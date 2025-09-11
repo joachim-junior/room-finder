@@ -547,71 +547,6 @@ class ApiClient {
     }
   }
 
-  // Add: Upload multiple images (multipart/form-data)
-  async uploadImages(files: File[]): Promise<
-    ApiResponse<{
-      images?: string[];
-      urls?: string[];
-    }>
-  > {
-    const url = `${this.baseUrl}/uploads/multiple`;
-    const formData = new FormData();
-    files.forEach((file) => formData.append("images", file));
-
-    const headers: Record<string, string> = {};
-    const token = this.getToken();
-    if (token) headers.Authorization = `Bearer ${token}`;
-
-    try {
-      const resp = await fetch(url, {
-        method: "POST",
-        body: formData,
-        headers, // do NOT set Content-Type; browser will set boundary
-      });
-
-      let data: any;
-      try {
-        data = await resp.json();
-      } catch (e) {
-        console.error("Failed to parse upload response JSON:", e);
-        data = {};
-      }
-
-      if (!resp.ok) {
-        return {
-          success: false,
-          message: (data && (data.message || data.error)) || "Upload failed",
-        };
-      }
-
-      const payload = data?.data || data;
-      return {
-        success: true,
-        data: {
-          images: payload?.images || payload?.files || [],
-          urls: payload?.urls || [],
-        },
-        message: data?.message,
-      };
-    } catch (error) {
-      console.error("❌ Image upload failed:", error);
-      return {
-        success: false,
-        message: error instanceof Error ? error.message : "Network error",
-      };
-    }
-  }
-
-  // Add: Create property
-  async createProperty(
-    propertyData: Partial<Property> & { images?: string[] }
-  ): Promise<ApiResponse<{ property?: Property }>> {
-    return this.request<{ property?: Property }>("/properties", {
-      method: "POST",
-      body: JSON.stringify(propertyData),
-    });
-  }
-
   async getProperty(id: string): Promise<Property> {
     const url = `${this.baseUrl}/properties/${id}`;
     const headers: Record<string, string> = {
@@ -1395,6 +1330,13 @@ class ApiClient {
       const url = `${
         this.baseUrl
       }/properties/host/my-properties?${params.toString()}`;
+      console.log("🔍 Making API request to:", url);
+      console.log("🔍 API Base URL:", this.baseUrl);
+      console.log("🔍 Request headers:", {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${this.getToken()}`,
+      });
+
       const response = await fetch(url, {
         method: "GET",
         headers: {
@@ -1402,6 +1344,14 @@ class ApiClient {
           Authorization: `Bearer ${this.getToken()}`,
         },
       });
+
+      console.log("🔍 Response status:", response.status);
+      console.log("🔍 Response status text:", response.statusText);
+      console.log(
+        "🔍 Response headers:",
+        Object.fromEntries(response.headers.entries())
+      );
+
       let data;
       try {
         data = await response.json();
@@ -1410,6 +1360,7 @@ class ApiClient {
         data = {};
       }
       console.log("🔍 Raw host properties API response:", data);
+
       // Handle different HTTP status codes
       if (!response.ok || !data || Object.keys(data).length === 0) {
         console.error("🔍 HTTP Error:", response.status, response.statusText);
@@ -1457,25 +1408,6 @@ class ApiClient {
           success: true,
           data: {
             message: data.message || "Properties retrieved successfully",
-            properties: data.data.properties,
-            pagination: data.data.pagination,
-          },
-        };
-      }
-
-      return {
-        success: false,
-        message: data.message || "Properties retrieved successfully",
-      };
-    } catch (error) {
-      console.error("Error fetching host properties:", error);
-      return {
-        success: false,
-        message: "Failed to fetch host properties",
-      };
-    }
-  }
-
   async deleteProperty(
     propertyId: string
   ): Promise<ApiResponse<{ message: string }>> {
@@ -1504,6 +1436,7 @@ class ApiClient {
           error: `HTTP ${response.status}`,
         };
       }
+
       return {
         success: true,
         data: data,
@@ -1516,8 +1449,8 @@ class ApiClient {
         error: error instanceof Error ? error.message : "Network error",
       };
     }
-  }
-
+  },
+  
   async getPropertyStats(): Promise<
     ApiResponse<{
       totalProperties: number;
@@ -1575,7 +1508,7 @@ class ApiClient {
         message: "Failed to fetch property stats",
       };
     }
-  }
+  },
 
   // Host Bookings
   async getHostBookings(
@@ -1634,7 +1567,7 @@ class ApiClient {
         message: "Failed to fetch host bookings",
       };
     }
-  }
+  },
 
   async getGuestBookings(
     status?: string,
@@ -1692,7 +1625,7 @@ class ApiClient {
         message: "Failed to fetch guest bookings",
       };
     }
-  }
+  },
 
   async updateBookingStatus(
     bookingId: string,
@@ -1702,7 +1635,7 @@ class ApiClient {
       method: "PUT",
       body: JSON.stringify({ status }),
     });
-  }
+  },
 
   // Notification Stats
   async getNotificationStats(): Promise<
@@ -1717,7 +1650,7 @@ class ApiClient {
       unread: number;
       read: number;
     }>("/notifications/stats");
-  }
+  },
 
   // Reviews
   async getMyReviews(
@@ -1731,7 +1664,7 @@ class ApiClient {
     return this.request<PaginatedResponse<Review>>(
       `/reviews/my-reviews?${params.toString()}`
     );
-  }
+  },
 
   async getHostReviews(
     page?: number,
@@ -1907,7 +1840,7 @@ class ApiClient {
         },
       };
     }
-  }
+  },
 
   async getReviewStats(): Promise<
     ApiResponse<{
@@ -1929,7 +1862,7 @@ class ApiClient {
       twoStarReviews: number;
       oneStarReviews: number;
     }>("/reviews/stats");
-  }
+  },
 
   async getHostReviewStats(): Promise<
     ApiResponse<{
@@ -1996,12 +1929,12 @@ class ApiClient {
       console.error("Error fetching host review stats:", error);
       return { success: false, message: "Failed to fetch host review stats" };
     }
-  }
+  },
 
   // Wallet
   async getWalletDetails(): Promise<ApiResponse<Wallet>> {
     return this.request<Wallet>("/wallet/details");
-  }
+  },
 
   async getRefundHistory(
     page?: number,
@@ -2014,7 +1947,7 @@ class ApiClient {
     return this.request<PaginatedResponse<Transaction>>(
       `/wallet/refunds?${params.toString()}`
     );
-  }
+  },
 
   async getGuestWithdrawalHistory(
     page?: number,
@@ -2027,7 +1960,7 @@ class ApiClient {
     return this.request<PaginatedResponse<Transaction>>(
       `/wallet/withdrawals?${params.toString()}`
     );
-  }
+  },
 
   async processRefund(
     bookingId: string,
@@ -2040,7 +1973,7 @@ class ApiClient {
         body: JSON.stringify(data),
       }
     );
-  }
+  },
 
   async withdrawFunds(data: {
     amount: number;
@@ -2053,7 +1986,7 @@ class ApiClient {
       method: "POST",
       body: JSON.stringify(data),
     });
-  }
+  },
 
   // Host-specific Wallet Functions
   async getHostEarnings(
@@ -2129,7 +2062,7 @@ class ApiClient {
         hasPrevPage: boolean;
       };
     }>(`/wallet/earnings?${params.toString()}`);
-  }
+  },
 
   async getHostWalletBalance(): Promise<
     ApiResponse<{
@@ -2145,11 +2078,11 @@ class ApiClient {
       isActive: boolean;
       walletId: string;
     }>("/wallet/balance");
-  }
+  },
 
   async withdrawFromWallet(data: {
     amount: number;
-    withdrawalMethod: "MTN_MOMO" | "ORANGE_MONEY";
+    withdrawalMethod: "MOBILE_MONEY" | "BANK_TRANSFER";
     phone?: string;
     bankDetails?: {
       accountNumber: string;
@@ -2210,7 +2143,7 @@ class ApiClient {
       method: "POST",
       body: JSON.stringify(data),
     });
-  }
+  },
 
   async getWithdrawalHistory(
     page?: number,
@@ -2273,7 +2206,7 @@ class ApiClient {
         pages: number;
       };
     }>(`/wallet/withdrawals?${params.toString()}`);
-  }
+  },
 
   // Enquiries
   async createEnquiry(enquiryData: {
@@ -2286,7 +2219,7 @@ class ApiClient {
       method: "POST",
       body: JSON.stringify(enquiryData),
     });
-  }
+  },
 
   async getEnquiries(
     status?: string,
@@ -2371,7 +2304,7 @@ class ApiClient {
         };
       }>
     >(`/enquiries?${params.toString()}`);
-  }
+  },
 
   async getEnquiryStats(): Promise<
     ApiResponse<{
@@ -2391,7 +2324,7 @@ class ApiClient {
       closed: number;
       spam: number;
     }>("/enquiries/stats");
-  }
+  },
 
   async getEnquiry(id: string): Promise<
     ApiResponse<{
@@ -2459,7 +2392,7 @@ class ApiClient {
         avatar?: string;
       };
     }>(`/enquiries/${id}`);
-  }
+  },
 
   async respondToEnquiry(
     enquiryId: string,
@@ -2487,7 +2420,7 @@ class ApiClient {
       method: "POST",
       body: JSON.stringify({ response }),
     });
-  }
+  },
 
   async updateEnquiryStatus(
     enquiryId: string,
@@ -2511,7 +2444,7 @@ class ApiClient {
       method: "PUT",
       body: JSON.stringify({ status }),
     });
-  }
+      },
 
   // Host Application
   async submitHostApplication(data: { notes?: string }): Promise<
@@ -2537,7 +2470,7 @@ class ApiClient {
       method: "POST",
       body: JSON.stringify(data),
     });
-  }
+  },
 
   async applyToBecomeHost(data: {
     propertyAddress: string;
@@ -2563,7 +2496,7 @@ class ApiClient {
       method: "POST",
       body: JSON.stringify(data),
     });
-  }
+          },
 
   async getHostApplicationStatus(): Promise<
     ApiResponse<{
@@ -2581,7 +2514,7 @@ class ApiClient {
       notes?: string;
       rejectionReason?: string;
     }>("/host-applications/status");
-  }
+  },
 
   async getHostPropertyStats(): Promise<
     ApiResponse<{
@@ -2624,7 +2557,7 @@ class ApiClient {
       success: false,
       message: response.message || "Failed to fetch property stats",
     };
-  }
+  },                
 
   // Convenience wrapper for host dashboard stats (same endpoint as user dashboard)
   async getHostDashboardStats(): Promise<
@@ -2792,7 +2725,7 @@ class ApiClient {
         }>;
       };
     }>("/users/dashboard-stats");
-  }
+        },
 
   // Host Enquiries
   async getHostEnquiries(
@@ -2809,7 +2742,7 @@ class ApiClient {
         itemsPerPage: number;
       };
     }>
-  > {
+  > {         
     const params = new URLSearchParams();
     if (status) params.append("status", status);
     if (page) params.append("page", String(page));
@@ -2881,12 +2814,12 @@ class ApiClient {
         },
       },
     };
-  }
+      },
 
   // Support
   async getSupportOptions(): Promise<ApiResponse<SupportOptions>> {
     return this.request("/support/options");
-  }
+        },
 
   async createSupportRequest(supportData: SupportRequest): Promise<
     ApiResponse<{
@@ -2897,7 +2830,7 @@ class ApiClient {
       method: "POST",
       body: JSON.stringify(supportData),
     });
-  }
+      },
 
   async getUserSupportTickets(
     page?: number,
@@ -2922,7 +2855,7 @@ class ApiClient {
     if (category) params.append("category", category);
 
     return this.request(`/support/tickets?${params.toString()}`);
-  }
+  },
 
   async getSupportTicket(ticketId: string): Promise<
     ApiResponse<{
@@ -2930,7 +2863,7 @@ class ApiClient {
     }>
   > {
     return this.request(`/support/tickets/${ticketId}`);
-  }
+  },
 
   async addMessageToSupportTicket(
     ticketId: string,
@@ -2942,12 +2875,12 @@ class ApiClient {
     ApiResponse<{
       message: SupportMessage;
     }>
-  > {
+  > {     
     return this.request(`/support/tickets/${ticketId}/messages`, {
       method: "POST",
       body: JSON.stringify(messageData),
     });
   }
-}
+},
 
 export const apiClient = new ApiClient(API_BASE_URL);

@@ -107,11 +107,13 @@ export default function AddPropertyPage() {
     const errors: Record<string, string> = {};
 
     if (!formData.title.trim()) {
-      errors.title = "Property title is required";
+      errors.title =
+        "Property title is required and title must be at least 10 characters";
     }
 
     if (!formData.description.trim()) {
-      errors.description = "Property description is required";
+      errors.description =
+        "Property description is required and description must be at least 1000 characters";
     }
 
     if (!formData.address.trim()) {
