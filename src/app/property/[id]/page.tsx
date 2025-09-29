@@ -603,8 +603,19 @@ export default function PropertyDetailPage() {
       console.log("Full fee calculation response:", response);
 
       if (response.data) {
-        setFeeCalculation(response.data);
-        console.log("Fee calculation data:", response.data);
+        // Normalize possible API envelopes: { data }, { data: { data } }, or direct payload
+        const normalized =
+          (response as any).data?.data ?? (response as any).data ?? response;
+        if (normalized && normalized.totals) {
+          setFeeCalculation(normalized as FeeCalculation);
+          console.log("Fee calculation data:", normalized);
+        } else {
+          console.error(
+            "Fee calculation payload missing totals, payload:",
+            normalized
+          );
+          setFeeCalculation(null);
+        }
       } else {
         console.error("Failed to calculate fees. Response:", response);
         setFeeCalculation(null);
@@ -1661,19 +1672,32 @@ export default function PropertyDetailPage() {
                     <div className="space-y-2">
                       <div className="text-sm text-gray-600">
                         {mounted
-                          ? feeCalculation.totals.baseAmount.toLocaleString()
-                          : feeCalculation.totals.baseAmount.toString()}{" "}
-                        {feeCalculation.currency} for{" "}
-                        {feeCalculation.booking.nights} night
-                        {feeCalculation.booking.nights !== 1 ? "s" : ""}
+                          ? (
+                              feeCalculation?.totals?.baseAmount ?? 0
+                            ).toLocaleString()
+                          : String(
+                              feeCalculation?.totals?.baseAmount ?? 0
+                            )}{" "}
+                        {feeCalculation?.currency || property.currency || "XAF"}{" "}
+                        for{" "}
+                        {feeCalculation?.booking?.nights ?? calculateNights()}{" "}
+                        night
+                        {(feeCalculation?.booking?.nights ??
+                          calculateNights()) !== 1
+                          ? "s"
+                          : ""}
                       </div>
                       <div className="text-sm text-gray-600">
                         Service fee:{" "}
                         {mounted
-                          ? feeCalculation.totals.guestServiceFee.toLocaleString()
-                          : feeCalculation.totals.guestServiceFee.toString()}{" "}
-                        {feeCalculation.currency} (
-                        {feeCalculation.fees.guestServiceFeePercent}%)
+                          ? (
+                              feeCalculation?.totals?.guestServiceFee ?? 0
+                            ).toLocaleString()
+                          : String(
+                              feeCalculation?.totals?.guestServiceFee ?? 0
+                            )}{" "}
+                        {feeCalculation?.currency || property.currency || "XAF"}{" "}
+                        ({feeCalculation?.fees?.guestServiceFeePercent ?? 0}%)
                       </div>
                       <div
                         className="text-lg font-semibold text-gray-900 pt-2"
@@ -1681,9 +1705,13 @@ export default function PropertyDetailPage() {
                       >
                         Total:{" "}
                         {mounted
-                          ? feeCalculation.totals.totalGuestPays.toLocaleString()
-                          : feeCalculation.totals.totalGuestPays.toString()}{" "}
-                        {feeCalculation.currency}
+                          ? (
+                              feeCalculation?.totals?.totalGuestPays ?? 0
+                            ).toLocaleString()
+                          : String(
+                              feeCalculation?.totals?.totalGuestPays ?? 0
+                            )}{" "}
+                        {feeCalculation?.currency || property.currency || "XAF"}
                       </div>
                     </div>
                   ) : (
@@ -2079,13 +2107,18 @@ export default function PropertyDetailPage() {
               <div>
                 <div className="text-lg font-bold text-gray-900">
                   {mounted
-                    ? feeCalculation.totals.totalGuestPays.toLocaleString()
-                    : feeCalculation.totals.totalGuestPays.toString()}{" "}
-                  {feeCalculation.currency}
+                    ? (
+                        feeCalculation?.totals?.totalGuestPays ?? 0
+                      ).toLocaleString()
+                    : String(feeCalculation?.totals?.totalGuestPays ?? 0)}{" "}
+                  {feeCalculation?.currency || property.currency || "XAF"}
                 </div>
                 <div className="text-xs text-gray-500">
-                  {feeCalculation.booking.nights} night
-                  {feeCalculation.booking.nights !== 1 ? "s" : ""} total
+                  {feeCalculation?.booking?.nights ?? calculateNights()} night
+                  {(feeCalculation?.booking?.nights ?? calculateNights()) !== 1
+                    ? "s"
+                    : ""}{" "}
+                  total
                 </div>
               </div>
             ) : (

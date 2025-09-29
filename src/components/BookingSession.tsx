@@ -273,7 +273,7 @@ export default function BookingSession({
         console.log(`Payment status response (attempt ${attempts}):`, response);
 
         if (response.success && response.data) {
-          const status = response.data.paymentStatus;
+          const status = response.data.data.paymentStatus;
           console.log(`Payment status: ${status}`);
 
           // Update status in progress (background only)
@@ -290,7 +290,7 @@ export default function BookingSession({
             console.log("Payment completed successfully!");
             setPollingProgress(null);
             setCurrentStep("success");
-            
+
             // Call the success callback if provided
             if (onBookingSuccess && booking) {
               onBookingSuccess(booking);
@@ -937,7 +937,9 @@ export default function BookingSession({
         </div>
       )}
 
-      <div className="overflow-y-auto flex-1 min-h-0 px-4 py-2 w-full">{renderStep()}</div>
+      <div className="overflow-y-auto flex-1 min-h-0 px-4 py-2 w-full">
+        {renderStep()}
+      </div>
     </div>
   );
 
