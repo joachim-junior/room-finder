@@ -914,7 +914,7 @@ export default function DashboardPage() {
           response.data.pagination
         );
 
-        setHostEnquiries(response.data.enquiries || []);
+        setHostEnquiries(response.data.data.enquiries || []);
 
         // Ensure pagination values are valid numbers
         const pagination = response.data.pagination || {};
@@ -1910,6 +1910,46 @@ export default function DashboardPage() {
     } catch (err: any) {
       console.error("❌ Error responding to enquiry:", err);
       alert(err.message || "Failed to respond to enquiry. Please try again.");
+    } finally {
+      setRespondingToEnquiry(null);
+    }
+  };
+
+  const handleUpdateEnquiryStatus = async (
+    enquiryId: string,
+    status: "PENDING" | "RESPONDED" | "CLOSED" | "SPAM"
+  ) => {
+    try {
+      setRespondingToEnquiry(enquiryId);
+      console.log("🔄 Updating enquiry status:", enquiryId, "to", status);
+
+      const response = await apiClient.updateEnquiryStatus(enquiryId, status);
+      console.log("🔄 Enquiry status update response:", response);
+
+      if (response.success) {
+        console.log("✅ Enquiry status updated successfully!");
+
+        // Refresh enquiries list
+        if (user?.role === "HOST") {
+          await fetchHostEnquiries(
+            enquiriesPagination.currentPage,
+            enquiryFilter !== "ALL" ? enquiryFilter : undefined
+          );
+        } else {
+          await fetchGuestEnquiries(enquiriesPagination.currentPage);
+        }
+
+        // Also refresh enquiry stats
+        await fetchEnquiryStats();
+      } else {
+        console.error("❌ Enquiry status update failed:", response);
+        alert(response.message || "Failed to update enquiry status");
+      }
+    } catch (err: any) {
+      console.error("❌ Error updating enquiry status:", err);
+      alert(
+        err.message || "Failed to update enquiry status. Please try again."
+      );
     } finally {
       setRespondingToEnquiry(null);
     }
@@ -3943,14 +3983,43 @@ export default function DashboardPage() {
                     </div>
 
                     {/* Action Buttons */}
-                    {user?.role === "HOST" && enquiry.status === "PENDING" && (
+                    {user?.role === "HOST" && (
                       <div className="flex flex-col space-y-2 ml-4">
-                        <button
-                          onClick={() => openResponseModal(enquiry.id)}
-                          className="px-3 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors"
-                        >
-                          Respond
-                        </button>
+                        {enquiry.status === "PENDING" && (
+                          <button
+                            onClick={() => openResponseModal(enquiry.id)}
+                            className="px-3 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors"
+                          >
+                            Respond
+                          </button>
+                        )}
+                        {enquiry.status === "RESPONDED" && (
+                          <button
+                            onClick={() =>
+                              handleUpdateEnquiryStatus(enquiry.id, "CLOSED")
+                            }
+                            disabled={respondingToEnquiry === enquiry.id}
+                            className="px-3 py-1 bg-green-600 text-white text-xs rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+                          >
+                            {respondingToEnquiry === enquiry.id
+                              ? "Closing..."
+                              : "Mark as Closed"}
+                          </button>
+                        )}
+                        {(enquiry.status === "PENDING" ||
+                          enquiry.status === "RESPONDED") && (
+                          <button
+                            onClick={() =>
+                              handleUpdateEnquiryStatus(enquiry.id, "SPAM")
+                            }
+                            disabled={respondingToEnquiry === enquiry.id}
+                            className="px-3 py-1 bg-red-600 text-white text-xs rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+                          >
+                            {respondingToEnquiry === enquiry.id
+                              ? "Marking..."
+                              : "Mark as Spam"}
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
