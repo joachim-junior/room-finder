@@ -154,7 +154,10 @@ export default function DashboardPage() {
   const [showWithdrawalModal, setShowWithdrawalModal] = useState(false);
   const [withdrawalForm, setWithdrawalForm] = useState({
     amount: "",
-    withdrawalMethod: "MTN_MOMO" as "MTN_MOMO" | "ORANGE_MONEY",
+    withdrawalMethod: "MOBILE_MONEY" as
+      | "MOBILE_MONEY"
+      | "MTN_MOMO"
+      | "ORANGE_MONEY",
     phone: "",
     bankDetails: {
       accountNumber: "",
@@ -1312,6 +1315,19 @@ export default function DashboardPage() {
       return;
     }
 
+    // Validate phone for mobile money methods
+    if (
+      (withdrawalForm.withdrawalMethod === "MOBILE_MONEY" ||
+        withdrawalForm.withdrawalMethod === "MTN_MOMO" ||
+        withdrawalForm.withdrawalMethod === "ORANGE_MONEY") &&
+      !withdrawalForm.phone
+    ) {
+      setWithdrawalError(
+        "Phone number is required for mobile money withdrawals"
+      );
+      return;
+    }
+
     try {
       setWithdrawalLoading(true);
       setWithdrawalError(null);
@@ -1319,12 +1335,7 @@ export default function DashboardPage() {
       const withdrawalData = {
         amount: parseFloat(withdrawalForm.amount),
         withdrawalMethod: withdrawalForm.withdrawalMethod,
-        ...(withdrawalForm.withdrawalMethod === "MOBILE_MONEY" && {
-          phone: withdrawalForm.phone,
-        }),
-        ...(withdrawalForm.withdrawalMethod === "BANK_TRANSFER" && {
-          bankDetails: withdrawalForm.bankDetails,
-        }),
+        phone: withdrawalForm.phone,
       };
 
       console.log("🔍 Submitting withdrawal request:", withdrawalData);
@@ -1337,7 +1348,7 @@ export default function DashboardPage() {
         setShowWithdrawalModal(false);
         setWithdrawalForm({
           amount: "",
-          withdrawalMethod: "MTN_MOMO",
+          withdrawalMethod: "MOBILE_MONEY",
           phone: "",
           bankDetails: { accountNumber: "", bankName: "" },
         });
@@ -5916,18 +5927,21 @@ export default function DashboardPage() {
                         setWithdrawalForm((prev) => ({
                           ...prev,
                           withdrawalMethod: e.target.value as
+                            | "MOBILE_MONEY"
                             | "MTN_MOMO"
                             | "ORANGE_MONEY",
                         }))
                       }
                       className="w-full px-3 py-2 border border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
-                      <option value="MOBILE_MONEY">Mobile Money</option>
-                      <option value="BANK_TRANSFER">Bank Transfer</option>
+                      <option value="MOBILE_MONEY">Mobile Money (MTN)</option>
+                      <option value="ORANGE_MONEY">Orange Money</option>
                     </select>
                   </div>
 
-                  {withdrawalForm.withdrawalMethod === "MOBILE_MONEY" && (
+                  {(withdrawalForm.withdrawalMethod === "MOBILE_MONEY" ||
+                    withdrawalForm.withdrawalMethod === "MTN_MOMO" ||
+                    withdrawalForm.withdrawalMethod === "ORANGE_MONEY") && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Phone Number
@@ -5944,52 +5958,11 @@ export default function DashboardPage() {
                         className="w-full px-3 py-2 border border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         placeholder="+237612345678"
                       />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Enter your mobile money account number (with or without
+                        +237 prefix)
+                      </p>
                     </div>
-                  )}
-
-                  {withdrawalForm.withdrawalMethod === "BANK_TRANSFER" && (
-                    <>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Account Number
-                        </label>
-                        <input
-                          type="text"
-                          value={withdrawalForm.bankDetails.accountNumber}
-                          onChange={(e) =>
-                            setWithdrawalForm((prev) => ({
-                              ...prev,
-                              bankDetails: {
-                                ...prev.bankDetails,
-                                accountNumber: e.target.value,
-                              },
-                            }))
-                          }
-                          className="w-full px-3 py-2 border border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          placeholder="Enter account number"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Bank Name
-                        </label>
-                        <input
-                          type="text"
-                          value={withdrawalForm.bankDetails.bankName}
-                          onChange={(e) =>
-                            setWithdrawalForm((prev) => ({
-                              ...prev,
-                              bankDetails: {
-                                ...prev.bankDetails,
-                                bankName: e.target.value,
-                              },
-                            }))
-                          }
-                          className="w-full px-3 py-2 border border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          placeholder="Enter bank name"
-                        />
-                      </div>
-                    </>
                   )}
                 </div>
 
