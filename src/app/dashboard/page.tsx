@@ -1877,13 +1877,25 @@ export default function DashboardPage() {
       return;
     }
 
+    // Validate response length (10-1000 characters per API spec)
+    if (enquiryResponse.trim().length < 10) {
+      alert("Response must be at least 10 characters long");
+      return;
+    }
+
+    if (enquiryResponse.trim().length > 1000) {
+      alert("Response must not exceed 1000 characters");
+      return;
+    }
+
     try {
       setRespondingToEnquiry(enquiryId);
       console.log("🔄 Responding to enquiry:", enquiryId);
+      console.log("🔄 Response text:", enquiryResponse);
 
       const response = await apiClient.respondToEnquiry(
         enquiryId,
-        enquiryResponse
+        enquiryResponse.trim()
       );
       console.log("🔄 Enquiry response:", response);
 
@@ -1893,6 +1905,11 @@ export default function DashboardPage() {
         // Close modal and clear response
         setShowResponseModal(null);
         setEnquiryResponse("");
+
+        // Show success message
+        alert(
+          "Response sent successfully! The guest will be notified via email."
+        );
 
         // Refresh enquiries list
         if (user?.role === "HOST") {
@@ -1912,7 +1929,12 @@ export default function DashboardPage() {
       }
     } catch (err: any) {
       console.error("❌ Error responding to enquiry:", err);
-      alert(err.message || "Failed to respond to enquiry. Please try again.");
+      const errorMessage =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to respond to enquiry. Please try again.";
+      console.error("❌ Error details:", errorMessage);
+      alert(errorMessage);
     } finally {
       setRespondingToEnquiry(null);
     }
