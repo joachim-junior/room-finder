@@ -1381,10 +1381,11 @@ export default function DashboardPage() {
       console.log("🔍 Notifications response:", response);
 
       if (response.success && response.data) {
+        // API returns { data: Notification[] } directly
         setNotifications(response.data.data.notifications || []);
 
         // Ensure pagination values are valid numbers
-        const pagination = response.data.pagination || {};
+        const pagination = response.data.data.pagination || {};
         console.log("🔍 Raw notifications pagination from API:", pagination);
         console.log("🔍 Parsed notifications pagination values:", {
           currentPage: parseInt(
@@ -1450,7 +1451,7 @@ export default function DashboardPage() {
       console.log("🔍 Notification stats response:", response);
 
       if (response.success && response.data) {
-        setNotificationStats(response.data);
+        setNotificationStats(response.data.data);
         console.log("✅ Notification stats updated:", response.data);
       }
     } catch (err) {
@@ -1467,15 +1468,16 @@ export default function DashboardPage() {
       console.log("🔍 Notification preferences response:", response);
 
       if (response.success && response.data) {
-        setNotificationPreferences(response.data);
+        const prefs = response.data.data || response.data;
+        setNotificationPreferences(prefs);
         setPreferencesForm({
-          emailNotifications: response.data.emailNotifications,
-          pushNotifications: response.data.pushNotifications,
-          bookingNotifications: response.data.bookingNotifications,
-          reviewNotifications: response.data.reviewNotifications,
-          paymentNotifications: response.data.paymentNotifications,
+          emailNotifications: prefs.emailNotifications ?? true,
+          pushNotifications: prefs.pushNotifications ?? true,
+          bookingNotifications: prefs.bookingNotifications ?? true,
+          reviewNotifications: prefs.reviewNotifications ?? true,
+          paymentNotifications: prefs.paymentNotifications ?? true,
         });
-        console.log("✅ Notification preferences updated:", response.data);
+        console.log("✅ Notification preferences updated:", prefs);
       }
     } catch (err) {
       console.error("Error fetching notification preferences:", err);
@@ -1568,9 +1570,10 @@ export default function DashboardPage() {
       console.log("🔍 Update preferences response:", response);
 
       if (response.success && response.data) {
-        setNotificationPreferences(response.data);
+        const prefs = response.data.data || response.data;
+        setNotificationPreferences(prefs);
         setShowPreferencesModal(false);
-        console.log("✅ Notification preferences updated:", response.data);
+        console.log("✅ Notification preferences updated:", prefs);
       } else {
         setPreferencesError(response.message || "Failed to update preferences");
       }
