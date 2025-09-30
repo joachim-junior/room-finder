@@ -52,16 +52,21 @@ export default function ForgotPasswordPage() {
     try {
       const response = await apiClient.forgotPassword(email.trim());
 
-      if (response.success) {
-        setSuccess("Password reset link sent! Please check your email.");
+      // Always show success for security (don't reveal if email exists)
+      if (response.success || response.message) {
+        setSuccess(
+          "If an account with this email exists, a password reset link has been sent. The link will expire in 1 hour."
+        );
         setEmailSent(true);
       } else {
-        setError(response.message || "Failed to send reset link");
+        setError(response.message || "An error occurred. Please try again.");
       }
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to send reset link"
+      // For security, show generic success even on error
+      setSuccess(
+        "If an account with this email exists, a password reset link has been sent. The link will expire in 1 hour."
       );
+      setEmailSent(true);
     } finally {
       setLoading(false);
     }

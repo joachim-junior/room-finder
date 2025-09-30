@@ -24,6 +24,7 @@ function ResetPasswordContent() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [countdown, setCountdown] = useState(3);
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -33,6 +34,16 @@ function ResetPasswordContent() {
       setError("Invalid reset link. Please request a new password reset.");
     }
   }, [searchParams]);
+
+  // Countdown timer for redirect after success
+  useEffect(() => {
+    if (success && countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      return () => clearTimeout(timer);
+    } else if (success && countdown === 0) {
+      router.push("/login");
+    }
+  }, [success, countdown, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,19 +68,32 @@ function ResetPasswordContent() {
     setError("");
 
     try {
+      console.log("🔍 Resetting password with token...");
+
       const response = await apiClient.resetPassword({
         token,
         newPassword: password,
       });
 
+      console.log("🔍 Reset password response:", response);
+
       if (response.success) {
         setSuccess(true);
+        console.log("✅ Password reset successfully");
       } else {
-        setError(response.message || "Failed to reset password");
+        const errorMsg =
+          response.message ||
+          "Failed to reset password. The link may be invalid or expired.";
+        setError(errorMsg);
+        console.error("❌ Password reset failed:", errorMsg);
       }
     } catch (err) {
-      console.error("Error resetting password:", err);
-      setError(err instanceof Error ? err.message : "Failed to reset password");
+      console.error("❌ Error resetting password:", err);
+      const errorMsg =
+        err instanceof Error
+          ? err.message
+          : "Failed to reset password. Please try again.";
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -97,18 +121,33 @@ function ResetPasswordContent() {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
         <div className="sm:mx-auto sm:w-full sm:max-w-md">
-          <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+          <div
+            className="bg-white py-8 px-4 shadow-xl sm:rounded-2xl sm:px-10"
+            style={{
+              border: "1px solid rgb(221, 221, 221)",
+              boxShadow: "0 6px 20px 0 rgba(0,0,0,0.1)",
+            }}
+          >
             <div className="text-center">
-              <CheckCircle className="mx-auto h-12 w-12 text-green-500 mb-4" />
+              <div className="h-20 w-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                <CheckCircle className="h-12 w-12 text-green-600" />
+              </div>
               <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                Password Reset Successful
+                Password Reset Successful!
               </h2>
-              <p className="text-gray-600 mb-6">
+              <p className="text-gray-600 mb-4">
                 Your password has been successfully reset. You can now log in
                 with your new password.
               </p>
-              <Button onClick={() => router.push("/login")} className="w-full">
-                Go to Login
+              <p className="text-sm text-gray-500 mb-6">
+                Redirecting you to login in {countdown} second
+                {countdown !== 1 ? "s" : ""}...
+              </p>
+              <Button
+                onClick={() => router.push("/login")}
+                className="w-full bg-blue-600 hover:bg-blue-700"
+              >
+                Go to Login Now
               </Button>
             </div>
           </div>
@@ -129,10 +168,22 @@ function ResetPasswordContent() {
           </div>
 
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-              <div className="flex items-center space-x-2">
-                <AlertCircle className="h-4 w-4 text-red-500" />
-                <span className="text-sm text-red-700">{error}</span>
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <div className="flex items-start space-x-3">
+                <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <span className="text-sm text-red-700">{error}</span>
+                  {(error.includes("expired") || error.includes("invalid")) && (
+                    <div className="mt-3">
+                      <Link
+                        href="/forgot-password"
+                        className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                      >
+                        Request New Reset Link →
+                      </Link>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}
@@ -169,58 +220,64 @@ function ResetPasswordContent() {
               </div>
 
               {/* Password strength indicator */}
-              <div className="mt-2 space-y-1">
-                <div className="text-xs text-gray-500">
-                  Password requirements:
+              {password && (
+                <div className="mt-2 space-y-1">
+                  <div className="text-xs text-gray-500">
+                    Password strength:
+                  </div>
+                  <div className="space-y-1">
+                    <div
+                      className={`text-xs flex items-center ${
+                        passwordValidation.minLength
+                          ? "text-green-600"
+                          : "text-gray-500"
+                      }`}
+                    >
+                      {passwordValidation.minLength ? "✓" : "○"} At least 8
+                      characters
+                    </div>
+                    <div
+                      className={`text-xs flex items-center ${
+                        passwordValidation.hasUpperCase
+                          ? "text-green-600"
+                          : "text-gray-500"
+                      }`}
+                    >
+                      {passwordValidation.hasUpperCase ? "✓" : "○"} One
+                      uppercase letter
+                    </div>
+                    <div
+                      className={`text-xs flex items-center ${
+                        passwordValidation.hasLowerCase
+                          ? "text-green-600"
+                          : "text-gray-500"
+                      }`}
+                    >
+                      {passwordValidation.hasLowerCase ? "✓" : "○"} One
+                      lowercase letter
+                    </div>
+                    <div
+                      className={`text-xs flex items-center ${
+                        passwordValidation.hasNumbers
+                          ? "text-green-600"
+                          : "text-gray-500"
+                      }`}
+                    >
+                      {passwordValidation.hasNumbers ? "✓" : "○"} One number
+                    </div>
+                    <div
+                      className={`text-xs flex items-center ${
+                        passwordValidation.hasSpecialChar
+                          ? "text-green-600"
+                          : "text-gray-500"
+                      }`}
+                    >
+                      {passwordValidation.hasSpecialChar ? "✓" : "○"} One
+                      special character
+                    </div>
+                  </div>
                 </div>
-                <div className="space-y-1">
-                  <div
-                    className={`text-xs ${
-                      passwordValidation.minLength
-                        ? "text-green-600"
-                        : "text-gray-500"
-                    }`}
-                  >
-                    • At least 8 characters
-                  </div>
-                  <div
-                    className={`text-xs ${
-                      passwordValidation.hasUpperCase
-                        ? "text-green-600"
-                        : "text-gray-500"
-                    }`}
-                  >
-                    • One uppercase letter
-                  </div>
-                  <div
-                    className={`text-xs ${
-                      passwordValidation.hasLowerCase
-                        ? "text-green-600"
-                        : "text-gray-500"
-                    }`}
-                  >
-                    • One lowercase letter
-                  </div>
-                  <div
-                    className={`text-xs ${
-                      passwordValidation.hasNumbers
-                        ? "text-green-600"
-                        : "text-gray-500"
-                    }`}
-                  >
-                    • One number
-                  </div>
-                  <div
-                    className={`text-xs ${
-                      passwordValidation.hasSpecialChar
-                        ? "text-green-600"
-                        : "text-gray-500"
-                    }`}
-                  >
-                    • One special character
-                  </div>
-                </div>
-              </div>
+              )}
             </div>
 
             <div>
