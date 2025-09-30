@@ -6015,963 +6015,979 @@ export default function DashboardPage() {
       );
     }
 
-    const renderNotificationsSection = () => {
-      console.log("🔍 Notifications section debug:", {
-        notifications: notifications,
-        notificationStats: notificationStats,
-        notificationsLoading: notificationsLoading,
-        notificationsError: notificationsError,
-        notificationsPagination: notificationsPagination,
-        notificationFilter: notificationFilter,
-        notificationPreferences: notificationPreferences,
-        showPreferencesModal: showPreferencesModal,
-      });
-
-      const getNotificationIcon = (type: string) => {
-        switch (type) {
-          case "NEW_BOOKING":
-            return <Calendar className="h-5 w-5 text-blue-600" />;
-          case "BOOKING_CONFIRMED":
-            return <CheckCircle className="h-5 w-5 text-green-600" />;
-          case "BOOKING_CANCELLED":
-            return <X className="h-5 w-5 text-red-600" />;
-          case "NEW_REVIEW":
-            return <Star className="h-5 w-5 text-yellow-600" />;
-          case "PAYMENT_RECEIVED":
-            return <DollarSign className="h-5 w-5 text-green-600" />;
-          case "PAYMENT_FAILED":
-            return <AlertCircle className="h-5 w-5 text-red-600" />;
-          default:
-            return <Bell className="h-5 w-5 text-gray-600" />;
-        }
-      };
-
-      const getNotificationColor = (status: string) => {
-        return status === "UNREAD"
-          ? "bg-blue-50 border-blue-200"
-          : "bg-white border-gray-200";
-      };
-
-      return (
-        <div className="space-y-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">
-                Notifications
-              </h1>
-              <p className="text-gray-600">
-                Stay updated with your latest activities
-              </p>
-            </div>
-            <div className="flex space-x-3">
-              <button
-                onClick={async () => {
-                  await fetchNotificationPreferences();
-                  setShowPreferencesModal(true);
-                }}
-                className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
-              >
-                Preferences
-              </button>
-              {notificationStats?.unread > 0 && (
-                <button
-                  onClick={handleMarkAllAsRead}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  Mark All as Read
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Notification Stats */}
-          {notificationStats && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div
-                className="bg-white p-6 rounded-xl"
-                style={{
-                  border: "1px solid #DDDDDD",
-                  boxShadow: "0 6px 20px 0 rgba(0,0,0,0.1)",
-                }}
-              >
-                <div className="flex items-center space-x-3">
-                  <div className="h-10 w-10 bg-blue-50 rounded-lg flex items-center justify-center">
-                    <Bell className="h-5 w-5 text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Total</p>
-                    <p className="text-xl font-bold text-gray-900">
-                      {notificationStats.total || 0}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div
-                className="bg-white p-6 rounded-xl"
-                style={{
-                  border: "1px solid #DDDDDD",
-                  boxShadow: "0 6px 20px 0 rgba(0,0,0,0.1)",
-                }}
-              >
-                <div className="flex items-center space-x-3">
-                  <div className="h-10 w-10 bg-yellow-50 rounded-lg flex items-center justify-center">
-                    <Eye className="h-5 w-5 text-yellow-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Unread</p>
-                    <p className="text-xl font-bold text-gray-900">
-                      {notificationStats.unread || 0}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div
-                className="bg-white p-6 rounded-xl"
-                style={{
-                  border: "1px solid #DDDDDD",
-                  boxShadow: "0 6px 20px 0 rgba(0,0,0,0.1)",
-                }}
-              >
-                <div className="flex items-center space-x-3">
-                  <div className="h-10 w-10 bg-green-50 rounded-lg flex items-center justify-center">
-                    <CheckCircle className="h-5 w-5 text-green-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Read</p>
-                    <p className="text-xl font-bold text-gray-900">
-                      {notificationStats.read || 0}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Filter Controls */}
-          <div className="flex space-x-4">
-            <button
-              onClick={() => {
-                setNotificationFilter("ALL");
-                fetchNotifications(1, "ALL");
-              }}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                notificationFilter === "ALL"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-              }`}
-            >
-              All
-            </button>
-            <button
-              onClick={() => {
-                setNotificationFilter("UNREAD");
-                fetchNotifications(1, "UNREAD");
-              }}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                notificationFilter === "UNREAD"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-              }`}
-            >
-              Unread
-            </button>
-            <button
-              onClick={() => {
-                setNotificationFilter("READ");
-                fetchNotifications(1, "READ");
-              }}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                notificationFilter === "READ"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-              }`}
-            >
-              Read
-            </button>
-          </div>
-
-          {/* Notifications List */}
-          <div
-            className="bg-white rounded-xl"
-            style={{
-              border: "1px solid #DDDDDD",
-              boxShadow: "0 6px 20px 0 rgba(0,0,0,0.1)",
-            }}
-          >
-            {notificationsLoading ? (
-              <div className="flex justify-center py-12">
-                <Loader size="md" className="py-6" />
-              </div>
-            ) : notificationsError ? (
-              <div className="p-6">
-                <p className="text-red-600">{notificationsError}</p>
-              </div>
-            ) : notifications.length > 0 ? (
-              <div className="divide-y divide-gray-200">
-                {notifications.map((notification) => (
-                  <div
-                    key={notification.id}
-                    className={`p-6 ${getNotificationColor(
-                      notification.status
-                    )}`}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start space-x-4 flex-1">
-                        <div className="flex-shrink-0">
-                          {getNotificationIcon(notification.type)}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center space-x-2">
-                            <p className="text-sm font-medium text-gray-900">
-                              {notification.title}
-                            </p>
-                            {notification.status === "UNREAD" && (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                New
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-sm text-gray-600 mt-1">
-                            {notification.body}
-                          </p>
-                          <p className="text-xs text-gray-500 mt-2">
-                            {formatDate(notification.createdAt)}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2 ml-4">
-                        {notification.status === "UNREAD" && (
-                          <button
-                            onClick={() => handleMarkAsRead(notification.id)}
-                            className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                          >
-                            Mark as Read
-                          </button>
-                        )}
-                        <button
-                          onClick={() =>
-                            handleDeleteNotification(notification.id)
-                          }
-                          className="text-red-600 hover:text-red-800 text-sm font-medium"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12">
-                <Bell className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500">No notifications found</p>
-              </div>
-            )}
-          </div>
-
-          {/* Pagination */}
-          {notificationsPagination.totalPages > 1 && (
-            <div className="flex justify-center space-x-2">
-              <button
-                onClick={() =>
-                  fetchNotifications(
-                    notificationsPagination.currentPage - 1,
-                    notificationFilter
-                  )
-                }
-                disabled={notificationsPagination.currentPage <= 1}
-                className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Previous
-              </button>
-
-              {Array.from(
-                { length: Math.min(5, notificationsPagination.totalPages) },
-                (_, i) => {
-                  const page = i + 1;
-                  return (
-                    <button
-                      key={page}
-                      onClick={() =>
-                        fetchNotifications(page, notificationFilter)
-                      }
-                      className={`px-3 py-2 text-sm font-medium rounded-md ${
-                        page === notificationsPagination.currentPage
-                          ? "bg-blue-600 text-white"
-                          : "text-gray-500 bg-white border border hover:bg-gray-50"
-                      }`}
-                    >
-                      {page}
-                    </button>
-                  );
-                }
-              )}
-
-              <button
-                onClick={() =>
-                  fetchNotifications(
-                    notificationsPagination.currentPage + 1,
-                    notificationFilter
-                  )
-                }
-                disabled={
-                  notificationsPagination.currentPage >=
-                  notificationsPagination.totalPages
-                }
-                className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Next
-              </button>
-            </div>
-          )}
-
-          {/* Preferences Modal */}
-          <Modal
-            isOpen={showPreferencesModal}
-            onClose={() => setShowPreferencesModal(false)}
-            title="Notification Preferences"
-          >
-            {preferencesError && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-sm text-red-700">{preferencesError}</p>
-              </div>
-            )}
-
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-900">
-                    Email Notifications
-                  </p>
-                  <p className="text-xs text-gray-600">
-                    Receive notifications via email
-                  </p>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={preferencesForm.emailNotifications}
-                  onChange={(e) =>
-                    setPreferencesForm((prev) => ({
-                      ...prev,
-                      emailNotifications: e.target.checked,
-                    }))
-                  }
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border rounded"
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-900">
-                    Push Notifications
-                  </p>
-                  <p className="text-xs text-gray-600">
-                    Receive push notifications
-                  </p>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={preferencesForm.pushNotifications}
-                  onChange={(e) =>
-                    setPreferencesForm((prev) => ({
-                      ...prev,
-                      pushNotifications: e.target.checked,
-                    }))
-                  }
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border rounded"
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-900">
-                    Booking Notifications
-                  </p>
-                  <p className="text-xs text-gray-600">
-                    New bookings and updates
-                  </p>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={preferencesForm.bookingNotifications}
-                  onChange={(e) =>
-                    setPreferencesForm((prev) => ({
-                      ...prev,
-                      bookingNotifications: e.target.checked,
-                    }))
-                  }
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border rounded"
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-900">
-                    Review Notifications
-                  </p>
-                  <p className="text-xs text-gray-600">
-                    New reviews and ratings
-                  </p>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={preferencesForm.reviewNotifications}
-                  onChange={(e) =>
-                    setPreferencesForm((prev) => ({
-                      ...prev,
-                      reviewNotifications: e.target.checked,
-                    }))
-                  }
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border rounded"
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-900">
-                    Payment Notifications
-                  </p>
-                  <p className="text-xs text-gray-600">
-                    Payment confirmations and issues
-                  </p>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={preferencesForm.paymentNotifications}
-                  onChange={(e) =>
-                    setPreferencesForm((prev) => ({
-                      ...prev,
-                      paymentNotifications: e.target.checked,
-                    }))
-                  }
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border rounded"
-                />
-              </div>
-            </div>
-
-            <div className="flex space-x-3 mt-6">
-              <button
-                onClick={() => setShowPreferencesModal(false)}
-                className="flex-1 px-4 py-2 border border rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleUpdatePreferences}
-                disabled={preferencesLoading}
-                className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {preferencesLoading ? "Saving..." : "Save Preferences"}
-              </button>
-            </div>
-          </Modal>
+    // For guests, show regular wallet
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Wallet</h1>
+          <p className="text-gray-600">Manage your wallet and transactions</p>
         </div>
-      );
-    };
 
-    const renderProfileSection = () => {
-      console.log("🔍 Profile section debug:", {
-        user: user,
-        profileForm: profileForm,
-        profileLoading: profileLoading,
-        showPasswordModal: showPasswordModal,
-      });
-
-      return (
-        <div className="space-y-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Profile</h1>
-            <p className="text-gray-600">
-              Manage your account information and security
-            </p>
-          </div>
-
-          {/* Profile Information */}
-          <div
-            className="bg-white rounded-xl p-6"
-            style={{
-              border: "1px solid #DDDDDD",
-              boxShadow: "0 6px 20px 0 rgba(0,0,0,0.1)",
-            }}
-          >
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-lg font-semibold text-gray-900">
-                Profile Information
-              </h2>
-              <button
-                onClick={() => setShowPasswordModal(true)}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Change Password
-              </button>
-            </div>
-
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                console.log("🔍 Form submitted, calling handleUpdateProfile");
-                handleUpdateProfile();
-              }}
-              className="space-y-6"
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    First Name *
-                  </label>
-                  <Input
-                    type="text"
-                    value={profileForm.firstName}
-                    onChange={(e) =>
-                      setProfileForm((prev) => ({
-                        ...prev,
-                        firstName: e.target.value,
-                      }))
-                    }
-                    placeholder="Enter your first name"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Last Name *
-                  </label>
-                  <Input
-                    type="text"
-                    value={profileForm.lastName}
-                    onChange={(e) =>
-                      setProfileForm((prev) => ({
-                        ...prev,
-                        lastName: e.target.value,
-                      }))
-                    }
-                    placeholder="Enter your last name"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email Address
-                </label>
-                <Input
-                  type="email"
-                  value={profileForm.email}
-                  disabled
-                  placeholder="your.email@example.com"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Email address cannot be changed
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Phone Number
-                </label>
-                <Input
-                  type="tel"
-                  value={profileForm.phone}
-                  onChange={(e) =>
-                    setProfileForm((prev) => ({
-                      ...prev,
-                      phone: e.target.value,
-                    }))
-                  }
-                  placeholder="+237612345678"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Avatar URL (Optional)
-                </label>
-                <Input
-                  type="url"
-                  value={profileForm.avatar}
-                  onChange={(e) =>
-                    setProfileForm((prev) => ({
-                      ...prev,
-                      avatar: e.target.value,
-                    }))
-                  }
-                  placeholder="https://example.com/avatar.jpg"
-                />
-              </div>
-
-              <div className="flex justify-end">
-                <button
-                  type="submit"
-                  disabled={profileLoading}
-                  className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {profileLoading ? "Updating..." : "Update Profile"}
-                </button>
-              </div>
-            </form>
-          </div>
-
-          {/* Account Information */}
-          <div
-            className="bg-white rounded-xl p-6"
-            style={{
-              border: "1px solid #DDDDDD",
-              boxShadow: "0 6px 20px 0 rgba(0,0,0,0.1)",
-            }}
-          >
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
-              Account Information
-            </h2>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center py-3 border-b border-gray-200">
-                <div>
-                  <p className="text-sm font-medium text-gray-900">
-                    Account Type
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    {user?.role === "HOST" ? "Host" : "Guest"}
-                  </p>
-                </div>
-                <div className="text-sm text-gray-500">
-                  {user?.role === "HOST"
-                    ? "Can list properties"
-                    : "Can book properties"}
-                </div>
-              </div>
-
-              <div className="flex justify-between items-center py-3 border-b border-gray-200">
-                <div>
-                  <p className="text-sm font-medium text-gray-900">
-                    Email Verification
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    {user?.isVerified ? "Verified" : "Not verified"}
-                  </p>
-                </div>
-                <div className="text-sm text-gray-500">
-                  {user?.isVerified ? (
-                    <span className="text-green-600">✓ Verified</span>
-                  ) : (
-                    <span className="text-yellow-600">⚠ Not verified</span>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex justify-between items-center py-3 border-b border-gray-200">
-                <div>
-                  <p className="text-sm font-medium text-gray-900">
-                    Member Since
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    {user?.createdAt ? formatDate(user.createdAt) : "Unknown"}
-                  </p>
-                </div>
-              </div>
-
-              {user?.role === "HOST" && (
-                <div className="flex justify-between items-center py-3 border-b border-gray-200">
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      Host Status
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      {user?.hostApprovalStatus === "APPROVED"
-                        ? "Approved"
-                        : "Pending"}
-                    </p>
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    {user?.hostApprovalStatus === "APPROVED" ? (
-                      <span className="text-green-600">✓ Approved</span>
-                    ) : (
-                      <span className="text-yellow-600">⏳ Pending</span>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Change Password Modal */}
-          {showPasswordModal && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-xl p-6 w-full max-w-md">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Change Password
-                </h3>
-
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    handleChangePassword();
-                  }}
-                  className="space-y-4"
-                >
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Current Password *
-                    </label>
-                    <Input
-                      type="password"
-                      value={passwordForm.currentPassword}
-                      onChange={(e) =>
-                        setPasswordForm((prev) => ({
-                          ...prev,
-                          currentPassword: e.target.value,
-                        }))
-                      }
-                      placeholder="Enter current password"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      New Password *
-                    </label>
-                    <Input
-                      type="password"
-                      value={passwordForm.newPassword}
-                      onChange={(e) =>
-                        setPasswordForm((prev) => ({
-                          ...prev,
-                          newPassword: e.target.value,
-                        }))
-                      }
-                      placeholder="Enter new password"
-                      required
-                      minLength={6}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Confirm New Password *
-                    </label>
-                    <Input
-                      type="password"
-                      value={passwordForm.confirmPassword}
-                      onChange={(e) =>
-                        setPasswordForm((prev) => ({
-                          ...prev,
-                          confirmPassword: e.target.value,
-                        }))
-                      }
-                      placeholder="Confirm new password"
-                      required
-                      minLength={6}
-                    />
-                  </div>
-
-                  <div className="flex space-x-3 mt-6">
-                    <button
-                      type="button"
-                      onClick={() => setShowPasswordModal(false)}
-                      className="flex-1 px-4 py-2 border border rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={passwordLoading}
-                      className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                      {passwordLoading ? "Changing..." : "Change Password"}
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          )}
+        <div
+          className="bg-white rounded-xl p-6"
+          style={{
+            border: "1px solid #DDDDDD",
+            boxShadow: "0 6px 20px 0 rgba(0,0,0,0.1)",
+          }}
+        >
+          <p className="text-gray-600 text-center py-8">
+            Guest wallet features coming soon.
+          </p>
         </div>
-      );
-    };
+      </div>
+    );
+  };
 
-    const renderContent = () => {
-      switch (activeSection) {
-        case "overview":
-          return renderOverviewSection();
-        case "bookings":
-          return renderBookingsSection();
-        case "properties":
-          return renderPropertiesSection();
-        case "reviews":
-          return renderReviewsSection();
-        case "enquiries":
-          return renderEnquiriesSection();
-        case "favorites":
-          return renderFavoritesSection();
-        case "host-application":
-          return renderHostApplicationSection();
-        case "wallet":
-          return renderWalletSection();
-        case "notifications":
-          return renderNotificationsSection();
-        case "profile":
-          return renderProfileSection();
+  const renderNotificationsSection = () => {
+    console.log("🔍 Notifications section debug:", {
+      notifications: notifications,
+      notificationStats: notificationStats,
+      notificationsLoading: notificationsLoading,
+      notificationsError: notificationsError,
+      notificationsPagination: notificationsPagination,
+      notificationFilter: notificationFilter,
+      notificationPreferences: notificationPreferences,
+      showPreferencesModal: showPreferencesModal,
+    });
+
+    const getNotificationIcon = (type: string) => {
+      switch (type) {
+        case "NEW_BOOKING":
+          return <Calendar className="h-5 w-5 text-blue-600" />;
+        case "BOOKING_CONFIRMED":
+          return <CheckCircle className="h-5 w-5 text-green-600" />;
+        case "BOOKING_CANCELLED":
+          return <X className="h-5 w-5 text-red-600" />;
+        case "NEW_REVIEW":
+          return <Star className="h-5 w-5 text-yellow-600" />;
+        case "PAYMENT_RECEIVED":
+          return <DollarSign className="h-5 w-5 text-green-600" />;
+        case "PAYMENT_FAILED":
+          return <AlertCircle className="h-5 w-5 text-red-600" />;
         default:
-          return (
-            <div className="text-center py-12">
-              <p className="text-gray-500">Section coming soon...</p>
-            </div>
-          );
+          return <Bell className="h-5 w-5 text-gray-600" />;
       }
     };
 
+    const getNotificationColor = (status: string) => {
+      return status === "UNREAD"
+        ? "bg-blue-50 border-blue-200"
+        : "bg-white border-gray-200";
+    };
+
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="max-w-7xl mx-auto px-6 py-8">
-          <div className="flex flex-col lg:flex-row gap-8">
-            {/* Sidebar Navigation */}
-            <div className="lg:w-72 flex-shrink-0">
-              <div
-                className="bg-white rounded-xl p-6 shadow-sm"
-                style={{
-                  border: "1px solid #DDDDDD",
-                  boxShadow: "0 6px 20px 0 rgba(0,0,0,0.1)",
-                }}
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              Notifications
+            </h1>
+            <p className="text-gray-600">
+              Stay updated with your latest activities
+            </p>
+          </div>
+          <div className="flex space-x-3">
+            <button
+              onClick={async () => {
+                await fetchNotificationPreferences();
+                setShowPreferencesModal(true);
+              }}
+              className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+            >
+              Preferences
+            </button>
+            {notificationStats?.unread > 0 && (
+              <button
+                onClick={handleMarkAllAsRead}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
               >
-                <h2 className="text-xl font-bold text-gray-900 mb-6">
-                  Dashboard
-                </h2>
-                <nav className="space-y-2">
-                  {navigationItems.map((item) => (
-                    <button
-                      key={item.id}
-                      onClick={() =>
-                        setActiveSection(item.id as DashboardSection)
-                      }
-                      className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-all duration-200 ${
-                        activeSection === item.id
-                          ? "bg-gray-100 text-gray-900 font-medium"
-                          : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                      }`}
-                    >
-                      {item.icon}
-                      <span className="text-sm font-medium">{item.label}</span>
-                    </button>
-                  ))}
-                </nav>
-
-                {/* Logout Button */}
-                <div className="pt-4 mt-4">
-                  <button
-                    onClick={handleLogout}
-                    className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-all duration-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                  >
-                    <LogOut className="h-5 w-5" />
-                    <span className="text-sm font-medium">Logout</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Main Content */}
-            <div className="flex-1">
-              {error && (
-                <div
-                  className="mb-8 p-4 bg-red-50 rounded-xl"
-                  style={{
-                    border: "1px solid #DDDDDD",
-                    boxShadow: "0 6px 20px 0 rgba(0,0,0,0.1)",
-                  }}
-                >
-                  <p className="text-sm text-red-700">{error}</p>
-                </div>
-              )}
-              {renderContent()}
-            </div>
+                Mark All as Read
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Delete Confirmation Modal */}
-        {showDeleteModal && propertyToDelete && (
-          <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-[9999]">
+        {/* Notification Stats */}
+        {notificationStats && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div
-              className="bg-white rounded-xl p-6 max-w-md w-full mx-4"
+              className="bg-white p-6 rounded-xl"
               style={{
                 border: "1px solid #DDDDDD",
                 boxShadow: "0 6px 20px 0 rgba(0,0,0,0.1)",
               }}
             >
-              <div className="flex items-center mb-4">
-                <div className="h-10 w-10 bg-red-100 rounded-full flex items-center justify-center mr-3">
-                  <svg
-                    className="h-5 w-5 text-red-600"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
+              <div className="flex items-center space-x-3">
+                <div className="h-10 w-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                  <Bell className="h-5 w-5 text-blue-600" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Delete Property
-                </h3>
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Total</p>
+                  <p className="text-xl font-bold text-gray-900">
+                    {notificationStats.total || 0}
+                  </p>
+                </div>
               </div>
+            </div>
 
-              <p className="text-gray-600 mb-6">
-                Are you sure you want to delete{" "}
-                <strong>"{propertyToDelete.title}"</strong>? This action cannot
-                be undone and will permanently remove the property from your
-                listings.
-              </p>
+            <div
+              className="bg-white p-6 rounded-xl"
+              style={{
+                border: "1px solid #DDDDDD",
+                boxShadow: "0 6px 20px 0 rgba(0,0,0,0.1)",
+              }}
+            >
+              <div className="flex items-center space-x-3">
+                <div className="h-10 w-10 bg-yellow-50 rounded-lg flex items-center justify-center">
+                  <Eye className="h-5 w-5 text-yellow-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Unread</p>
+                  <p className="text-xl font-bold text-gray-900">
+                    {notificationStats.unread || 0}
+                  </p>
+                </div>
+              </div>
+            </div>
 
-              <div className="flex justify-end space-x-3">
-                <button
-                  onClick={closeDeleteModal}
-                  disabled={deletingProperty}
-                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => handleDeleteProperty(propertyToDelete.id)}
-                  disabled={deletingProperty}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center"
-                >
-                  {deletingProperty ? (
-                    <>
-                      <svg
-                        className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        />
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        />
-                      </svg>
-                      Deleting...
-                    </>
-                  ) : (
-                    "Delete Property"
-                  )}
-                </button>
+            <div
+              className="bg-white p-6 rounded-xl"
+              style={{
+                border: "1px solid #DDDDDD",
+                boxShadow: "0 6px 20px 0 rgba(0,0,0,0.1)",
+              }}
+            >
+              <div className="flex items-center space-x-3">
+                <div className="h-10 w-10 bg-green-50 rounded-lg flex items-center justify-center">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Read</p>
+                  <p className="text-xl font-bold text-gray-900">
+                    {notificationStats.read || 0}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* Toast Notifications */}
-        <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
+        {/* Filter Controls */}
+        <div className="flex space-x-4">
+          <button
+            onClick={() => {
+              setNotificationFilter("ALL");
+              fetchNotifications(1, "ALL");
+            }}
+            className={`px-4 py-2 rounded-lg transition-colors ${
+              notificationFilter === "ALL"
+                ? "bg-blue-600 text-white"
+                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+            }`}
+          >
+            All
+          </button>
+          <button
+            onClick={() => {
+              setNotificationFilter("UNREAD");
+              fetchNotifications(1, "UNREAD");
+            }}
+            className={`px-4 py-2 rounded-lg transition-colors ${
+              notificationFilter === "UNREAD"
+                ? "bg-blue-600 text-white"
+                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+            }`}
+          >
+            Unread
+          </button>
+          <button
+            onClick={() => {
+              setNotificationFilter("READ");
+              fetchNotifications(1, "READ");
+            }}
+            className={`px-4 py-2 rounded-lg transition-colors ${
+              notificationFilter === "READ"
+                ? "bg-blue-600 text-white"
+                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+            }`}
+          >
+            Read
+          </button>
+        </div>
+
+        {/* Notifications List */}
+        <div
+          className="bg-white rounded-xl"
+          style={{
+            border: "1px solid #DDDDDD",
+            boxShadow: "0 6px 20px 0 rgba(0,0,0,0.1)",
+          }}
+        >
+          {notificationsLoading ? (
+            <div className="flex justify-center py-12">
+              <Loader size="md" className="py-6" />
+            </div>
+          ) : notificationsError ? (
+            <div className="p-6">
+              <p className="text-red-600">{notificationsError}</p>
+            </div>
+          ) : notifications.length > 0 ? (
+            <div className="divide-y divide-gray-200">
+              {notifications.map((notification) => (
+                <div
+                  key={notification.id}
+                  className={`p-6 ${getNotificationColor(notification.status)}`}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start space-x-4 flex-1">
+                      <div className="flex-shrink-0">
+                        {getNotificationIcon(notification.type)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center space-x-2">
+                          <p className="text-sm font-medium text-gray-900">
+                            {notification.title}
+                          </p>
+                          {notification.status === "UNREAD" && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                              New
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-600 mt-1">
+                          {notification.body}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-2">
+                          {formatDate(notification.createdAt)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2 ml-4">
+                      {notification.status === "UNREAD" && (
+                        <button
+                          onClick={() => handleMarkAsRead(notification.id)}
+                          className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                        >
+                          Mark as Read
+                        </button>
+                      )}
+                      <button
+                        onClick={() =>
+                          handleDeleteNotification(notification.id)
+                        }
+                        className="text-red-600 hover:text-red-800 text-sm font-medium"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <Bell className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-500">No notifications found</p>
+            </div>
+          )}
+        </div>
+
+        {/* Pagination */}
+        {notificationsPagination.totalPages > 1 && (
+          <div className="flex justify-center space-x-2">
+            <button
+              onClick={() =>
+                fetchNotifications(
+                  notificationsPagination.currentPage - 1,
+                  notificationFilter
+                )
+              }
+              disabled={notificationsPagination.currentPage <= 1}
+              className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+
+            {Array.from(
+              { length: Math.min(5, notificationsPagination.totalPages) },
+              (_, i) => {
+                const page = i + 1;
+                return (
+                  <button
+                    key={page}
+                    onClick={() => fetchNotifications(page, notificationFilter)}
+                    className={`px-3 py-2 text-sm font-medium rounded-md ${
+                      page === notificationsPagination.currentPage
+                        ? "bg-blue-600 text-white"
+                        : "text-gray-500 bg-white border border hover:bg-gray-50"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                );
+              }
+            )}
+
+            <button
+              onClick={() =>
+                fetchNotifications(
+                  notificationsPagination.currentPage + 1,
+                  notificationFilter
+                )
+              }
+              disabled={
+                notificationsPagination.currentPage >=
+                notificationsPagination.totalPages
+              }
+              className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
+        )}
+
+        {/* Preferences Modal */}
+        <Modal
+          isOpen={showPreferencesModal}
+          onClose={() => setShowPreferencesModal(false)}
+          title="Notification Preferences"
+        >
+          {preferencesError && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-700">{preferencesError}</p>
+            </div>
+          )}
+
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-900">
+                  Email Notifications
+                </p>
+                <p className="text-xs text-gray-600">
+                  Receive notifications via email
+                </p>
+              </div>
+              <input
+                type="checkbox"
+                checked={preferencesForm.emailNotifications}
+                onChange={(e) =>
+                  setPreferencesForm((prev) => ({
+                    ...prev,
+                    emailNotifications: e.target.checked,
+                  }))
+                }
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border rounded"
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-900">
+                  Push Notifications
+                </p>
+                <p className="text-xs text-gray-600">
+                  Receive push notifications
+                </p>
+              </div>
+              <input
+                type="checkbox"
+                checked={preferencesForm.pushNotifications}
+                onChange={(e) =>
+                  setPreferencesForm((prev) => ({
+                    ...prev,
+                    pushNotifications: e.target.checked,
+                  }))
+                }
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border rounded"
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-900">
+                  Booking Notifications
+                </p>
+                <p className="text-xs text-gray-600">
+                  New bookings and updates
+                </p>
+              </div>
+              <input
+                type="checkbox"
+                checked={preferencesForm.bookingNotifications}
+                onChange={(e) =>
+                  setPreferencesForm((prev) => ({
+                    ...prev,
+                    bookingNotifications: e.target.checked,
+                  }))
+                }
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border rounded"
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-900">
+                  Review Notifications
+                </p>
+                <p className="text-xs text-gray-600">New reviews and ratings</p>
+              </div>
+              <input
+                type="checkbox"
+                checked={preferencesForm.reviewNotifications}
+                onChange={(e) =>
+                  setPreferencesForm((prev) => ({
+                    ...prev,
+                    reviewNotifications: e.target.checked,
+                  }))
+                }
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border rounded"
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-900">
+                  Payment Notifications
+                </p>
+                <p className="text-xs text-gray-600">
+                  Payment confirmations and issues
+                </p>
+              </div>
+              <input
+                type="checkbox"
+                checked={preferencesForm.paymentNotifications}
+                onChange={(e) =>
+                  setPreferencesForm((prev) => ({
+                    ...prev,
+                    paymentNotifications: e.target.checked,
+                  }))
+                }
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border rounded"
+              />
+            </div>
+          </div>
+
+          <div className="flex space-x-3 mt-6">
+            <button
+              onClick={() => setShowPreferencesModal(false)}
+              className="flex-1 px-4 py-2 border border rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleUpdatePreferences}
+              disabled={preferencesLoading}
+              className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {preferencesLoading ? "Saving..." : "Save Preferences"}
+            </button>
+          </div>
+        </Modal>
       </div>
     );
   };
+
+  const renderProfileSection = () => {
+    console.log("🔍 Profile section debug:", {
+      user: user,
+      profileForm: profileForm,
+      profileLoading: profileLoading,
+      showPasswordModal: showPasswordModal,
+    });
+
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Profile</h1>
+          <p className="text-gray-600">
+            Manage your account information and security
+          </p>
+        </div>
+
+        {/* Profile Information */}
+        <div
+          className="bg-white rounded-xl p-6"
+          style={{
+            border: "1px solid #DDDDDD",
+            boxShadow: "0 6px 20px 0 rgba(0,0,0,0.1)",
+          }}
+        >
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-lg font-semibold text-gray-900">
+              Profile Information
+            </h2>
+            <button
+              onClick={() => setShowPasswordModal(true)}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Change Password
+            </button>
+          </div>
+
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              console.log("🔍 Form submitted, calling handleUpdateProfile");
+              handleUpdateProfile();
+            }}
+            className="space-y-6"
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  First Name *
+                </label>
+                <Input
+                  type="text"
+                  value={profileForm.firstName}
+                  onChange={(e) =>
+                    setProfileForm((prev) => ({
+                      ...prev,
+                      firstName: e.target.value,
+                    }))
+                  }
+                  placeholder="Enter your first name"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Last Name *
+                </label>
+                <Input
+                  type="text"
+                  value={profileForm.lastName}
+                  onChange={(e) =>
+                    setProfileForm((prev) => ({
+                      ...prev,
+                      lastName: e.target.value,
+                    }))
+                  }
+                  placeholder="Enter your last name"
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Email Address
+              </label>
+              <Input
+                type="email"
+                value={profileForm.email}
+                disabled
+                placeholder="your.email@example.com"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Email address cannot be changed
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Phone Number
+              </label>
+              <Input
+                type="tel"
+                value={profileForm.phone}
+                onChange={(e) =>
+                  setProfileForm((prev) => ({
+                    ...prev,
+                    phone: e.target.value,
+                  }))
+                }
+                placeholder="+237612345678"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Avatar URL (Optional)
+              </label>
+              <Input
+                type="url"
+                value={profileForm.avatar}
+                onChange={(e) =>
+                  setProfileForm((prev) => ({
+                    ...prev,
+                    avatar: e.target.value,
+                  }))
+                }
+                placeholder="https://example.com/avatar.jpg"
+              />
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                type="submit"
+                disabled={profileLoading}
+                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {profileLoading ? "Updating..." : "Update Profile"}
+              </button>
+            </div>
+          </form>
+        </div>
+
+        {/* Account Information */}
+        <div
+          className="bg-white rounded-xl p-6"
+          style={{
+            border: "1px solid #DDDDDD",
+            boxShadow: "0 6px 20px 0 rgba(0,0,0,0.1)",
+          }}
+        >
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            Account Information
+          </h2>
+          <div className="space-y-4">
+            <div className="flex justify-between items-center py-3 border-b border-gray-200">
+              <div>
+                <p className="text-sm font-medium text-gray-900">
+                  Account Type
+                </p>
+                <p className="text-sm text-gray-600">
+                  {user?.role === "HOST" ? "Host" : "Guest"}
+                </p>
+              </div>
+              <div className="text-sm text-gray-500">
+                {user?.role === "HOST"
+                  ? "Can list properties"
+                  : "Can book properties"}
+              </div>
+            </div>
+
+            <div className="flex justify-between items-center py-3 border-b border-gray-200">
+              <div>
+                <p className="text-sm font-medium text-gray-900">
+                  Email Verification
+                </p>
+                <p className="text-sm text-gray-600">
+                  {user?.isVerified ? "Verified" : "Not verified"}
+                </p>
+              </div>
+              <div className="text-sm text-gray-500">
+                {user?.isVerified ? (
+                  <span className="text-green-600">✓ Verified</span>
+                ) : (
+                  <span className="text-yellow-600">⚠ Not verified</span>
+                )}
+              </div>
+            </div>
+
+            <div className="flex justify-between items-center py-3 border-b border-gray-200">
+              <div>
+                <p className="text-sm font-medium text-gray-900">
+                  Member Since
+                </p>
+                <p className="text-sm text-gray-600">
+                  {user?.createdAt ? formatDate(user.createdAt) : "Unknown"}
+                </p>
+              </div>
+            </div>
+
+            {user?.role === "HOST" && (
+              <div className="flex justify-between items-center py-3 border-b border-gray-200">
+                <div>
+                  <p className="text-sm font-medium text-gray-900">
+                    Host Status
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    {user?.hostApprovalStatus === "APPROVED"
+                      ? "Approved"
+                      : "Pending"}
+                  </p>
+                </div>
+                <div className="text-sm text-gray-500">
+                  {user?.hostApprovalStatus === "APPROVED" ? (
+                    <span className="text-green-600">✓ Approved</span>
+                  ) : (
+                    <span className="text-yellow-600">⏳ Pending</span>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Change Password Modal */}
+        {showPasswordModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl p-6 w-full max-w-md">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Change Password
+              </h3>
+
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleChangePassword();
+                }}
+                className="space-y-4"
+              >
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Current Password *
+                  </label>
+                  <Input
+                    type="password"
+                    value={passwordForm.currentPassword}
+                    onChange={(e) =>
+                      setPasswordForm((prev) => ({
+                        ...prev,
+                        currentPassword: e.target.value,
+                      }))
+                    }
+                    placeholder="Enter current password"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    New Password *
+                  </label>
+                  <Input
+                    type="password"
+                    value={passwordForm.newPassword}
+                    onChange={(e) =>
+                      setPasswordForm((prev) => ({
+                        ...prev,
+                        newPassword: e.target.value,
+                      }))
+                    }
+                    placeholder="Enter new password"
+                    required
+                    minLength={6}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Confirm New Password *
+                  </label>
+                  <Input
+                    type="password"
+                    value={passwordForm.confirmPassword}
+                    onChange={(e) =>
+                      setPasswordForm((prev) => ({
+                        ...prev,
+                        confirmPassword: e.target.value,
+                      }))
+                    }
+                    placeholder="Confirm new password"
+                    required
+                    minLength={6}
+                  />
+                </div>
+
+                <div className="flex space-x-3 mt-6">
+                  <button
+                    type="button"
+                    onClick={() => setShowPasswordModal(false)}
+                    className="flex-1 px-4 py-2 border border rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={passwordLoading}
+                    className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {passwordLoading ? "Changing..." : "Change Password"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderContent = () => {
+    switch (activeSection) {
+      case "overview":
+        return renderOverviewSection();
+      case "bookings":
+        return renderBookingsSection();
+      case "properties":
+        return renderPropertiesSection();
+      case "reviews":
+        return renderReviewsSection();
+      case "enquiries":
+        return renderEnquiriesSection();
+      case "favorites":
+        return renderFavoritesSection();
+      case "host-application":
+        return renderHostApplicationSection();
+      case "wallet":
+        return renderWalletSection();
+      case "notifications":
+        return renderNotificationsSection();
+      case "profile":
+        return renderProfileSection();
+      default:
+        return (
+          <div className="text-center py-12">
+            <p className="text-gray-500">Section coming soon...</p>
+          </div>
+        );
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Sidebar Navigation */}
+          <div className="lg:w-72 flex-shrink-0">
+            <div
+              className="bg-white rounded-xl p-6 shadow-sm"
+              style={{
+                border: "1px solid #DDDDDD",
+                boxShadow: "0 6px 20px 0 rgba(0,0,0,0.1)",
+              }}
+            >
+              <h2 className="text-xl font-bold text-gray-900 mb-6">
+                Dashboard
+              </h2>
+              <nav className="space-y-2">
+                {navigationItems.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() =>
+                      setActiveSection(item.id as DashboardSection)
+                    }
+                    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-all duration-200 ${
+                      activeSection === item.id
+                        ? "bg-gray-100 text-gray-900 font-medium"
+                        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                    }`}
+                  >
+                    {item.icon}
+                    <span className="text-sm font-medium">{item.label}</span>
+                  </button>
+                ))}
+              </nav>
+
+              {/* Logout Button */}
+              <div className="pt-4 mt-4">
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-all duration-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                >
+                  <LogOut className="h-5 w-5" />
+                  <span className="text-sm font-medium">Logout</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Main Content */}
+          <div className="flex-1">
+            {error && (
+              <div
+                className="mb-8 p-4 bg-red-50 rounded-xl"
+                style={{
+                  border: "1px solid #DDDDDD",
+                  boxShadow: "0 6px 20px 0 rgba(0,0,0,0.1)",
+                }}
+              >
+                <p className="text-sm text-red-700">{error}</p>
+              </div>
+            )}
+            {renderContent()}
+          </div>
+        </div>
+      </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && propertyToDelete && (
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-[9999]">
+          <div
+            className="bg-white rounded-xl p-6 max-w-md w-full mx-4"
+            style={{
+              border: "1px solid #DDDDDD",
+              boxShadow: "0 6px 20px 0 rgba(0,0,0,0.1)",
+            }}
+          >
+            <div className="flex items-center mb-4">
+              <div className="h-10 w-10 bg-red-100 rounded-full flex items-center justify-center mr-3">
+                <svg
+                  className="h-5 w-5 text-red-600"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Delete Property
+              </h3>
+            </div>
+
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to delete{" "}
+              <strong>"{propertyToDelete.title}"</strong>? This action cannot be
+              undone and will permanently remove the property from your
+              listings.
+            </p>
+
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={closeDeleteModal}
+                disabled={deletingProperty}
+                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDeleteProperty(propertyToDelete.id)}
+                disabled={deletingProperty}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center"
+              >
+                {deletingProperty ? (
+                  <>
+                    <svg
+                      className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      />
+                    </svg>
+                    Deleting...
+                  </>
+                ) : (
+                  "Delete Property"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notifications */}
+      <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
+    </div>
+  );
 }
