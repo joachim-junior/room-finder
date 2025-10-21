@@ -2130,13 +2130,16 @@ export default function DashboardPage() {
           },
         ]
       : []),
-    // Only show host application for users who haven't applied yet
-    ...(user?.role === "HOST" && !hostApplicationStatus?.status
+    // Show host onboarding for hosts who need to complete onboarding
+    ...(user?.role === "HOST" &&
+    user?.hostApprovalStatus &&
+    user?.hostApprovalStatus !== "APPROVED"
       ? [
           {
-            id: "host-application",
-            label: "Host Application",
-            icon: getSectionIcon("host-application"),
+            id: "host-onboarding",
+            label: "Host Onboarding",
+            icon: <User className="h-5 w-5" />,
+            onClick: () => router.push("/host-onboarding"),
           },
         ]
       : []),
@@ -3294,7 +3297,7 @@ export default function DashboardPage() {
                     <p className="text-xl font-bold text-gray-900">
                       {reviewStats.averageRating
                         ? reviewStats.averageRating.toFixed(1)
-                        : "N/A"}
+                        : "0"}
                     </p>
                     {reviewStats.averageRating && (
                       <div className="flex items-center space-x-1">
@@ -3304,7 +3307,7 @@ export default function DashboardPage() {
                             className={`w-4 h-4 ${
                               star <= Math.round(reviewStats.averageRating)
                                 ? "text-yellow-400 fill-current"
-                                : "text-gray-300"
+                                : "text-gray-900 font-bold"
                             }`}
                             viewBox="0 0 20 20"
                           >
@@ -5687,13 +5690,14 @@ export default function DashboardPage() {
                 Manage your earnings and withdrawals
               </p>
             </div>
-            <button
-              onClick={() => setShowWithdrawalModal(true)}
-              disabled={hostWalletBalance <= 0}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              Withdraw Funds
-            </button>
+            <div className="flex space-x-3">
+              <button
+                onClick={() => router.push("/payout-requests")}
+                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+              >
+                Payout Requests
+              </button>
+            </div>
           </div>
 
           {hostWalletLoading ? (
@@ -6926,9 +6930,13 @@ export default function DashboardPage() {
                 {navigationItems.map((item) => (
                   <button
                     key={item.id}
-                    onClick={() =>
-                      setActiveSection(item.id as DashboardSection)
-                    }
+                    onClick={() => {
+                      if (item.onClick) {
+                        item.onClick();
+                      } else {
+                        setActiveSection(item.id as DashboardSection);
+                      }
+                    }}
                     className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-all duration-200 ${
                       activeSection === item.id
                         ? "bg-gray-100 text-gray-900 font-medium"

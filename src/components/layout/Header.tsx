@@ -8,16 +8,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import {
   Globe,
   Menu,
-  Heart,
   User,
-  Bell,
-  Settings,
   LogOut,
-  Home,
-  Calendar,
-  Star,
   MessageSquare,
-  UserCheck,
+  BarChart3,
+  HelpCircle,
+  FileText,
+  MapPin,
 } from "lucide-react";
 import { Divider } from "@/components/ui";
 
@@ -76,12 +73,14 @@ export function Header() {
 
           {/* Right side */}
           <div className="flex items-center space-x-4">
-            <Link
-              href="/host"
-              className="hidden sm:block text-gray-700 hover:text-gray-900 transition-colors font-medium"
-            >
-              Become a host
-            </Link>
+            {user?.role !== "HOST" && (
+              <Link
+                href="/host"
+                className="hidden sm:block text-gray-700 hover:text-gray-900 transition-colors font-medium"
+              >
+                Become a host
+              </Link>
+            )}
             <button className="p-2 rounded-full hover:bg-gray-100 transition-colors">
               <Globe className="h-5 w-5 text-gray-700" />
             </button>
@@ -118,9 +117,7 @@ export function Header() {
                           className="flex items-center space-x-3 px-2 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
                           onClick={() => setShowUserMenu(false)}
                         >
-                          <div className="h-4 w-4 rounded-full bg-gray-300 flex items-center justify-center">
-                            <span className="text-xs">📊</span>
-                          </div>
+                          <BarChart3 className="h-4 w-4 text-gray-500" />
                           <span className="text-sm">Dashboard</span>
                         </Link>
                       </div>
@@ -133,9 +130,7 @@ export function Header() {
                           className="flex items-center space-x-3 px-2 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
                           onClick={() => setShowUserMenu(false)}
                         >
-                          <div className="h-4 w-4 rounded-full bg-gray-300 flex items-center justify-center">
-                            <span className="text-xs">❓</span>
-                          </div>
+                          <HelpCircle className="h-4 w-4 text-gray-500" />
                           <span className="text-sm">Help Center</span>
                         </Link>
                         <Link
@@ -151,37 +146,36 @@ export function Header() {
                           className="flex items-center space-x-3 px-2 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
                           onClick={() => setShowUserMenu(false)}
                         >
-                          <div className="h-4 w-4 rounded-full bg-gray-300 flex items-center justify-center">
-                            <span className="text-xs">📝</span>
-                          </div>
+                          <FileText className="h-4 w-4 text-gray-500" />
                           <span className="text-sm">Blog</span>
                         </Link>
                       </div>
 
                       <Divider />
 
-                      {/* Become a Host Section */}
-                      <div className="px-4 py-2">
-                        <Link
-                          href="/host"
-                          className="flex items-center space-x-3 px-2 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
-                          onClick={() => setShowUserMenu(false)}
-                        >
-                          <div className="h-4 w-4 rounded-full bg-gray-300 flex items-center justify-center">
-                            <span className="text-xs">🏠</span>
+                      {/* Become a Host Section - Only show if user is not already a host */}
+                      {user?.role !== "HOST" && (
+                        <>
+                          <div className="px-4 py-2">
+                            <Link
+                              href="/host"
+                              className="flex items-center space-x-3 px-2 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                              onClick={() => setShowUserMenu(false)}
+                            >
+                              <MapPin className="h-4 w-4 text-gray-500" />
+                              <div>
+                                <div className="text-sm font-semibold">
+                                  Become a host
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  Start hosting and earn extra income
+                                </div>
+                              </div>
+                            </Link>
                           </div>
-                          <div>
-                            <div className="text-sm font-semibold">
-                              Become a host
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              Start hosting and earn extra income
-                            </div>
-                          </div>
-                        </Link>
-                      </div>
-
-                      <Divider />
+                          <Divider />
+                        </>
+                      )}
 
                       {/* Log Out */}
                       <div className="px-4 py-2">
@@ -238,9 +232,7 @@ export function Header() {
                           className="flex items-center space-x-3 px-2 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
                           onClick={() => setShowUserMenu(false)}
                         >
-                          <div className="h-4 w-4 rounded-full bg-gray-300 flex items-center justify-center">
-                            <span className="text-xs">❓</span>
-                          </div>
+                          <HelpCircle className="h-4 w-4 text-gray-500" />
                           <span className="text-sm">Help Center</span>
                         </Link>
                         <Link
@@ -256,9 +248,7 @@ export function Header() {
                           className="flex items-center space-x-3 px-2 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
                           onClick={() => setShowUserMenu(false)}
                         >
-                          <div className="h-4 w-4 rounded-full bg-gray-300 flex items-center justify-center">
-                            <span className="text-xs">📝</span>
-                          </div>
+                          <FileText className="h-4 w-4 text-gray-500" />
                           <span className="text-sm">Blog</span>
                         </Link>
                       </div>
@@ -272,9 +262,7 @@ export function Header() {
                           className="flex items-center space-x-3 px-2 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
                           onClick={() => setShowUserMenu(false)}
                         >
-                          <div className="h-4 w-4 rounded-full bg-gray-300 flex items-center justify-center">
-                            <span className="text-xs">🏠</span>
-                          </div>
+                          <MapPin className="h-4 w-4 text-gray-500" />
                           <div>
                             <div className="text-sm font-semibold">
                               Become a host

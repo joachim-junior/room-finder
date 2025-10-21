@@ -20,6 +20,16 @@ import {
   SupportOptions,
   SupportRequest,
 } from "@/types";
+import {
+  HostProfile,
+  IDVerification,
+  OwnershipDocuments,
+  OnboardingStatus,
+  PayoutEligibleAmount,
+  PayoutFees,
+  PayoutRequestForm,
+  PayoutRequestsResponse,
+} from "@/types/host-onboarding";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "https://api.roomfinder237.com/api/v1";
@@ -2946,6 +2956,131 @@ class ApiClient {
     return this.request(`/support/tickets/${ticketId}/messages`, {
       method: "POST",
       body: JSON.stringify(messageData),
+    });
+  }
+
+  // Host Onboarding APIs
+  async uploadImages(
+    files: File[]
+  ): Promise<
+    ApiResponse<{ files: Array<{ url: string; name: string; size: number }> }>
+  > {
+    const formData = new FormData();
+    files.forEach((file) => formData.append("images", file));
+
+    const url = `${this.baseUrl}/uploads/multiple`;
+    const headers: Record<string, string> = {};
+
+    // Add auth header if token exists
+    if (this.token) {
+      headers.Authorization = `Bearer ${this.token}`;
+    }
+
+    const response = await fetch(url, {
+      method: "POST",
+      body: formData,
+      headers,
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || "Upload failed");
+    }
+
+    return data;
+  }
+
+  async saveHostProfile(
+    profile: HostProfile
+  ): Promise<ApiResponse<{ profileId: string; completion: number }>> {
+    return this.request("/host-onboarding/profile", {
+      method: "POST",
+      body: JSON.stringify(profile),
+    });
+  }
+
+  async submitIdVerification(
+    verification: IDVerification
+  ): Promise<ApiResponse<{ status: string }>> {
+    return this.request("/host-onboarding/id-verification", {
+      method: "POST",
+      body: JSON.stringify(verification),
+    });
+  }
+
+  async uploadOwnershipDocuments(
+    documents: OwnershipDocuments
+  ): Promise<ApiResponse<{ count: number }>> {
+    return this.request("/host-onboarding/ownership-documents", {
+      method: "POST",
+      body: JSON.stringify(documents),
+    });
+  }
+
+  async getOnboardingStatus(): Promise<ApiResponse<OnboardingStatus>> {
+    return this.request("/host-onboarding/status");
+  }
+
+  async getHostProfile(): Promise<ApiResponse<HostProfile>> {
+    return this.request("/host-onboarding/profile");
+  }
+
+  async updatePayoutDetails(details: {
+    payoutPhoneNumber: string;
+    payoutPhoneName: string;
+  }): Promise<
+    ApiResponse<{
+      payoutPhoneNumber: string;
+      payoutPhoneName: string;
+      updatedAt: string;
+    }>
+  > {
+    return this.request("/host-onboarding/payout-details", {
+      method: "PUT",
+      body: JSON.stringify(details),
+    });
+  }
+
+  // Payout APIs
+  async getEligibleAmount(): Promise<ApiResponse<PayoutEligibleAmount>> {
+    return this.request("/payout-requests/eligible-amount");
+  }
+
+  async calculatePayoutFees(amount: number): Promise<ApiResponse<PayoutFees>> {
+    return this.request(`/payout-requests/calculate-fees?amount=${amount}`);
+  }
+
+  async createPayoutRequest(
+    request: PayoutRequestForm
+  ): Promise<
+    ApiResponse<{
+      requestId: string;
+      status: string;
+      amount: number;
+      phoneNumber: string;
+    }>
+  > {
+    return this.request("/payout-requests/request", {
+      method: "POST",
+      body: JSON.stringify(request),
+    });
+  }
+
+  async getPayoutRequests(
+    page: number = 1,
+    limit: number = 10
+  ): Promise<ApiResponse<PayoutRequestsResponse>> {
+    return this.request(
+      `/payout-requests/my-requests?page=${page}&limit=${limit}`
+    );
+  }
+
+  async cancelPayoutRequest(
+    requestId: string
+  ): Promise<ApiResponse<{ id: string; status: string }>> {
+    return this.request(`/payout-requests/${requestId}/cancel`, {
+      method: "PUT",
     });
   }
 }
