@@ -44,16 +44,32 @@ function VerifyEmailContent() {
         token.substring(0, 10) + "..."
       );
 
+      const apiUrl = `${
+        process.env.NEXT_PUBLIC_API_URL ||
+        "https://api.roomfinder237.com/api/v1"
+      }/auth/verify-email`;
+      console.log("🔍 API URL:", apiUrl);
+      console.log("🔍 Environment API URL:", process.env.NEXT_PUBLIC_API_URL);
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/verify-email`,
+        `${
+          process.env.NEXT_PUBLIC_API_URL ||
+          "https://api.roomfinder237.com/api/v1"
+        }/auth/verify-email`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ token }),
+          signal: controller.signal,
         }
       );
+
+      clearTimeout(timeoutId);
 
       const data = await response.json();
       console.log("🔍 Verification response:", data);
@@ -71,7 +87,27 @@ function VerifyEmailContent() {
       }
     } catch (error) {
       setStatus("error");
-      setMessage("Network error. Please check your connection and try again.");
+
+      if (error instanceof Error) {
+        if (error.name === "AbortError") {
+          setMessage(
+            "Request timed out. Please check your connection and try again."
+          );
+        } else if (error.message.includes("Failed to fetch")) {
+          setMessage(
+            "Network error. Please check your internet connection and try again."
+          );
+        } else if (error.message.includes("CORS")) {
+          setMessage("Server configuration error. Please try again later.");
+        } else {
+          setMessage(`Network error: ${error.message}`);
+        }
+      } else {
+        setMessage(
+          "Network error. Please check your connection and try again."
+        );
+      }
+
       console.error("❌ Verification error:", error);
     }
   }

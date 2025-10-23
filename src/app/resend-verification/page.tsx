@@ -31,7 +31,10 @@ export default function ResendVerificationPage() {
       console.log("🔍 Resending verification email to:", email);
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/resend-verification`,
+        `${
+          process.env.NEXT_PUBLIC_API_URL ||
+          "https://api.roomfinder237.com/api/v1"
+        }/auth/resend-verification`,
         {
           method: "POST",
           headers: {
