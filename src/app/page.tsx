@@ -8,8 +8,8 @@ import {
   Heart,
   ChevronRight,
   ChevronDown,
-  ChevronLeft,
   X,
+  Zap,
 } from "lucide-react";
 import { Property, SearchFilters } from "@/types";
 import { apiClient } from "@/lib/api";
@@ -723,17 +723,22 @@ function PropertyCard({
 }) {
   console.log("PropertyCard image:", property.images?.[0]);
 
+  // Random lightning bolt for some properties (like in the image)
+  const showLightning = Math.random() > 0.5;
+  const hasRating = (property.reviews?.totalReviews || 0) > 0;
+
   return (
     <Link href={`/property/${property.id}`} className="group block h-full">
       <div
         className="bg-white overflow-hidden hover:-translate-y-1 transition-all duration-300 h-full flex flex-col"
         style={{
-          border: "1px solid #DDDDDD",
-          boxShadow: "0 6px 20px 0 rgba(0,0,0,0.1)",
-          borderRadius: "20px",
+          borderRadius: "12px",
         }}
       >
-        <div className="relative h-48 overflow-hidden">
+        <div
+          className="relative h-48 overflow-hidden"
+          style={{ borderRadius: "20px" }}
+        >
           <ImageWithPlaceholder
             src={property.images?.[0]}
             alt={property.title}
@@ -741,82 +746,54 @@ function PropertyCard({
             className="object-cover group-hover:scale-105 transition-transform duration-300"
           />
 
-          {/* Property type tag */}
-          <div className="absolute top-3 left-3">
-            <span className="bg-white/95 text-gray-700 text-xs px-3 py-1.5 rounded-full font-medium shadow-sm">
-              {property?.type
-                ?.toLowerCase()
-                .replace(/^\w/, (c) => c.toUpperCase()) || "Property"}
-            </span>
-          </div>
-
-          {/* Heart button */}
+          {/* Heart button - white circular button */}
           <div className="absolute top-3 right-3">
-            <button
-              className="p-2 bg-white/95 rounded-full hover:bg-white transition-colors"
-              style={{ boxShadow: "0 6px 20px 0 rgba(0,0,0,0.1)" }}
-            >
-              <Heart className="h-4 w-4 text-gray-700" />
+            <button className="w-8 h-8 bg-white rounded-full flex items-center justify-center hover:bg-gray-50 transition-colors">
+              <Heart className="h-4 w-4 text-gray-600" />
             </button>
           </div>
         </div>
 
-        <div className="p-4 flex-1 flex flex-col justify-between">
-          <div>
-            <div className="flex items-start justify-between mb-1">
-              <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-1">
-                {property.title}
-              </h3>
-            </div>
-
-            <div className="flex items-center justify-between text-sm text-gray-500 mb-1">
-              <span>
-                {property.city}, {property.state}
-              </span>
-            </div>
-
-            {/* Beds and baths information */}
-            <div className="flex items-center text-sm text-gray-500 mb-2">
-              <span className="mr-2">
-                {property.bedrooms} {property.bedrooms === 1 ? "bed" : "beds"}
-              </span>
-              <span className="mx-2">•</span>
-              <span>
-                {property.bathrooms}{" "}
-                {property.bathrooms === 1 ? "bath" : "baths"}
-              </span>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between mt-auto">
-            <div className="flex items-center space-x-1">
-              {(property.reviews?.totalReviews || 0) > 0 ? (
-                <>
-                  <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                  <span className="text-sm font-medium text-gray-900">
-                    {property.reviews?.averageRating || 0}
-                  </span>
-                  <span className="text-sm text-gray-500">
-                    ({property.reviews?.totalReviews || 0})
-                  </span>
-                </>
-              ) : (
-                <>
-                  <Star className="h-3 w-3 text-gray-300" />
-                  <span className="text-sm text-gray-500">No rating</span>
-                </>
-              )}
-            </div>
-            <div className="text-right">
-              <p className="font-semibold text-gray-900">
+        <div className="pl-0 pr-4 py-2 flex-1 flex flex-col">
+          {/* Price and Reviews - side by side */}
+          <div className="flex items-center justify-between mb-1">
+            <div>
+              <p className="text-2xl font-bold text-gray-900">
                 {mounted
                   ? property.price.toLocaleString()
                   : property.price.toString()}{" "}
                 {property.currency}
+                <span className="text-base font-normal text-gray-700">
+                  {" "}
+                  / Night
+                </span>
               </p>
-              <p className="text-xs text-gray-500">night</p>
             </div>
+            {hasRating && (
+              <div className="flex items-center space-x-1">
+                <Star className="h-4 w-4 fill-blue-500 text-blue-500" />
+                <span className="text-sm font-medium text-gray-900">
+                  {property.reviews?.averageRating || 0}
+                </span>
+              </div>
+            )}
           </div>
+
+          {/* Title */}
+          <h3
+            className="text-lg font-normal mb-0.5"
+            style={{ color: "#575757" }}
+          >
+            {property.title}
+          </h3>
+
+          {/* Property type and beds */}
+          <p className="text-sm text-gray-500">
+            {property?.type
+              ?.toLowerCase()
+              .replace(/^\w/, (c) => c.toUpperCase()) || "Property"}{" "}
+            / {property.bedrooms} {property.bedrooms === 1 ? "bed" : "beds"}
+          </p>
         </div>
       </div>
     </Link>
