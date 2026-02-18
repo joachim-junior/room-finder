@@ -95,14 +95,9 @@ export default function DocumentUploadForm({
   };
 
   const validateForm = (): boolean => {
-    const newErrors: Record<string, string> = {};
-
-    if (documents.documents.length === 0) {
-      newErrors.documents = "At least one document is required";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    // Documents are optional -- skip validation if none uploaded
+    setErrors({});
+    return true;
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -116,11 +111,12 @@ export default function DocumentUploadForm({
     <div className="space-y-8">
       <div className="text-center">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          Property Ownership Documents
+          Property Ownership Documents{" "}
+          <span className="text-sm font-normal text-gray-500">(Optional)</span>
         </h2>
         <p className="text-gray-600">
           Upload documents that prove your ownership or right to rent the
-          property
+          property. You can skip this step and add documents later.
         </p>
       </div>
 

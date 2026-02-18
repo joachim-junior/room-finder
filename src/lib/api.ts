@@ -193,6 +193,7 @@ class ApiClient {
     password: string;
     phone: string;
     role?: "GUEST" | "HOST" | "ADMIN";
+    turnstileToken?: string;
   }): Promise<ApiResponse<{ user: User }>> {
     const response = await this.request<{ user: User }>("/auth/register", {
       method: "POST",
@@ -266,6 +267,52 @@ class ApiClient {
 
   async getProfile(): Promise<ApiResponse<User>> {
     return this.request<User>("/auth/profile");
+  }
+
+  async googleAuth(data: {
+    credential: string;
+    role?: "GUEST" | "HOST";
+  }): Promise<ApiResponse<{ user: User; token: string }>> {
+    const response = await this.request<{ user: User; token: string }>(
+      "/auth/google",
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      }
+    );
+
+    if (response.success && response.data?.token) {
+      this.setToken(response.data.token);
+      return response;
+    } else if ("token" in response && "user" in response) {
+      const backendResponse = response as {
+        message: string;
+        user: User;
+        token: string;
+      };
+      this.setToken(backendResponse.token);
+      return {
+        success: true,
+        message: backendResponse.message,
+        data: {
+          user: backendResponse.user,
+          token: backendResponse.token,
+        },
+      };
+    }
+
+    return {
+      success: false,
+      message: "Invalid response from server",
+      data: undefined,
+    };
+  }
+
+  async resendVerification(email: string): Promise<ApiResponse<void>> {
+    return this.request<void>("/auth/resend-verification", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    });
   }
 
   async updateProfile(profileData: Partial<User>): Promise<ApiResponse<User>> {

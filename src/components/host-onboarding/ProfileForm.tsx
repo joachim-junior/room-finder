@@ -88,19 +88,16 @@ export default function ProfileForm({
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    // Required fields validation
+    // Cameroon phone: 6XXXXXXXX or +2376XXXXXXXX or 2376XXXXXXXX
+    const cmPhoneRegex = /^(\+?237)?6[0-9]{8}$/;
+    const todayStr = new Date().toISOString().split("T")[0];
+
+    // --- Required fields (must match backend) ---
+
     if (!formData.fullLegalName.trim()) {
       newErrors.fullLegalName = "Full legal name is required";
-    }
-
-    if (!formData.dateOfBirth) {
-      newErrors.dateOfBirth = "Date of birth is required";
-    } else {
-      const birthDate = new Date(formData.dateOfBirth);
-      const today = new Date();
-      if (birthDate >= today) {
-        newErrors.dateOfBirth = "Date of birth must be in the past";
-      }
+    } else if (formData.fullLegalName.trim().length < 3) {
+      newErrors.fullLegalName = "Must be at least 3 characters";
     }
 
     if (!formData.residentialAddress.trim()) {
@@ -115,80 +112,74 @@ export default function ProfileForm({
       newErrors.region = "Region is required";
     }
 
-    if (!formData.postalCode.trim()) {
-      newErrors.postalCode = "Postal code is required";
-    } else if (!/^\d{5}$/.test(formData.postalCode)) {
-      newErrors.postalCode = "Postal code must be 5 digits";
-    }
-
-    if (!formData.emergencyContact.trim()) {
-      newErrors.emergencyContact = "Emergency contact name is required";
-    }
-
-    if (!formData.emergencyPhone.trim()) {
-      newErrors.emergencyPhone = "Emergency phone is required";
-    } else if (!/^\+237[0-9]{9}$/.test(formData.emergencyPhone)) {
-      newErrors.emergencyPhone = "Phone must be in format +237XXXXXXXXX";
+    if (!formData.whatsapp.trim()) {
+      newErrors.whatsapp = "WhatsApp number is required";
+    } else if (!cmPhoneRegex.test(formData.whatsapp.trim())) {
+      newErrors.whatsapp =
+        "Enter a valid Cameroon number (e.g. 6XXXXXXXX or +2376XXXXXXXX)";
     }
 
     if (!formData.payoutPhoneNumber.trim()) {
       newErrors.payoutPhoneNumber = "Payout phone number is required";
-    } else if (!/^\+237[0-9]{9}$/.test(formData.payoutPhoneNumber)) {
-      newErrors.payoutPhoneNumber = "Phone must be in format +237XXXXXXXXX";
+    } else if (!cmPhoneRegex.test(formData.payoutPhoneNumber.trim())) {
+      newErrors.payoutPhoneNumber =
+        "Enter a valid Cameroon number (e.g. 6XXXXXXXX or +2376XXXXXXXX)";
     }
 
-    if (!formData.payoutPhoneName.trim()) {
-      newErrors.payoutPhoneName = "Payout phone name is required";
+    // --- Optional fields (only validate format if provided) ---
+
+    if (formData.dateOfBirth) {
+      if (formData.dateOfBirth >= todayStr) {
+        newErrors.dateOfBirth = "Date of birth must be in the past";
+      }
     }
 
-    if (!formData.idNumber.trim()) {
-      newErrors.idNumber = "ID number is required";
-    }
-
-    if (!formData.idExpiryDate) {
-      newErrors.idExpiryDate = "ID expiry date is required";
-    } else {
-      const expiryDate = new Date(formData.idExpiryDate);
-      const today = new Date();
-      if (expiryDate <= today) {
+    if (formData.idExpiryDate) {
+      if (formData.idExpiryDate <= todayStr) {
         newErrors.idExpiryDate = "ID must not be expired";
       }
     }
 
-    if (!formData.bio.trim()) {
-      newErrors.bio = "Bio is required";
-    } else if (formData.bio.length < 50) {
+    if (formData.postalCode.trim() && !/^\d{3,10}$/.test(formData.postalCode.trim())) {
+      newErrors.postalCode = "Invalid postal code";
+    }
+
+    if (formData.emergencyPhone.trim() && !cmPhoneRegex.test(formData.emergencyPhone.trim())) {
+      newErrors.emergencyPhone =
+        "Enter a valid Cameroon number (e.g. 6XXXXXXXX)";
+    }
+
+    if (formData.alternatePhone.trim() && !cmPhoneRegex.test(formData.alternatePhone.trim())) {
+      newErrors.alternatePhone =
+        "Enter a valid Cameroon number (e.g. 6XXXXXXXX)";
+    }
+
+    if (formData.bio.trim() && formData.bio.trim().length < 50) {
       newErrors.bio = "Bio must be at least 50 characters";
     } else if (formData.bio.length > 500) {
       newErrors.bio = "Bio must not exceed 500 characters";
     }
 
-    if (formData.languages.length === 0) {
-      newErrors.languages = "At least one language is required";
-    }
-
-    // Optional phone validation
-    if (
-      formData.alternatePhone &&
-      !/^\+237[0-9]{9}$/.test(formData.alternatePhone)
-    ) {
-      newErrors.alternatePhone = "Phone must be in format +237XXXXXXXXX";
-    }
-
-    if (formData.whatsapp && !/^\+237[0-9]{9}$/.test(formData.whatsapp)) {
-      newErrors.whatsapp = "Phone must be in format +237XXXXXXXXX";
-    }
-
-    // URL validation
-    if (formData.facebookUrl && !isValidUrl(formData.facebookUrl)) {
+    if (formData.facebookUrl.trim() && !isValidUrl(formData.facebookUrl)) {
       newErrors.facebookUrl = "Please enter a valid URL";
     }
 
-    if (formData.instagramUrl && !isValidUrl(formData.instagramUrl)) {
+    if (formData.instagramUrl.trim() && !isValidUrl(formData.instagramUrl)) {
       newErrors.instagramUrl = "Please enter a valid URL";
     }
 
     setErrors(newErrors);
+
+    // Scroll to the first error so the user can see it
+    if (Object.keys(newErrors).length > 0) {
+      setTimeout(() => {
+        const errorEl = document.querySelector(".text-red-600");
+        if (errorEl) {
+          errorEl.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, 100);
+    }
+
     return Object.keys(newErrors).length === 0;
   };
 
@@ -204,7 +195,27 @@ export default function ProfileForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
-      onSubmit(formData);
+      // Strip empty optional strings so backend .optional() skips them
+      const cleaned = { ...formData };
+      const optionalStringFields: (keyof HostProfile)[] = [
+        "postalCode",
+        "alternatePhone",
+        "emergencyContact",
+        "emergencyPhone",
+        "facebookUrl",
+        "instagramUrl",
+        "dateOfBirth",
+        "idExpiryDate",
+        "bio",
+        "idNumber",
+        "payoutPhoneName",
+      ];
+      for (const key of optionalStringFields) {
+        if (typeof cleaned[key] === "string" && cleaned[key].trim() === "") {
+          delete (cleaned as Record<string, unknown>)[key];
+        }
+      }
+      onSubmit(cleaned);
     }
   };
 
@@ -256,7 +267,7 @@ export default function ProfileForm({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Date of Birth *
+                Date of Birth
               </label>
               <Input
                 type="date"
@@ -300,7 +311,7 @@ export default function ProfileForm({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                ID Number *
+                ID Number
               </label>
               <Input
                 value={formData.idNumber}
@@ -314,7 +325,7 @@ export default function ProfileForm({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                ID Expiry Date *
+                ID Expiry Date
               </label>
               <Input
                 type="date"
@@ -392,7 +403,7 @@ export default function ProfileForm({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Postal Code *
+                  Postal Code
                 </label>
                 <Input
                   value={formData.postalCode}
@@ -420,7 +431,7 @@ export default function ProfileForm({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Emergency Contact Name *
+                Emergency Contact Name
               </label>
               <Input
                 value={formData.emergencyContact}
@@ -437,7 +448,7 @@ export default function ProfileForm({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Emergency Phone *
+                Emergency Phone
               </label>
               <Input
                 value={formData.emergencyPhone}
@@ -447,7 +458,7 @@ export default function ProfileForm({
                     emergencyPhone: e.target.value,
                   }))
                 }
-                placeholder="+237XXXXXXXXX"
+                placeholder="6XXXXXXXX"
                 error={errors.emergencyPhone}
               />
             </div>
@@ -464,21 +475,21 @@ export default function ProfileForm({
                     alternatePhone: e.target.value,
                   }))
                 }
-                placeholder="+237XXXXXXXXX"
+                placeholder="6XXXXXXXX"
                 error={errors.alternatePhone}
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                WhatsApp
+                WhatsApp *
               </label>
               <Input
                 value={formData.whatsapp}
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, whatsapp: e.target.value }))
                 }
-                placeholder="+237XXXXXXXXX"
+                placeholder="6XXXXXXXX"
                 error={errors.whatsapp}
               />
             </div>
@@ -505,14 +516,14 @@ export default function ProfileForm({
                     payoutPhoneNumber: e.target.value,
                   }))
                 }
-                placeholder="+237XXXXXXXXX"
+                placeholder="6XXXXXXXX"
                 error={errors.payoutPhoneNumber}
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Payout Phone Name *
+                Payout Phone Name
               </label>
               <Input
                 value={formData.payoutPhoneName}
@@ -579,7 +590,7 @@ export default function ProfileForm({
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Bio * ({formData.bio.length}/500 characters)
+              Bio ({formData.bio.length}/500 characters)
             </label>
             <Textarea
               value={formData.bio}
@@ -594,7 +605,7 @@ export default function ProfileForm({
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Languages Spoken * ({formData.languages.length} selected)
+              Languages Spoken ({formData.languages.length} selected)
             </label>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
               {LANGUAGES.map((language) => (

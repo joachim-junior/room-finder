@@ -15,7 +15,9 @@ interface AuthContextType {
     password: string;
     phone: string;
     role?: "GUEST" | "HOST" | "ADMIN";
+    turnstileToken?: string;
   }) => Promise<void>;
+  googleLogin: (credential: string, role?: "GUEST" | "HOST") => Promise<void>;
   logout: () => void;
   updateProfile: (profileData: Partial<User>) => Promise<void>;
   refreshHostStatus: () => Promise<void>;
@@ -172,10 +174,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     password: string;
     phone: string;
     role?: "GUEST" | "HOST" | "ADMIN";
+    turnstileToken?: string;
   }) => {
     const response = await apiClient.register(userData);
     if (!response.success) {
       throw new Error(response.message || "Registration failed");
+    }
+  };
+
+  const googleLogin = async (credential: string, role?: "GUEST" | "HOST") => {
+    const response = await apiClient.googleAuth({ credential, role });
+
+    if (response.success && response.data) {
+      setUser(response.data.user);
+      if (response.data.user?.role === "HOST") {
+        await refreshHostStatus();
+      }
+    } else {
+      throw new Error(response.message || "Google login failed");
     }
   };
 
@@ -202,6 +218,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loading,
     login,
     register,
+    googleLogin,
     logout,
     updateProfile,
     refreshHostStatus,

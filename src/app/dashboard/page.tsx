@@ -209,6 +209,10 @@ export default function DashboardPage() {
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
 
+  // Email verification resend state
+  const [resendingVerification, setResendingVerification] = useState(false);
+  const [verificationResent, setVerificationResent] = useState(false);
+
   // Host application state
   const [hostApplicationStatus, setHostApplicationStatus] = useState<any>(null);
   const [hostApplicationLoading, setHostApplicationLoading] = useState(false);
@@ -2001,8 +2005,7 @@ export default function DashboardPage() {
         if (isApprovedHost) {
           setActiveSection("properties");
         } else {
-          // Redirect to host application if not approved
-          setActiveSection("host-application");
+          router.push("/host-onboarding");
         }
         break;
       case "bookings":
@@ -2131,14 +2134,12 @@ export default function DashboardPage() {
         ]
       : []),
     // Show host onboarding for hosts who need to complete onboarding
-    ...(user?.role === "HOST" &&
-    user?.hostApprovalStatus &&
-    user?.hostApprovalStatus !== "APPROVED"
+    ...(user?.role === "HOST" && user?.hostApprovalStatus !== "APPROVED"
       ? [
           {
             id: "host-onboarding",
             label: "Host Onboarding",
-            icon: <User className="h-5 w-5" />,
+            icon: <UserCheck className="h-5 w-5" />,
             onClick: () => router.push("/host-onboarding"),
           },
         ]
@@ -2161,6 +2162,20 @@ export default function DashboardPage() {
     console.log("Rendering overview section, stats:", stats);
     console.log("User role:", user?.role);
 
+    const handleResendVerification = async () => {
+      if (!user?.email || resendingVerification) return;
+      setResendingVerification(true);
+      try {
+        await apiClient.resendVerification(user.email);
+        setVerificationResent(true);
+        showSuccess("Verification email sent! Check your inbox.");
+      } catch {
+        showError("Failed to resend verification email. Please try again.");
+      } finally {
+        setResendingVerification(false);
+      }
+    };
+
     return (
       <div className="space-y-6">
         {/* Welcome Section */}
@@ -2173,6 +2188,69 @@ export default function DashboardPage() {
             {user?.role === "HOST" ? "properties" : "bookings"}.
           </p>
         </div>
+
+        {/* Email Verification Banner */}
+        {user && !user.isVerified && (
+          <div
+            className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl"
+          >
+            <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <h3 className="text-sm font-semibold text-amber-800">
+                Verify your email address
+              </h3>
+              <p className="text-sm text-amber-700 mt-0.5">
+                Please check your inbox and verify your email ({user.email}) to unlock all features.
+              </p>
+            </div>
+            <button
+              onClick={handleResendVerification}
+              disabled={resendingVerification || verificationResent}
+              className="flex-shrink-0 px-3 py-1.5 text-sm font-medium rounded-lg bg-amber-600 text-white hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {verificationResent
+                ? "Email Sent"
+                : resendingVerification
+                ? "Sending..."
+                : "Resend Email"}
+            </button>
+          </div>
+        )}
+
+        {/* Host Verification Banner */}
+        {user?.role === "HOST" && user?.hostApprovalStatus !== "APPROVED" && (
+          <div
+            className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-200 rounded-xl"
+          >
+            <UserCheck className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <h3 className="text-sm font-semibold text-blue-800">
+                {user?.hostApprovalStatus === "PENDING"
+                  ? "Host verification in progress"
+                  : user?.hostApprovalStatus === "REJECTED"
+                  ? "Host verification was not approved"
+                  : "Complete host verification"}
+              </h3>
+              <p className="text-sm text-blue-700 mt-0.5">
+                {user?.hostApprovalStatus === "PENDING"
+                  ? "Your host application is being reviewed. This usually takes 2-3 business days."
+                  : user?.hostApprovalStatus === "REJECTED"
+                  ? "Your previous application was not approved. You can reapply with updated information."
+                  : "Complete the host onboarding process to list properties and start earning."}
+              </p>
+            </div>
+            {user?.hostApprovalStatus !== "PENDING" && (
+              <button
+                onClick={() => router.push("/host-onboarding")}
+                className="flex-shrink-0 px-3 py-1.5 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+              >
+                {user?.hostApprovalStatus === "REJECTED"
+                  ? "Reapply"
+                  : "Get Verified"}
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -2653,10 +2731,11 @@ export default function DashboardPage() {
           "Your host application is pending approval. You'll be able to manage bookings once approved.";
       } else if (user?.hostApprovalStatus === "REJECTED") {
         message =
-          "Your host application was rejected. Please contact support for more information.";
+          "Your host application was not approved. You can reapply with updated information.";
+        actionText = "Reapply";
       } else {
-        message = "You need to be an approved host to manage bookings.";
-        actionText = "Apply to Become a Host";
+        message = "You need to complete host onboarding to manage bookings.";
+        actionText = "Complete Host Onboarding";
       }
 
       return (
@@ -2685,7 +2764,7 @@ export default function DashboardPage() {
             {actionText && (
               <button
                 onClick={() => {
-                  setActiveSection("host-application");
+                  router.push("/host-onboarding");
                 }}
                 className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
               >
@@ -3133,10 +3212,11 @@ export default function DashboardPage() {
           "Your host application is pending approval. You'll be able to manage reviews once approved.";
       } else if (user?.hostApprovalStatus === "REJECTED") {
         message =
-          "Your host application was rejected. Please contact support for more information.";
+          "Your host application was not approved. You can reapply with updated information.";
+        actionText = "Reapply";
       } else {
-        message = "You need to be an approved host to manage reviews.";
-        actionText = "Apply to Become a Host";
+        message = "You need to complete host onboarding to manage reviews.";
+        actionText = "Complete Host Onboarding";
       }
 
       return (
@@ -3167,7 +3247,7 @@ export default function DashboardPage() {
             {actionText && (
               <button
                 onClick={() => {
-                  setActiveSection("host-application");
+                  router.push("/host-onboarding");
                 }}
                 className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
               >
@@ -3685,10 +3765,11 @@ export default function DashboardPage() {
           "Your host application is pending approval. You'll be able to manage enquiries once approved.";
       } else if (user?.hostApprovalStatus === "REJECTED") {
         message =
-          "Your host application was rejected. Please contact support for more information.";
+          "Your host application was not approved. You can reapply with updated information.";
+        actionText = "Reapply";
       } else {
-        message = "You need to be an approved host to manage enquiries.";
-        actionText = "Apply to Become a Host";
+        message = "You need to complete host onboarding to manage enquiries.";
+        actionText = "Complete Host Onboarding";
       }
 
       return (
@@ -3719,7 +3800,7 @@ export default function DashboardPage() {
             {actionText && (
               <button
                 onClick={() => {
-                  setActiveSection("host-application");
+                  router.push("/host-onboarding");
                 }}
                 className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
               >
@@ -4727,17 +4808,19 @@ export default function DashboardPage() {
       if (user?.role !== "HOST") {
         message = "You need to become a host to manage properties.";
         actionText = "Apply to Become a Host";
-        actionLink = "#host-application";
+        actionLink = "/host-onboarding";
       } else if (user?.hostApprovalStatus === "PENDING") {
         message =
           "Your host application is pending approval. You'll be able to manage properties once approved.";
       } else if (user?.hostApprovalStatus === "REJECTED") {
         message =
-          "Your host application was rejected. Please contact support for more information.";
+          "Your host application was not approved. You can reapply with updated information.";
+        actionText = "Reapply";
+        actionLink = "/host-onboarding";
       } else {
-        message = "You need to be an approved host to manage properties.";
-        actionText = "Apply to Become a Host";
-        actionLink = "#host-application";
+        message = "You need to complete host onboarding to manage properties.";
+        actionText = "Complete Host Onboarding";
+        actionLink = "/host-onboarding";
       }
 
       return (
@@ -4768,8 +4851,7 @@ export default function DashboardPage() {
             {actionText && actionLink && (
               <button
                 onClick={() => {
-                  // Navigate to host application section
-                  setActiveSection("host-application");
+                  router.push("/host-onboarding");
                 }}
                 className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
               >
@@ -5165,13 +5247,6 @@ export default function DashboardPage() {
 
     // If user is already a host, show status based on approval
     if (user?.role === "HOST") {
-      console.log("🔍 Host status check:", {
-        hostApprovalStatus: user?.hostApprovalStatus,
-        hostApplicationStatus: hostApplicationStatus,
-        statusType: typeof user?.hostApprovalStatus,
-      });
-
-      // Combine sources: consider approved if either source says APPROVED
       const statusFromApp = hostApplicationStatus?.status?.toUpperCase();
       const statusFromUser = user?.hostApprovalStatus?.toUpperCase();
       const status = statusFromApp || statusFromUser;
@@ -5182,35 +5257,44 @@ export default function DashboardPage() {
       const isRejected = (statusFromApp || statusFromUser) === "REJECTED";
       const isSuspended = (statusFromApp || statusFromUser) === "SUSPENDED";
 
-      console.log("🔍 Status analysis:", {
-        originalStatus: user?.hostApprovalStatus,
-        applicationStatus: hostApplicationStatus?.status,
-        normalizedStatus: status,
-        isApproved,
-        isPending,
-        isRejected,
-        isSuspended,
-        finalStatus: isApproved
-          ? "APPROVED"
-          : isPending
-          ? "PENDING"
-          : isRejected
-          ? "REJECTED"
-          : isSuspended
-          ? "SUSPENDED"
-          : "UNKNOWN",
-      });
-
-      // Debug the actual condition that determines the display
-      console.log("🔍 Display logic:", {
-        status,
-        isApproved,
-        isPending,
-        isRejected,
-        willShowApproved: isApproved,
-        willShowPending: isPending,
-        willShowRejected: isRejected,
-      });
+      // If no status at all, host hasn't started onboarding — redirect there
+      if (!status) {
+        return (
+          <div className="space-y-6">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 mb-1">
+                Complete Host Onboarding
+              </h1>
+              <p className="text-gray-600 text-base">
+                You need to complete the host onboarding process before you can list properties.
+              </p>
+            </div>
+            <div
+              className="bg-white p-8 rounded-xl text-center"
+              style={{
+                border: "1px solid #DDDDDD",
+                boxShadow: "0 6px 20px 0 rgba(0,0,0,0.1)",
+              }}
+            >
+              <div className="h-16 w-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <UserCheck className="h-8 w-8 text-blue-600" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Get Started as a Host
+              </h3>
+              <p className="text-gray-600 mb-4 max-w-md mx-auto">
+                Complete your host profile, verify your identity, and start listing properties on Room Finder.
+              </p>
+              <button
+                onClick={() => router.push("/host-onboarding")}
+                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Start Host Onboarding
+              </button>
+            </div>
+          </div>
+        );
+      }
 
       return (
         <div className="space-y-6">
@@ -5223,6 +5307,8 @@ export default function DashboardPage() {
                 ? "You are a verified host on our platform."
                 : isPending
                 ? "Your host application is being reviewed."
+                : isRejected
+                ? "Your application was not approved."
                 : "Your host application status."}
             </p>
           </div>
@@ -5243,8 +5329,6 @@ export default function DashboardPage() {
                     ? "bg-yellow-50"
                     : isRejected
                     ? "bg-red-50"
-                    : isSuspended
-                    ? "bg-gray-50"
                     : "bg-gray-50"
                 }`}
               >
@@ -5256,8 +5340,6 @@ export default function DashboardPage() {
                       ? "text-yellow-600"
                       : isRejected
                       ? "text-red-600"
-                      : isSuspended
-                      ? "text-gray-600"
                       : "text-gray-600"
                   }`}
                 />
@@ -5268,12 +5350,12 @@ export default function DashboardPage() {
                   {isApproved
                     ? "Active"
                     : isPending
-                    ? "Pending"
+                    ? "Pending Review"
                     : isRejected
                     ? "Rejected"
                     : isSuspended
                     ? "Suspended"
-                    : `Unknown (${status})`}
+                    : "Not Started"}
                 </h3>
                 <p className="text-sm text-gray-600">
                   {isApproved
@@ -5284,7 +5366,7 @@ export default function DashboardPage() {
                     ? "Your application was not approved"
                     : isSuspended
                     ? "Your host account is temporarily suspended"
-                    : "Status unknown"}
+                    : "Complete your host onboarding to get started"}
                 </p>
               </div>
             </div>
@@ -5294,11 +5376,19 @@ export default function DashboardPage() {
                 : isPending
                 ? "Your host application is currently being reviewed by our team. We'll notify you once a decision has been made. This process typically takes 2-3 business days."
                 : isRejected
-                ? "Unfortunately, your host application was not approved at this time. You may reapply in the future or contact support for more information."
+                ? "Unfortunately, your host application was not approved at this time. You can reapply by updating your host profile."
                 : isSuspended
                 ? "Your host account has been temporarily suspended. Please contact support for more information about the suspension and how to resolve it."
-                : "Your host application status is currently unknown. Please contact support for assistance."}
+                : "You haven't completed host onboarding yet. Please complete the process to start listing properties."}
             </p>
+            {(isRejected || (!isApproved && !isPending && !isSuspended)) && (
+              <button
+                onClick={() => router.push("/host-onboarding")}
+                className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                {isRejected ? "Reapply" : "Complete Onboarding"}
+              </button>
+            )}
           </div>
         </div>
       );
@@ -5634,10 +5724,11 @@ export default function DashboardPage() {
             "Your host application is pending approval. You'll be able to manage your wallet once approved.";
         } else if (user?.hostApprovalStatus === "REJECTED") {
           message =
-            "Your host application was rejected. Please contact support for more information.";
+            "Your host application was not approved. You can reapply with updated information.";
+          actionText = "Reapply";
         } else {
-          message = "You need to be an approved host to manage your wallet.";
-          actionText = "Apply to Become a Host";
+          message = "You need to complete host onboarding to manage your wallet.";
+          actionText = "Complete Host Onboarding";
         }
 
         return (
@@ -5668,7 +5759,7 @@ export default function DashboardPage() {
               {actionText && (
                 <button
                   onClick={() => {
-                    setActiveSection("host-application");
+                    router.push("/host-onboarding");
                   }}
                   className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
                 >

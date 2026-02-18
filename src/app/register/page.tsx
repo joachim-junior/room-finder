@@ -1,19 +1,30 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { Mail, Lock, Eye, EyeOff, User, Phone } from "lucide-react";
 import { Input, Button, Label, Divider, Select } from "@/components/ui";
+import Turnstile from "@/components/ui/Turnstile";
+import GoogleSignInButton from "@/components/ui/GoogleSignInButton";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { register } = useAuth();
+  const { register, googleLogin, user, loading: authLoading } = useAuth();
+  const [googleLoading, setGoogleLoading] = useState(false);
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      router.replace("/dashboard");
+    }
+  }, [user, authLoading, router]);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState("");
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -35,6 +46,12 @@ export default function RegisterPage() {
       return;
     }
 
+    if (process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && !turnstileToken) {
+      setError("Please complete the verification");
+      setLoading(false);
+      return;
+    }
+
     try {
       await register({
         firstName: formData.firstName,
@@ -43,6 +60,7 @@ export default function RegisterPage() {
         password: formData.password,
         phone: formData.phone,
         role: formData.role,
+        turnstileToken: turnstileToken || undefined,
       });
       router.push("/login");
     } catch (error) {
@@ -51,6 +69,19 @@ export default function RegisterPage() {
       setLoading(false);
     }
   };
+
+  const handleGoogleSuccess = useCallback(async (credential: string) => {
+    setGoogleLoading(true);
+    setError("");
+    try {
+      await googleLogin(credential, formData.role as "GUEST" | "HOST");
+      router.push("/dashboard");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Google sign-up failed");
+    } finally {
+      setGoogleLoading(false);
+    }
+  }, [googleLogin, router, formData.role]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -65,6 +96,14 @@ export default function RegisterPage() {
     { value: "GUEST", label: "Guest" },
     { value: "HOST", label: "Host" },
   ];
+
+  if (authLoading || user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8">
@@ -235,10 +274,36 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          <Button type="submit" loading={loading} className="w-full">
+          <Turnstile
+            onVerify={(token) => setTurnstileToken(token)}
+            onExpire={() => setTurnstileToken("")}
+          />
+
+          <Button type="submit" loading={loading || googleLoading} className="w-full">
             {loading ? "Creating account..." : "Create account"}
           </Button>
         </form>
+
+        <div className="relative my-4">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-300" />
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+          </div>
+        </div>
+
+        {googleLoading ? (
+          <div className="flex justify-center py-3">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600" />
+          </div>
+        ) : (
+          <GoogleSignInButton
+            onSuccess={handleGoogleSuccess}
+            onError={() => setError("Google sign-up was cancelled")}
+            text="signup_with"
+          />
+        )}
 
         <div className="mt-6">
           <Divider />

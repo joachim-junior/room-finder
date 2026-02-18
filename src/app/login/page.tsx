@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
+import GoogleSignInButton from "@/components/ui/GoogleSignInButton";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -14,11 +15,17 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const { login } = useAuth();
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const { login, googleLogin, user, loading: authLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    // Clear any existing messages when component mounts
+    if (!authLoading && user) {
+      router.replace("/dashboard");
+    }
+  }, [user, authLoading, router]);
+
+  useEffect(() => {
     setError("");
     setSuccess("");
   }, []);
@@ -41,6 +48,27 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
+
+  const handleGoogleSuccess = useCallback(async (credential: string) => {
+    setGoogleLoading(true);
+    setError("");
+    try {
+      await googleLogin(credential);
+      router.push("/dashboard");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Google sign-in failed");
+    } finally {
+      setGoogleLoading(false);
+    }
+  }, [googleLogin, router]);
+
+  if (authLoading || user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -134,12 +162,33 @@ export default function LoginPage() {
           <div>
             <Button
               type="submit"
-              disabled={loading}
+              disabled={loading || googleLoading}
               className="w-full flex justify-center py-3 px-4"
             >
               {loading ? "Signing in..." : "Sign in"}
             </Button>
           </div>
+
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="bg-gray-50 px-2 text-gray-500">Or continue with</span>
+            </div>
+          </div>
+
+          {googleLoading ? (
+            <div className="flex justify-center py-3">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600" />
+            </div>
+          ) : (
+            <GoogleSignInButton
+              onSuccess={handleGoogleSuccess}
+              onError={() => setError("Google sign-in was cancelled")}
+              text="signin_with"
+            />
+          )}
 
           <div className="text-center">
             <p className="text-sm text-gray-600">
