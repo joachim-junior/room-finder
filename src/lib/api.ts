@@ -34,6 +34,35 @@ import {
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "https://api.roomfinder237.com/api/v1";
 
+/** Build a user-facing message from JSON error bodies (e.g. express-validator). */
+function messageFromErrorPayload(data: Record<string, unknown>): string {
+  const details = data.details;
+  if (Array.isArray(details) && details.length > 0) {
+    const msgs: string[] = [];
+    for (const item of details) {
+      if (
+        item &&
+        typeof item === "object" &&
+        "msg" in item &&
+        typeof (item as { msg: unknown }).msg === "string"
+      ) {
+        const m = String((item as { msg: string }).msg).trim();
+        if (m) msgs.push(m);
+      }
+    }
+    if (msgs.length > 0) {
+      return [...new Set(msgs)].join("; ");
+    }
+  }
+  if (typeof data.message === "string" && data.message.trim()) {
+    return data.message;
+  }
+  if (typeof data.error === "string" && data.error.trim()) {
+    return data.error;
+  }
+  return "Empty response from server";
+}
+
 class ApiClient {
   private baseUrl: string;
   private token: string | null = null;
@@ -81,7 +110,7 @@ class ApiClient {
         data = {};
       }
       if (!response.ok) {
-        throw new Error(data.message || "Empty response from server");
+        throw new Error(messageFromErrorPayload(data));
       }
 
       if (!data || Object.keys(data).length === 0) {
@@ -133,7 +162,7 @@ class ApiClient {
 
       if (!response.ok || !data || Object.keys(data).length === 0) {
         console.error("❌ API request failed:", data);
-        throw new Error(data.message || "Empty response from server");
+        throw new Error(messageFromErrorPayload(data));
       }
 
       console.log("✅ API request successful");

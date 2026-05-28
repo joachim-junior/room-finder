@@ -106,14 +106,22 @@ export default function AddPropertyPage() {
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
 
-    if (!formData.title.trim()) {
+    if (
+      !formData.title.trim() ||
+      formData.title.trim().length < 5 ||
+      formData.title.trim().length > 100
+    ) {
       errors.title =
-        "Property title is required and title must be at least 10 characters";
+        "Title must be between 5 and 100 characters";
     }
 
-    if (!formData.description.trim()) {
+    if (
+      !formData.description.trim() ||
+      formData.description.trim().length < 10 ||
+      formData.description.trim().length > 1000
+    ) {
       errors.description =
-        "Property description is required and description must be at least 1000 characters";
+        "Description must be between 10 and 1000 characters";
     }
 
     if (!formData.address.trim()) {

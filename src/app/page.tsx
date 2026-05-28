@@ -51,7 +51,6 @@ export default function Home() {
             const response = await apiClient.getProperties({
               limit: 7,
               isAvailable: true,
-              // Remove isVerified requirement since properties might not be verified yet
               page: 1,
               city: city,
             });
